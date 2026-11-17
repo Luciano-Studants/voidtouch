@@ -80,9 +80,19 @@ class MainActivity : ComponentActivity() {
                     value = withContext(Dispatchers.Default) { AppRepository.loadApps(applicationContext) }
                 }
                 var showAllApps by remember { mutableStateOf(false) }
+                // Verdadeiro quando a lista foi aberta pela pílula de busca (já abre o teclado).
+                var focusSearch by remember { mutableStateOf(false) }
+                var query by remember { mutableStateOf("") }
 
                 // Apertar Home com o launcher aberto sempre volta para a home.
                 LaunchedEffect(homeSignal) { showAllApps = false }
+                // Ao sair da lista completa, a busca é limpa.
+                LaunchedEffect(showAllApps) {
+                    if (!showAllApps) {
+                        query = ""
+                        focusSearch = false
+                    }
+                }
                 // Um launcher não fecha com o botão voltar; aqui ele só sai da lista completa.
                 BackHandler { if (showAllApps) showAllApps = false }
 
@@ -96,8 +106,12 @@ class MainActivity : ComponentActivity() {
                         AppList(
                             apps = apps,
                             pinnedKeys = pinnedKeys,
+                            query = query,
+                            onQueryChange = { query = it },
+                            focusSearch = focusSearch,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
                             onTogglePin = { togglePin(it) },
+                            onClose = { showAllApps = false },
                         )
                     } else {
                         HomeContent(
@@ -106,7 +120,14 @@ class MainActivity : ComponentActivity() {
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
                             onUnpin = { togglePin(it) },
-                            onOpenDrawer = { showAllApps = true },
+                            onOpenDrawer = {
+                                focusSearch = false
+                                showAllApps = true
+                            },
+                            onOpenSearch = {
+                                focusSearch = true
+                                showAllApps = true
+                            },
                             onClockLongPress = ::cycleBackdrop,
                         )
                     }

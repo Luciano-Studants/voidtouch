@@ -4,9 +4,13 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
 
-> Status: **v0.3 – home da referência**. Hora, mês em letra manuscrita, dia por extenso, bateria e RAM, até 10 favoritos com ícone e um botão redondo que abre a lista de todos os apps. Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Status: **v0.4 – busca e gestos**. Busca de apps sem acento, pílula "buscar app" na home e deslizar para cima para abrir a lista completa. Tudo o mais está no [plano](docs/REQUISITOS.md).
 
-**Fixar favoritos:** toque no círculo (canto inferior direito) para ver todos os apps e **segure** um app para fixar na home (o ponto à direita marca os fixados). Na home, segurar um favorito desafixa. Máximo de 10.
+**Abrir a lista completa:** deslize para cima na home ou toque no círculo (canto inferior direito). Para voltar, deslize para baixo com a lista no topo ou use o botão voltar.
+
+**Buscar:** toque em "buscar app" (canto inferior esquerdo) e digite; acentos e maiúsculas não importam ("camera" acha "Câmera"). A tecla de confirmar do teclado abre o primeiro resultado.
+
+**Fixar favoritos:** na lista completa, **segure** um app para fixar na home (o ponto à direita marca os fixados). Na home, segurar um favorito desafixa. Máximo de 10.
 
 **Trocar o fundo (provisório):** segure o dedo no relógio. Alterna entre preto, grafite e papel de parede. Vira uma opção na tela de Ajustes mais adiante.
 

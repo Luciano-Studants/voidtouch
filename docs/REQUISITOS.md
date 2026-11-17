@@ -55,9 +55,9 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 1. Repositório, projeto base e compilação automática do APK. **(feito)**
 2. Esqueleto do launcher no A05, como padrão. **(feito; falta testar no aparelho)**
 3. Temas e fontes. **(feito na v0.2)**
-4. Home: relógio, favoritos, RAM e bateria **(feitos na v0.3)**; falta a busca.
+4. Home: relógio, favoritos, RAM e bateria **(v0.3)** e busca **(v0.4)**.
 5. Ícones.
-6. Gaveta A–Z, gesto e pastas.
+6. Gaveta A–Z, gesto e pastas. **(gesto de deslizar para cima e busca na v0.4; faltam pastas)**
 7. Saúde do aparelho.
 8. Modo foco.
 9. Ajustes e persistência.

@@ -55,15 +55,28 @@ fun HomeContent(
     onLaunch: (AppEntry) -> Unit,
     onUnpin: (AppEntry) -> Unit,
     onOpenDrawer: () -> Unit,
+    onOpenSearch: () -> Unit,
     onClockLongPress: () -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        // A rolagem aqui é só uma rede de segurança para telas pequenas; a home cabe sem rolar.
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    // A rolagem aqui é só uma rede de segurança para telas pequenas; a home cabe sem rolar.
+    val scrollState = rememberScrollState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Deslizar para cima abre a lista completa (só quando a home não está rolando).
+            .onVerticalSwipe(
+                up = true,
+                threshold = 96.dp,
+                enabled = { !scrollState.canScrollForward },
+                onSwipe = onOpenDrawer,
+            ),
+    ) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
             ClockHeader(nowMillis = nowMillis, stats = stats, onLongPress = onClockLongPress)
             if (favorites.isEmpty()) {
                 Text(
-                    text = "toque no círculo, segure um app\npara fixar aqui",
+                    text = "deslize para cima, segure um app\npara fixar aqui",
                     style = VoidType.Caption,
                     color = VoidColors.TextDim,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
@@ -77,12 +90,36 @@ fun HomeContent(
             Spacer(Modifier.height(88.dp))
         }
 
+        SearchPill(
+            onClick = onOpenSearch,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(24.dp),
+        )
+
         DrawerButton(
             onClick = onOpenDrawer,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp),
         )
+    }
+}
+
+/** Pílula fina "buscar app": abre a lista completa já com o teclado. */
+@Composable
+private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier = modifier
+            .height(52.dp)
+            .width(168.dp)
+            .clip(CircleShape)
+            .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp),
+    ) {
+        Text(text = "buscar app", style = VoidType.Caption, color = VoidColors.TextDim)
     }
 }
 
