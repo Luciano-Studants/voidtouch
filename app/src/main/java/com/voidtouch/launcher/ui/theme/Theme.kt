@@ -14,6 +14,27 @@ object VoidColors {
     val Text = Color(0xFFF2F2F2)
 }
 
+/**
+ * Fundo da tela inicial. É aplicado como fundo da janela (e não desenhado pelo Compose),
+ * para não gastar nada de GPU em desenho extra.
+ */
+enum class Backdrop(val key: String, val argb: Int) {
+    /** Preto puro. */
+    Void("void", 0xFF000000.toInt()),
+
+    /** Cinza bem escuro. */
+    Graphite("graphite", 0xFF121212.toInt()),
+
+    /** Papel de parede do sistema, com uma camada escura (55%) para o texto continuar legível. */
+    Wallpaper("wallpaper", 0x8C000000.toInt());
+
+    fun next(): Backdrop = entries[(ordinal + 1) % entries.size]
+
+    companion object {
+        fun fromKey(key: String?): Backdrop = entries.firstOrNull { it.key == key } ?: Void
+    }
+}
+
 private val VoidScheme = darkColorScheme(
     primary = VoidColors.Text,
     onPrimary = VoidColors.Void,

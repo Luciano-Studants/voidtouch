@@ -15,7 +15,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 |---|---|
 | Formato | Launcher (tela inicial) |
 | Tema | Só escuro. Void (preto puro) e Grafite (cinza) |
-| Fundo | Transparente, mostrando o papel de parede do sistema (sem imagem dentro do app) |
+| Fundo | Três modos: Void (preto), Grafite (cinza) e Wallpaper (papel de parede do sistema com camada escura de 55%). Aplicado como fundo da janela, sem imagem dentro do app |
 | Cor de destaque | Nenhuma |
 | Fonte da lista | Monoespaçada (JetBrains Mono Light) |
 | Relógio | 24 h, fonte quadrada fina (Oxanium ExtraLight) |
@@ -54,8 +54,8 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 
 1. Repositório, projeto base e compilação automática do APK. **(feito)**
 2. Esqueleto do launcher no A05, como padrão. **(feito; falta testar no aparelho)**
-3. Temas e fontes.
-4. Home: relógio, favoritos, RAM e bateria, busca.
+3. Temas e fontes. **(feito na v0.2)**
+4. Home: relógio **(feito na v0.2)**, favoritos, RAM e bateria, busca.
 5. Ícones.
 6. Gaveta A–Z, gesto e pastas.
 7. Saúde do aparelho.
