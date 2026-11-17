@@ -18,6 +18,8 @@ android {
 
     buildTypes {
         release {
+            // Uso pessoal: assinado com a chave de debug para poder instalar direto.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

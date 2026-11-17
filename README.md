@@ -9,7 +9,8 @@ Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor 
 ## Instalar o APK (sem computador)
 
 1. No GitHub, abra a aba **Actions** e entre na execução mais recente de **Build APK**.
-2. Em **Artifacts**, baixe `voidtouch-debug-apk` (vem em .zip) e extraia o `.apk`.
+2. Em **Artifacts**, baixe `voidtouch-release-apk` (vem em .zip) e extraia o `.apk`. É a versão otimizada; use sempre essa.
+   Cada compilação usa uma chave nova, então para atualizar é preciso **desinstalar a versão anterior** antes de instalar a nova.
 3. Abra o `.apk` no celular. Se pedir, permita "instalar apps desconhecidos" para o navegador ou gerenciador de arquivos.
 4. Aperte o botão Home. O Android pergunta qual tela inicial usar: escolha **VoidTouch** e **Sempre**.
 
@@ -20,10 +21,10 @@ Para voltar à tela inicial da Samsung: Ajustes > Apps > Escolher apps padrão >
 O APK é compilado automaticamente pelo GitHub Actions a cada push na `main`. Para compilar localmente é preciso JDK 17 e o Android SDK (Android Studio):
 
 ```
-./gradlew assembleDebug
+./gradlew assembleRelease
 ```
 
-O APK sai em `app/build/outputs/apk/debug/`.
+O APK sai em `app/build/outputs/apk/release/`.
 
 ## Tecnologia
 
