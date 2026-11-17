@@ -51,14 +51,17 @@ import kotlinx.coroutines.withContext
 fun HomeContent(
     nowMillis: Long,
     stats: DeviceStats?,
+    focusSinceMillis: Long,
     favorites: List<AppEntry>,
     onLaunch: (AppEntry) -> Unit,
     onUnpin: (AppEntry) -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenHealth: () -> Unit,
+    onToggleFocus: () -> Unit,
     onClockLongPress: () -> Unit,
 ) {
+    val focusOn = focusSinceMillis != 0L
     // A rolagem aqui é só uma rede de segurança para telas pequenas; a home cabe sem rolar.
     val scrollState = rememberScrollState()
 
@@ -76,13 +79,20 @@ fun HomeContent(
         Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
             ClockHeader(
                 nowMillis = nowMillis,
-                stats = stats,
+                // Com o foco ligado a home fica mais calma: some a linha de bateria e RAM.
+                stats = if (focusOn) null else stats,
+                focusSinceMillis = focusSinceMillis,
                 onStatsClick = onOpenHealth,
+                onFocusClick = onToggleFocus,
                 onLongPress = onClockLongPress,
             )
             if (favorites.isEmpty()) {
                 Text(
-                    text = "deslize para cima, segure um app\npara fixar aqui",
+                    text = if (focusOn) {
+                        "modo foco ligado: nenhum favorito liberado"
+                    } else {
+                        "deslize para cima, segure um app\npara fixar aqui"
+                    },
                     style = VoidType.Caption,
                     color = VoidColors.TextDim,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),

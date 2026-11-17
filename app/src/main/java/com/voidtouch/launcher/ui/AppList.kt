@@ -2,6 +2,8 @@ package com.voidtouch.launcher.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -46,12 +49,20 @@ import com.voidtouch.launcher.ui.theme.VoidType
  * Lista completa de apps, em texto, com busca no topo. Tocar abre o app; segurar fixa ou
  * desafixa na home (o ponto à direita marca os fixados). O botão de confirmar do teclado abre
  * o primeiro resultado. Deslizar para baixo, com a lista no topo, volta para a home.
+ *
+ * Modo foco: o texto "apps do foco" liga a marcação, em que tocar num app o marca como
+ * distração (o círculo vazio à direita). Com o foco ligado, os marcados somem da lista e da busca.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppList(
     apps: List<AppEntry>,
     pinnedKeys: List<String>,
+    focusApps: Set<String>,
+    focusModeOn: Boolean,
+    markingFocusApps: Boolean,
+    onMarkingChange: (Boolean) -> Unit,
+    onToggleFocusApp: (AppEntry) -> Unit,
     query: String,
     onQueryChange: (String) -> Unit,
     focusSearch: Boolean,
@@ -63,11 +74,24 @@ fun AppList(
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
 
-    val results = remember(apps, query) { Search.filter(apps, query) }
+    // Enquanto se marca os apps do foco, todos aparecem para poder desmarcar.
+    val hiding = focusModeOn && !markingFocusApps
+    val visible = remember(apps, focusApps, hiding) {
+        if (hiding) apps.filter { it.key !in focusApps } else apps
+    }
+    val hiddenCount = apps.size - visible.size
+    val results = remember(visible, query) { Search.filter(visible, query) }
 
     fun launch(app: AppEntry) {
         focusManager.clearFocus()
         onLaunch(app)
+    }
+
+    val caption = when {
+        markingFocusApps -> "toque nos apps que distraem: eles somem no modo foco"
+        query.isNotBlank() -> "${results.size} encontrado(s)"
+        hiding -> "modo foco ligado: $hiddenCount app(s) escondido(s)"
+        else -> "segure um app para fixar na home"
     }
 
     Column(
@@ -91,11 +115,25 @@ fun AppList(
                 onGo = { results.firstOrNull()?.let(::launch) },
             )
             Spacer(Modifier.height(10.dp))
-            Text(
-                text = if (query.isBlank()) "segure um app para fixar na home" else "${results.size} encontrado(s)",
-                style = VoidType.Caption,
-                color = VoidColors.TextDim,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = caption,
+                    style = VoidType.Caption,
+                    color = VoidColors.TextDim,
+                    modifier = Modifier.weight(1f).padding(end = 12.dp),
+                )
+                Text(
+                    text = if (markingFocusApps) "concluir" else "apps do foco",
+                    style = VoidType.Caption,
+                    color = VoidColors.Text,
+                    modifier = Modifier
+                        .clickable {
+                            focusManager.clearFocus()
+                            onMarkingChange(!markingFocusApps)
+                        }
+                        .padding(vertical = 8.dp),
+                )
+            }
         }
 
         if (results.isEmpty()) {
@@ -117,15 +155,18 @@ fun AppList(
                 key = { it.key },
                 contentType = { "app" },
             ) { app ->
+                val marked = app.key in focusApps
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = { launch(app) },
+                            onClick = {
+                                if (markingFocusApps) onToggleFocusApp(app) else launch(app)
+                            },
                             onLongClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onTogglePin(app)
+                                if (markingFocusApps) onToggleFocusApp(app) else onTogglePin(app)
                             },
                         )
                         .padding(horizontal = 24.dp, vertical = 14.dp),
@@ -133,12 +174,23 @@ fun AppList(
                     Text(
                         text = app.label,
                         style = VoidType.App,
-                        color = VoidColors.Text,
+                        // Marcados aparecem apagados enquanto se escolhe os apps do foco.
+                        color = if (markingFocusApps && marked) VoidColors.TextDim else VoidColors.Text,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
+                    if (marked) {
+                        // Círculo vazio: app marcado como distração.
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .border(1.dp, VoidColors.TextDim, CircleShape),
+                        )
+                    }
                     if (app.key in pinnedKeys) {
+                        // Ponto cheio: app fixado na home.
+                        if (marked) Spacer(Modifier.width(10.dp))
                         Box(
                             modifier = Modifier
                                 .size(6.dp)

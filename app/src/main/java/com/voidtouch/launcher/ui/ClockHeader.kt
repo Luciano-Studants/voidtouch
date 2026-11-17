@@ -1,17 +1,24 @@
 package com.voidtouch.launcher.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -51,7 +58,9 @@ private data class HeaderText(val time: String, val month: String, val dateLine:
 fun ClockHeader(
     nowMillis: Long,
     stats: DeviceStats?,
+    focusSinceMillis: Long,
     onStatsClick: () -> Unit,
+    onFocusClick: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -66,6 +75,8 @@ fun ClockHeader(
         )
     }
     val statsLine = remember(stats) { stats?.let(::formatStats) }
+    val focusOn = focusSinceMillis != 0L
+    val focusLine = remember(minute, focusSinceMillis) { formatFocus(focusSinceMillis, nowMillis) }
     val haptic = LocalHapticFeedback.current
 
     Column(
@@ -97,7 +108,48 @@ fun ClockHeader(
                     .padding(vertical = 8.dp),
             )
         }
+        // Liga e desliga o modo foco com um toque. Ligado, a home fica mais calma: some a linha
+        // de bateria e RAM e os apps marcados como distração.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onFocusClick()
+                }
+                .padding(vertical = 8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .then(
+                        if (focusOn) {
+                            Modifier.background(VoidColors.Text, CircleShape)
+                        } else {
+                            Modifier.border(1.dp, VoidColors.TextDim, CircleShape)
+                        },
+                    ),
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = focusLine,
+                style = VoidType.Caption,
+                color = if (focusOn) VoidColors.Text else VoidColors.TextDim,
+            )
+        }
     }
+}
+
+/** "foco desligado" ou "foco ligado · 23 min" (e "1 h 05 min" depois da primeira hora). */
+private fun formatFocus(sinceMillis: Long, nowMillis: Long): String {
+    if (sinceMillis == 0L) return "foco desligado"
+    val minutes = ((nowMillis - sinceMillis) / 60_000L).coerceAtLeast(0L)
+    val elapsed = when {
+        minutes < 1L -> "agora"
+        minutes < 60L -> "$minutes min"
+        else -> String.format(PtBr, "%d h %02d min", minutes / 60L, minutes % 60L)
+    }
+    return "foco ligado · $elapsed"
 }
 
 private fun formatStats(stats: DeviceStats): String {

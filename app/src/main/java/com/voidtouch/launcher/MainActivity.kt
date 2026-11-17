@@ -31,6 +31,7 @@ import com.voidtouch.launcher.data.AppRepository
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.DeviceStatsReader
 import com.voidtouch.launcher.data.FavoritesStore
+import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
@@ -54,9 +55,17 @@ class MainActivity : ComponentActivity() {
 
     private var pinnedKeys by mutableStateOf<List<String>>(emptyList())
 
+    /** Apps marcados como distração; somem da home, da lista e da busca com o foco ligado. */
+    private var focusApps by mutableStateOf<Set<String>>(emptySet())
+
+    /** Horário em que o modo foco foi ligado; zero significa desligado. */
+    private var focusSince by mutableLongStateOf(0L)
+
     private var backdrop: Backdrop = Backdrop.Void
 
     private lateinit var favoritesStore: FavoritesStore
+
+    private lateinit var focusStore: FocusStore
 
     private val timeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -72,6 +81,9 @@ class MainActivity : ComponentActivity() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         favoritesStore = FavoritesStore(prefs)
         pinnedKeys = favoritesStore.load()
+        focusStore = FocusStore(prefs)
+        focusApps = focusStore.loadApps()
+        focusSince = focusStore.loadSince()
         backdrop = Backdrop.fromKey(prefs.getString(KEY_BACKDROP, null))
         applyBackdrop()
 
@@ -85,30 +97,36 @@ class MainActivity : ComponentActivity() {
                 var focusSearch by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
                 var showHealth by remember { mutableStateOf(false) }
+                // Verdadeiro enquanto se marca os apps do foco na lista completa.
+                var markingFocusApps by remember { mutableStateOf(false) }
 
                 // Apertar Home com o launcher aberto sempre volta para a home.
                 LaunchedEffect(homeSignal) {
                     showAllApps = false
                     showHealth = false
                 }
-                // Ao sair da lista completa, a busca é limpa.
+                // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {
                     if (!showAllApps) {
                         query = ""
                         focusSearch = false
+                        markingFocusApps = false
                     }
                 }
                 // Um launcher não fecha com o botão voltar; aqui ele só sai das telas internas.
                 BackHandler {
                     when {
                         showHealth -> showHealth = false
+                        showAllApps && markingFocusApps -> markingFocusApps = false
                         showAllApps -> showAllApps = false
                     }
                 }
 
-                val favorites = remember(apps, pinnedKeys) {
+                val focusOn = focusSince != 0L
+                val favorites = remember(apps, pinnedKeys, focusApps, focusOn) {
                     val byKey = apps.associateBy { it.key }
                     pinnedKeys.mapNotNull { byKey[it] }
+                        .filter { !focusOn || it.key !in focusApps }
                 }
 
                 Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
@@ -122,6 +140,11 @@ class MainActivity : ComponentActivity() {
                         AppList(
                             apps = apps,
                             pinnedKeys = pinnedKeys,
+                            focusApps = focusApps,
+                            focusModeOn = focusOn,
+                            markingFocusApps = markingFocusApps,
+                            onMarkingChange = { markingFocusApps = it },
+                            onToggleFocusApp = { toggleFocusApp(it) },
                             query = query,
                             onQueryChange = { query = it },
                             focusSearch = focusSearch,
@@ -133,6 +156,7 @@ class MainActivity : ComponentActivity() {
                         HomeContent(
                             nowMillis = nowMillis,
                             stats = stats,
+                            focusSinceMillis = focusSince,
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
                             onUnpin = { togglePin(it) },
@@ -145,6 +169,7 @@ class MainActivity : ComponentActivity() {
                                 showAllApps = true
                             },
                             onOpenHealth = { showHealth = true },
+                            onToggleFocus = ::toggleFocus,
                             onClockLongPress = ::cycleBackdrop,
                         )
                     }
@@ -196,6 +221,28 @@ class MainActivity : ComponentActivity() {
             else -> current + app.key
         }
         favoritesStore.save(pinnedKeys)
+    }
+
+    /** Liga ou desliga o foco. Sem nenhum app marcado não há o que esconder, então avisa em vez de ligar. */
+    private fun toggleFocus() {
+        if (focusSince != 0L) {
+            focusSince = 0L
+        } else if (focusApps.isEmpty()) {
+            Toast.makeText(
+                this,
+                "Marque os apps do foco: lista completa > apps do foco",
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        } else {
+            focusSince = System.currentTimeMillis()
+        }
+        focusStore.saveSince(focusSince)
+    }
+
+    private fun toggleFocusApp(app: AppEntry) {
+        focusApps = if (app.key in focusApps) focusApps - app.key else focusApps + app.key
+        focusStore.saveApps(focusApps)
     }
 
     private fun cycleBackdrop() {
