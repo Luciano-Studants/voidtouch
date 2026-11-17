@@ -21,7 +21,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Relógio | 24 h, fonte quadrada fina (Oxanium ExtraLight) |
 | Ícones | Vetor próprio; letra inicial em círculo fino como reserva |
 | Favoritos na home | 10 |
-| Topo da home | Relógio e data |
+| Topo da home | Hora em 24 h, mês em letra manuscrita (Allura), dia da semana e dia do mês por extenso, bateria e RAM (referência visual: print enviado pelo usuário) |
 | Home | Resumo de RAM e bateria, barra de busca, sem rolagem |
 | Gaveta | Lista A–Z; abre deslizando para cima |
 | Pastas | Sim, só na gaveta (criadas segurando o dedo) |
@@ -55,7 +55,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 1. Repositório, projeto base e compilação automática do APK. **(feito)**
 2. Esqueleto do launcher no A05, como padrão. **(feito; falta testar no aparelho)**
 3. Temas e fontes. **(feito na v0.2)**
-4. Home: relógio **(feito na v0.2)**, favoritos, RAM e bateria, busca.
+4. Home: relógio, favoritos, RAM e bateria **(feitos na v0.3)**; falta a busca.
 5. Ícones.
 6. Gaveta A–Z, gesto e pastas.
 7. Saúde do aparelho.

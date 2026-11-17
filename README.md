@@ -4,7 +4,9 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
 
-> Status: **v0.2 – identidade visual**. Relógio 24 h e data, fontes próprias, lista de apps e três fundos (preto, grafite e papel de parede). Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Status: **v0.3 – home da referência**. Hora, mês em letra manuscrita, dia por extenso, bateria e RAM, até 10 favoritos com ícone e um botão redondo que abre a lista de todos os apps. Tudo o mais está no [plano](docs/REQUISITOS.md).
+
+**Fixar favoritos:** toque no círculo (canto inferior direito) para ver todos os apps e **segure** um app para fixar na home (o ponto à direita marca os fixados). Na home, segurar um favorito desafixa. Máximo de 10.
 
 **Trocar o fundo (provisório):** segure o dedo no relógio. Alterna entre preto, grafite e papel de parede. Vira uma opção na tela de Ajustes mais adiante.
 
@@ -32,4 +34,4 @@ O APK sai em `app/build/outputs/apk/release/`.
 
 Kotlin + Jetpack Compose, `minSdk 26`, `targetSdk 35`, uma única Activity, sem bibliotecas além do necessário.
 
-Fontes: JetBrains Mono Light e Oxanium ExtraLight (licença OFL, ver [licenses](licenses/README.md)).
+Fontes: JetBrains Mono Light, Oxanium ExtraLight e Allura (licença OFL, ver [licenses](licenses/README.md)).

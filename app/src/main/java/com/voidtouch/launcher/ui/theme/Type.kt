@@ -13,8 +13,25 @@ val JetBrainsMono = FontFamily(Font(R.font.jetbrains_mono_light, FontWeight.Ligh
 /** Fonte quadrada e fina, usada só no relógio. */
 val Oxanium = FontFamily(Font(R.font.oxanium_extralight, FontWeight.ExtraLight))
 
+/** Letra manuscrita elegante, usada só no nome do mês. */
+val Allura = FontFamily(Font(R.font.allura_regular, FontWeight.Normal))
+
 /** Estilos de texto do app. A cor é aplicada em cada Text. */
 object VoidType {
+    val Month = TextStyle(
+        fontFamily = Allura,
+        fontWeight = FontWeight.Normal,
+        fontSize = 46.sp,
+        lineHeight = 52.sp,
+    )
+
+    val Caption = TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Light,
+        fontSize = 12.sp,
+        letterSpacing = 1.5.sp,
+    )
+
     val App = TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
@@ -32,8 +49,8 @@ object VoidType {
     val Clock = TextStyle(
         fontFamily = Oxanium,
         fontWeight = FontWeight.ExtraLight,
-        fontSize = 84.sp,
-        lineHeight = 88.sp,
+        fontSize = 64.sp,
+        lineHeight = 68.sp,
         letterSpacing = 2.sp,
     )
 }

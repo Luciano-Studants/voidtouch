@@ -11,7 +11,10 @@ data class AppEntry(
     val label: String,
     val packageName: String,
     val activityName: String,
-)
+) {
+    /** Identificador estável do app, usado nos favoritos. */
+    val key: String get() = "$packageName/$activityName"
+}
 
 object AppRepository {
 
