@@ -58,7 +58,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 4. Home: relógio, favoritos, RAM e bateria **(v0.3)** e busca **(v0.4)**.
 5. Ícones. **(v0.5: logotipos próprios para 43 apps; ChatGPT, Amazon, LinkedIn e Canva ficaram de fora porque o pacote retirou essas marcas)**
 6. Gaveta A–Z, gesto e pastas. **(gesto de deslizar para cima e busca na v0.4; faltam pastas)**
-7. Saúde do aparelho.
+7. Saúde do aparelho. **(v0.6)**
 8. Modo foco.
 9. Ajustes e persistência.
 10. Otimização e APK de release.

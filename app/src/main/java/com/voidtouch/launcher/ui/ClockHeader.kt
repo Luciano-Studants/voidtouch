@@ -1,6 +1,7 @@
 package com.voidtouch.launcher.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ private data class HeaderText(val time: String, val month: String, val dateLine:
 fun ClockHeader(
     nowMillis: Long,
     stats: DeviceStats?,
+    onStatsClick: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -84,8 +86,16 @@ fun ClockHeader(
         Text(text = text.month, style = VoidType.Month, color = VoidColors.Text)
         Text(text = text.dateLine, style = VoidType.Caption, color = VoidColors.TextDim)
         if (statsLine != null) {
-            Spacer(Modifier.height(12.dp))
-            Text(text = statsLine, style = VoidType.Caption, color = VoidColors.TextDim)
+            // Tocar na linha abre a tela "saúde do aparelho"; o ">" indica que é tocável.
+            Text(
+                text = "$statsLine  ›",
+                style = VoidType.Caption,
+                color = VoidColors.TextDim,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .clickable(onClick = onStatsClick)
+                    .padding(vertical = 8.dp),
+            )
         }
     }
 }

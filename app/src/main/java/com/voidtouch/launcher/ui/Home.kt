@@ -56,6 +56,7 @@ fun HomeContent(
     onUnpin: (AppEntry) -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenSearch: () -> Unit,
+    onOpenHealth: () -> Unit,
     onClockLongPress: () -> Unit,
 ) {
     // A rolagem aqui é só uma rede de segurança para telas pequenas; a home cabe sem rolar.
@@ -73,7 +74,12 @@ fun HomeContent(
             ),
     ) {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
-            ClockHeader(nowMillis = nowMillis, stats = stats, onLongPress = onClockLongPress)
+            ClockHeader(
+                nowMillis = nowMillis,
+                stats = stats,
+                onStatsClick = onOpenHealth,
+                onLongPress = onClockLongPress,
+            )
             if (favorites.isEmpty()) {
                 Text(
                     text = "deslize para cima, segure um app\npara fixar aqui",

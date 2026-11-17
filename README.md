@@ -4,11 +4,13 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
 
-> Status: **v0.5 – ícones próprios**. Logotipos brancos para 43 apps comuns (WhatsApp, Instagram, YouTube, Nubank, Spotify etc.); os demais usam o ícone monocromático do sistema ou a letra em círculo. Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Status: **v0.6 – saúde do aparelho**. Tela com RAM, armazenamento, bateria (temperatura e saúde) e os apps mais pesados, com atalho para limpar o cache. Tudo o mais está no [plano](docs/REQUISITOS.md).
 
 **Abrir a lista completa:** deslize para cima na home ou toque no círculo (canto inferior direito). Para voltar, deslize para baixo com a lista no topo ou use o botão voltar.
 
 **Buscar:** toque em "buscar app" (canto inferior esquerdo) e digite; acentos e maiúsculas não importam ("camera" acha "Câmera"). A tecla de confirmar do teclado abre o primeiro resultado.
+
+**Saúde do aparelho:** toque na linha "bateria · ram" da home. Mostra RAM, armazenamento e bateria em barras finas e a lista dos 10 apps que mais ocupam espaço (app + dados), com o cache de cada um. Tocar num app abre a tela dele no Android, onde fica Armazenamento > Limpar cache. Para medir o tamanho dos apps o Android exige a permissão especial **acesso ao uso**: o botão "permitir acesso" leva direto até ela. O VoidTouch só lê os tamanhos, não tem permissão de internet e não envia nada. Sem a permissão, o resto da tela funciona normalmente.
 
 **Fixar favoritos:** na lista completa, **segure** um app para fixar na home (o ponto à direita marca os fixados). Na home, segurar um favorito desafixa. Máximo de 10.
 

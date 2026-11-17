@@ -32,6 +32,7 @@ import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.DeviceStatsReader
 import com.voidtouch.launcher.data.FavoritesStore
 import com.voidtouch.launcher.ui.AppList
+import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
 import com.voidtouch.launcher.ui.theme.Backdrop
 import com.voidtouch.launcher.ui.theme.VoidTouchTheme
@@ -83,9 +84,13 @@ class MainActivity : ComponentActivity() {
                 // Verdadeiro quando a lista foi aberta pela pílula de busca (já abre o teclado).
                 var focusSearch by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
+                var showHealth by remember { mutableStateOf(false) }
 
                 // Apertar Home com o launcher aberto sempre volta para a home.
-                LaunchedEffect(homeSignal) { showAllApps = false }
+                LaunchedEffect(homeSignal) {
+                    showAllApps = false
+                    showHealth = false
+                }
                 // Ao sair da lista completa, a busca é limpa.
                 LaunchedEffect(showAllApps) {
                     if (!showAllApps) {
@@ -93,8 +98,13 @@ class MainActivity : ComponentActivity() {
                         focusSearch = false
                     }
                 }
-                // Um launcher não fecha com o botão voltar; aqui ele só sai da lista completa.
-                BackHandler { if (showAllApps) showAllApps = false }
+                // Um launcher não fecha com o botão voltar; aqui ele só sai das telas internas.
+                BackHandler {
+                    when {
+                        showHealth -> showHealth = false
+                        showAllApps -> showAllApps = false
+                    }
+                }
 
                 val favorites = remember(apps, pinnedKeys) {
                     val byKey = apps.associateBy { it.key }
@@ -102,7 +112,13 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-                    if (showAllApps) {
+                    if (showHealth) {
+                        HealthScreen(
+                            apps = apps,
+                            nowMillis = nowMillis,
+                            onClose = { showHealth = false },
+                        )
+                    } else if (showAllApps) {
                         AppList(
                             apps = apps,
                             pinnedKeys = pinnedKeys,
@@ -128,6 +144,7 @@ class MainActivity : ComponentActivity() {
                                 focusSearch = true
                                 showAllApps = true
                             },
+                            onOpenHealth = { showHealth = true },
                             onClockLongPress = ::cycleBackdrop,
                         )
                     }
