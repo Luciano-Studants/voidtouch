@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logotipo de PayPal: Simple Icons (CC0). Marca registrada de seus respectivos donos. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15.607,4.653L8.941,4.653L6.645,19.251L1.82,19.251L4.862,0L12.857,0C16.611,0 19.232,2.294 19.33,5.513C18.682,5.035 17.225,4.653 15.608,4.653M22.178,10.199C22.178,13.609 19.168,17.052 15.22,17.052L12.727,17.052L11.595,24L6.74,24L8.585,12.462L12.177,12.462C16.385,12.462 19.523,8.828 19.33,5.513C21.086,6.414 22.187,8.225 22.178,10.199M9.653,5.546L16.061,5.546C16.968,5.546 18.003,5.768 18.424,6.087C18.229,8.828 15.769,11.57 11.983,11.57L8.714,11.57L9.653,5.546Z" />
+</vector>

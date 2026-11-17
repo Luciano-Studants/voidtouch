@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logotipo de PicPay: Simple Icons (CC0). Marca registrada de seus respectivos donos. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16.463,1.587L16.463,9.124L24,9.124L24,1.587L16.463,1.587ZM17.719,2.843L22.744,2.843L22.744,7.868L17.719,7.868L17.719,2.843ZM18.975,4.099L18.975,6.612L21.488,6.612L21.488,4.099L18.975,4.099ZM3.77,5.355L3.77,8.53L7.146,8.53C9.288,8.53 10.504,9.57 10.504,11.469C10.504,13.416 9.288,14.48 7.146,14.48L3.769,14.48L3.769,8.53L0,8.53L0,22.414L3.769,22.414L3.769,17.654L7.339,17.654C11.672,17.654 14.154,15.302 14.154,11.334C14.154,7.563 11.672,5.356 7.34,5.356L3.77,5.355Z" />
+</vector>

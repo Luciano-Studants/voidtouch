@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logotipo de Twitch: Simple Icons (CC0). Marca registrada de seus respectivos donos. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11.571,4.714L13.286,4.714L13.286,9.857L11.57,9.857L11.571,4.714ZM16.286,4.714L18,4.714L18,9.857L16.286,9.857L16.286,4.714ZM6,0L1.714,4.286L1.714,19.714L6.857,19.714L6.857,24L11.143,19.714L14.571,19.714L22.286,12L22.286,0L6,0ZM20.571,11.143L17.143,14.571L13.714,14.571L10.714,17.571L10.714,14.571L6.857,14.571L6.857,1.714L20.571,1.714L20.571,11.143Z" />
+</vector>

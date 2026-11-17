@@ -4,7 +4,7 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
 
-> Status: **v0.4 – busca e gestos**. Busca de apps sem acento, pílula "buscar app" na home e deslizar para cima para abrir a lista completa. Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Status: **v0.5 – ícones próprios**. Logotipos brancos para 43 apps comuns (WhatsApp, Instagram, YouTube, Nubank, Spotify etc.); os demais usam o ícone monocromático do sistema ou a letra em círculo. Tudo o mais está no [plano](docs/REQUISITOS.md).
 
 **Abrir a lista completa:** deslize para cima na home ou toque no círculo (canto inferior direito). Para voltar, deslize para baixo com a lista no topo ou use o botão voltar.
 
@@ -37,5 +37,7 @@ O APK sai em `app/build/outputs/apk/release/`.
 ## Tecnologia
 
 Kotlin + Jetpack Compose, `minSdk 26`, `targetSdk 35`, uma única Activity, sem bibliotecas além do necessário.
+
+Logotipos: [Simple Icons](https://simpleicons.org) (CC0); as marcas pertencem aos seus donos.
 
 Fontes: JetBrains Mono Light, Oxanium ExtraLight e Allura (licença OFL, ver [licenses](licenses/README.md)).

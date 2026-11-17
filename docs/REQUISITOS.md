@@ -56,7 +56,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 2. Esqueleto do launcher no A05, como padrão. **(feito; falta testar no aparelho)**
 3. Temas e fontes. **(feito na v0.2)**
 4. Home: relógio, favoritos, RAM e bateria **(v0.3)** e busca **(v0.4)**.
-5. Ícones.
+5. Ícones. **(v0.5: logotipos próprios para 43 apps; ChatGPT, Amazon, LinkedIn e Canva ficaram de fora porque o pacote retirou essas marcas)**
 6. Gaveta A–Z, gesto e pastas. **(gesto de deslizar para cima e busca na v0.4; faltam pastas)**
 7. Saúde do aparelho.
 8. Modo foco.
