@@ -23,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
 import com.voidtouch.launcher.data.ClockStyle
+import com.voidtouch.launcher.notify.NotificationHub
+import androidx.compose.ui.text.style.TextOverflow
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
 import java.time.Instant
@@ -71,6 +74,8 @@ fun HomeCarousel(
     nowMillis: Long,
     clockStyle: ClockStyle,
     pagerState: PagerState,
+    notificationsEnabled: Boolean,
+    onEnableNotifications: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -111,7 +116,7 @@ fun HomeCarousel(
                 when (page) {
                     0 -> TimePage(text)
                     1 -> DayPage(text)
-                    else -> MusicPage()
+                    else -> MusicPage(notificationsEnabled, onEnableNotifications)
                 }
             }
         }
@@ -140,14 +145,44 @@ private fun DayPage(text: CarouselText) {
     }
 }
 
-/** Página 3: música. O controle do player chega na v0.9, junto com o acesso às notificações. */
+/** Página 3: música tocando agora, com anterior, tocar/pausar e próxima. */
 @Composable
-private fun MusicPage() {
+private fun MusicPage(enabled: Boolean, onEnable: () -> Unit) {
+    val media = NotificationHub.media
     Column {
         Text(text = "música", style = VoidType.Caption, color = VoidColors.TextDim)
         Spacer(Modifier.height(8.dp))
-        Text(text = "nenhuma música tocando", style = VoidType.App, color = VoidColors.TextDim)
+        when {
+            !enabled -> Text(
+                text = "ativar acesso às notificações ›",
+                style = VoidType.App,
+                color = VoidColors.Text,
+                modifier = Modifier.clickable(onClick = onEnable).padding(vertical = 4.dp),
+            )
+            media == null -> Text("nenhuma música tocando", style = VoidType.App, color = VoidColors.TextDim)
+            else -> {
+                Text(media.title, style = VoidType.App, color = VoidColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (media.artist.isNotEmpty()) {
+                    Text(media.artist, style = VoidType.Caption, color = VoidColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MediaButton("‹‹", NotificationHub::previous)
+                    MediaButton(if (media.playing) "❚❚" else "▶", NotificationHub::togglePlay)
+                    MediaButton("››", NotificationHub::next)
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun MediaButton(label: String, onClick: () -> Unit) {
+    Text(
+        text = label,
+        style = VoidType.App,
+        color = VoidColors.Text,
+        modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 10.dp),
+    )
 }
 
 /** Traços finos que mostram em que página do carrossel você está. */

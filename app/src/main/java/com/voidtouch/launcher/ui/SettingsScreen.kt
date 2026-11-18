@@ -51,6 +51,10 @@ fun SettingsScreen(
     swipeLeftKey: String?,
     swipeRightKey: String?,
     versionName: String,
+    notificationsEnabled: Boolean,
+    onOpenNotificationAccess: () -> Unit,
+    onOpenAppInfo: () -> Unit,
+    onOpenChangelog: () -> Unit,
     onBackdrop: (Backdrop) -> Unit,
     onClockStyle: (ClockStyle) -> Unit,
     onSwipeApp: (SwipeSide, String?) -> Unit,
@@ -125,8 +129,19 @@ fun SettingsScreen(
             modifier = Modifier.padding(top = 10.dp),
         )
 
+        Section("notificações e música")
+        ValueRow(if (notificationsEnabled) "acesso ligado" else "acesso desligado", onOpenNotificationAccess)
+        ValueRow("liberar configurações restritas", onOpenAppInfo)
+        Text(
+            "se o acesso aparecer bloqueado: info do app > ⋮ > permitir configurações restritas",
+            style = VoidType.Small,
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+
         Section("sobre")
         Text("VoidTouch $versionName", style = VoidType.App, color = VoidColors.TextDim)
+        ValueRow("novidades", onOpenChangelog)
         UpdateRow(versionName)
     }
 }

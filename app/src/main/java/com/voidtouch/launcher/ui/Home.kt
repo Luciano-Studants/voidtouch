@@ -45,6 +45,7 @@ import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.IconLoader
 import com.voidtouch.launcher.data.IconResult
+import com.voidtouch.launcher.notify.NoteItem
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,11 @@ fun HomeContent(
     nowMillis: Long,
     stats: DeviceStats?,
     clockStyle: ClockStyle,
+    notifications: List<NoteItem>,
+    notificationsEnabled: Boolean,
+    onNotificationClick: (NoteItem) -> Unit,
+    onNotificationDismiss: (NoteItem) -> Unit,
+    onEnableNotifications: () -> Unit,
     focusSinceMillis: Long,
     favorites: List<AppEntry>,
     onLaunch: (AppEntry) -> Unit,
@@ -98,6 +104,8 @@ fun HomeContent(
                 nowMillis = nowMillis,
                 clockStyle = clockStyle,
                 pagerState = pagerState,
+                notificationsEnabled = notificationsEnabled,
+                onEnableNotifications = onEnableNotifications,
                 onLongPress = onOpenSettings,
             )
 
@@ -119,7 +127,15 @@ fun HomeContent(
             ) {
                 // Com o foco ligado a home fica mais calma: some o bloco de notificações e status.
                 if (!focusOn) {
-                    InfoBlock(stats = stats, onStatusClick = onOpenHealth)
+                    InfoBlock(
+                        stats = stats,
+                        notifications = notifications,
+                        notificationsEnabled = notificationsEnabled,
+                        onNotificationClick = onNotificationClick,
+                        onNotificationDismiss = onNotificationDismiss,
+                        onEnableNotifications = onEnableNotifications,
+                        onStatusClick = onOpenHealth,
+                    )
                 }
                 FocusLine(
                     focusSinceMillis = focusSinceMillis,

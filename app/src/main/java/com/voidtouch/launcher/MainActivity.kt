@@ -35,6 +35,13 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.ui.ChangelogScreen
+import com.voidtouch.launcher.data.Changelog
+import com.voidtouch.launcher.data.ReleaseNote
+import com.voidtouch.launcher.notify.NoteItem
+import com.voidtouch.launcher.notify.NotificationHub
+import android.provider.Settings
+import android.net.Uri
 import com.voidtouch.launcher.ui.SettingsScreen
 import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.data.SettingsStore
@@ -75,6 +82,12 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var settingsStore: SettingsStore
 
+    /** Verdadeiro quando o acesso às notificações está liberado; relido a cada volta à tela. */
+    private var notifAccess by mutableStateOf(false)
+
+    private val versionName: String
+        get() = packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+
     private lateinit var favoritesStore: FavoritesStore
 
     private lateinit var focusStore: FocusStore
@@ -103,6 +116,12 @@ class MainActivity : ComponentActivity() {
         swipeRightKey = settingsStore.loadSwipeApp(SwipeSide.Right)
         applyBackdrop()
 
+        // Depois de uma atualização (ou na primeira instalação), mostra as novidades uma vez.
+        val seen = prefs.getString(KEY_SEEN_VERSION, null)
+        val initialNotes: List<ReleaseNote>? =
+            if (seen != versionName) Changelog.forVersion(versionName)?.let { listOf(it) } else null
+        prefs.edit().putString(KEY_SEEN_VERSION, versionName).apply()
+
         setContent {
             VoidTouchTheme {
                 val apps by produceState(emptyList<AppEntry>(), refreshKey) {
@@ -114,6 +133,9 @@ class MainActivity : ComponentActivity() {
                 var query by remember { mutableStateOf("") }
                 var showHealth by remember { mutableStateOf(false) }
                 var showSettings by remember { mutableStateOf(false) }
+                // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
+                var changelog by remember { mutableStateOf(initialNotes) }
+                var changelogTitle by remember { mutableStateOf("novidades da v$versionName") }
                 // Verdadeiro enquanto se marca os apps do foco na lista completa.
                 var markingFocusApps by remember { mutableStateOf(false) }
 
@@ -122,6 +144,7 @@ class MainActivity : ComponentActivity() {
                     showAllApps = false
                     showHealth = false
                     showSettings = false
+                    changelog = null
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {
@@ -134,6 +157,7 @@ class MainActivity : ComponentActivity() {
                 // Um launcher não fecha com o botão voltar; aqui ele só sai das telas internas.
                 BackHandler {
                     when {
+                        changelog != null -> changelog = null
                         showSettings -> showSettings = false
                         showHealth -> showHealth = false
                         showAllApps && markingFocusApps -> markingFocusApps = false
@@ -148,15 +172,30 @@ class MainActivity : ComponentActivity() {
                         .filter { !focusOn || it.key !in focusApps }
                 }
 
+                // Com o foco ligado, notificações dos apps marcados ficam escondidas.
+                val notifications = NotificationHub.items.filter { n ->
+                    !focusOn || focusApps.none { it.substringBefore('/') == n.packageName }
+                }
+
                 Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-                    if (showSettings) {
+                    val notes = changelog
+                    if (notes != null) {
+                        ChangelogScreen(title = changelogTitle, notes = notes, onClose = { changelog = null })
+                    } else if (showSettings) {
                         SettingsScreen(
                             apps = apps,
                             backdrop = backdrop,
                             clockStyle = clockStyle,
                             swipeLeftKey = swipeLeftKey,
                             swipeRightKey = swipeRightKey,
-                            versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "",
+                            versionName = versionName,
+                            notificationsEnabled = notifAccess,
+                            onOpenNotificationAccess = ::openNotificationAccess,
+                            onOpenAppInfo = ::openAppInfo,
+                            onOpenChangelog = {
+                                changelogTitle = "novidades"
+                                changelog = Changelog.all
+                            },
                             onBackdrop = {
                                 backdrop = it
                                 settingsStore.saveBackdrop(it)
@@ -200,6 +239,11 @@ class MainActivity : ComponentActivity() {
                             nowMillis = nowMillis,
                             stats = stats,
                             clockStyle = clockStyle,
+                            notifications = notifications,
+                            notificationsEnabled = notifAccess,
+                            onNotificationClick = { openNotification(it) },
+                            onNotificationDismiss = { NotificationHub.dismiss(it.key) },
+                            onEnableNotifications = ::openNotificationAccess,
                             focusSinceMillis = focusSince,
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
@@ -248,12 +292,27 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        notifAccess = NotificationHub.hasAccess(this)
         refreshKey++
     }
 
     private fun refreshClock() {
         nowMillis = System.currentTimeMillis()
         stats = DeviceStatsReader.read(applicationContext)
+    }
+
+    private fun openNotificationAccess() {
+        runCatching { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+    }
+
+    private fun openAppInfo() {
+        runCatching {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        }
+    }
+
+    private fun openNotification(item: NoteItem) {
+        runCatching { item.intent?.send() }
     }
 
     private fun togglePin(app: AppEntry) {
@@ -310,5 +369,6 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val PREFS = "voidtouch"
+        const val KEY_SEEN_VERSION = "seen_version"
     }
 }

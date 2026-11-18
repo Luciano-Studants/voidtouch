@@ -4,7 +4,9 @@ import android.content.Context
 import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +27,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.NetworkKind
+import com.voidtouch.launcher.notify.NoteItem
+import androidx.compose.ui.text.style.TextOverflow
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
 import java.util.Locale
@@ -35,9 +39,15 @@ private val PtBr: Locale = Locale.forLanguageTag("pt-BR")
  * Duas colunas sob o carrossel, como na prancheta de referência: notificações à esquerda e
  * status do celular à direita. Tocar no status abre a tela "saúde do aparelho".
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InfoBlock(
     stats: DeviceStats?,
+    notifications: List<NoteItem>,
+    notificationsEnabled: Boolean,
+    onNotificationClick: (NoteItem) -> Unit,
+    onNotificationDismiss: (NoteItem) -> Unit,
+    onEnableNotifications: () -> Unit,
     onStatusClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -51,13 +61,40 @@ fun InfoBlock(
     ) {
         Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
             Text(text = "notificações", style = VoidType.Small, color = VoidColors.TextDim)
-            // As notificações chegam na v0.9, junto com a permissão de acesso a elas.
-            Text(
-                text = "em breve (v0.9)",
-                style = VoidType.Small,
-                color = VoidColors.TextDim,
-                modifier = Modifier.padding(top = 3.dp),
-            )
+            val haptic = LocalHapticFeedback.current
+            if (!notificationsEnabled) {
+                Text(
+                    text = "ativar acesso ›",
+                    style = VoidType.Small,
+                    color = VoidColors.Text,
+                    modifier = Modifier.clickable(onClick = onEnableNotifications).padding(top = 3.dp, bottom = 3.dp),
+                )
+            } else if (notifications.isEmpty()) {
+                Text("nenhuma", style = VoidType.Small, color = VoidColors.TextDim, modifier = Modifier.padding(top = 3.dp))
+            } else {
+                notifications.take(3).forEach { n ->
+                    Text(
+                        text = "${n.appLabel} · ${n.title}",
+                        style = VoidType.Small,
+                        color = VoidColors.Text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = { onNotificationClick(n) },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onNotificationDismiss(n)
+                                },
+                            )
+                            .padding(top = 3.dp, bottom = 3.dp),
+                    )
+                }
+                if (notifications.size > 3) {
+                    Text("+${notifications.size - 3}", style = VoidType.Small, color = VoidColors.TextDim)
+                }
+            }
         }
         Column(modifier = Modifier.weight(1f).clickable(onClick = onStatusClick)) {
             Text(text = "status do celular ›", style = VoidType.Small, color = VoidColors.TextDim)
