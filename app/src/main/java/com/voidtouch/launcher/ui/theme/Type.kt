@@ -18,6 +18,23 @@ val Allura = FontFamily(Font(R.font.allura_regular, FontWeight.Normal))
 
 /** Estilos de texto do app. A cor é aplicada em cada Text. */
 object VoidType {
+    /** Linhas do bloco de status e notificações: menores, para caber duas colunas. */
+    val Small = TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Light,
+        fontSize = 11.sp,
+        letterSpacing = 0.4.sp,
+    )
+
+    /** Dia da semana grande, na página "hoje é" do carrossel. */
+    val Day = TextStyle(
+        fontFamily = Oxanium,
+        fontWeight = FontWeight.ExtraLight,
+        fontSize = 40.sp,
+        lineHeight = 44.sp,
+        letterSpacing = 1.sp,
+    )
+
     val Month = TextStyle(
         fontFamily = Allura,
         fontWeight = FontWeight.Normal,

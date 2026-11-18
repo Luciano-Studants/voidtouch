@@ -4,13 +4,15 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
 
-> Status: **v0.7 – modo foco**. Esconde da home, da lista e da busca os apps que distraem, com um toque para ligar e desligar. Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Status: **v0.8 – nova home e ajustes**. Carrossel (hora, dia, música), bloco de notificações/status, deslizes configuráveis e tela de ajustes. Tudo o mais está no [plano](docs/REQUISITOS.md).
 
 **Abrir a lista completa:** deslize para cima na home ou toque no círculo (canto inferior direito). Para voltar, deslize para baixo com a lista no topo ou use o botão voltar.
 
 **Buscar:** toque em "buscar app" (canto inferior esquerdo) e digite; acentos e maiúsculas não importam ("camera" acha "Câmera"). A tecla de confirmar do teclado abre o primeiro resultado.
 
 **Saúde do aparelho:** toque na linha "bateria · ram" da home. Mostra RAM, armazenamento e bateria em barras finas e a lista dos 10 apps que mais ocupam espaço (app + dados), com o cache de cada um. Tocar num app abre a tela dele no Android, onde fica Armazenamento > Limpar cache. Para medir o tamanho dos apps o Android exige a permissão especial **acesso ao uso**: o botão "permitir acesso" leva direto até ela. O VoidTouch só lê os tamanhos, não tem permissão de internet e não envia nada. Sem a permissão, o resto da tela funciona normalmente.
+
+**Home (v0.8):** carrossel no topo (passe para os lados: hora, dia da semana, música), depois notificações (chegam na v0.9) e status do celular (toque para abrir a saúde do aparelho), a linha do foco e os favoritos. Deslize para cima abre a lista. **Deslizar para a esquerda ou direita abaixo do carrossel abre os apps escolhidos em Ajustes.** Segure o carrossel, ou toque em "ajustes" na lista, para abrir os Ajustes (fundo, formato da hora 20H00/20:00, apps dos deslizes). Na lista, arraste a linha tracejada à direita para pular por letra.
 
 **Modo foco:** na lista completa, toque em **apps do foco** (canto direito, abaixo da busca) e toque nos apps que distraem; eles ganham um círculo vazio à direita. Toque em **concluir**. Depois, na home, toque na linha **foco desligado** (abaixo do relógio) para ligar: os apps marcados somem dos favoritos, da lista e da busca, a linha de bateria e RAM some e a linha passa a mostrar há quanto tempo o foco está ligado. Toque de novo para desligar. Sem nenhum app marcado o foco não liga e o app avisa.
 

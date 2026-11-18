@@ -1,12 +1,13 @@
 package com.voidtouch.launcher.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -36,8 +38,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.AppEntry
+import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.IconLoader
 import com.voidtouch.launcher.data.IconResult
@@ -46,11 +50,19 @@ import com.voidtouch.launcher.ui.theme.VoidType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Home: cabeçalho, favoritos com ícone e o botão redondo que abre a lista completa. */
+/**
+ * Home, seguindo as pranchetas de referência: carrossel no topo (hora, dia, música), duas
+ * colunas de notificações e status, a linha do modo foco e a lista de favoritos.
+ *
+ * Gestos: deslizar para cima abre a lista de apps; deslizar para os lados **abaixo do
+ * carrossel** abre os apps configurados nos Ajustes. Dentro do carrossel, deslizar para os
+ * lados troca de página (por isso os dois gestos não se misturam).
+ */
 @Composable
 fun HomeContent(
     nowMillis: Long,
     stats: DeviceStats?,
+    clockStyle: ClockStyle,
     focusSinceMillis: Long,
     favorites: List<AppEntry>,
     onLaunch: (AppEntry) -> Unit,
@@ -59,51 +71,94 @@ fun HomeContent(
     onOpenSearch: () -> Unit,
     onOpenHealth: () -> Unit,
     onToggleFocus: () -> Unit,
-    onClockLongPress: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit,
 ) {
     val focusOn = focusSinceMillis != 0L
-    // A rolagem aqui é só uma rede de segurança para telas pequenas; a home cabe sem rolar.
-    val scrollState = rememberScrollState()
+    val pagerState = rememberPagerState(pageCount = { CAROUSEL_PAGES })
+    // Só rola se a tela for tão baixa que os favoritos não caibam nem no tamanho mínimo.
+    val favoritesScroll = rememberScrollState()
+    val haptic = LocalHapticFeedback.current
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            // Deslizar para cima abre a lista completa (só quando a home não está rolando).
+            // Deslizar para cima abre a lista completa (a menos que os favoritos estejam rolando).
             .onVerticalSwipe(
                 up = true,
                 threshold = 96.dp,
-                enabled = { !scrollState.canScrollForward },
+                enabled = { !favoritesScroll.canScrollForward },
                 onSwipe = onOpenDrawer,
             ),
     ) {
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
-            ClockHeader(
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(Modifier.height(12.dp))
+            HomeCarousel(
                 nowMillis = nowMillis,
-                // Com o foco ligado a home fica mais calma: some a linha de bateria e RAM.
-                stats = if (focusOn) null else stats,
-                focusSinceMillis = focusSinceMillis,
-                onStatsClick = onOpenHealth,
-                onFocusClick = onToggleFocus,
-                onLongPress = onClockLongPress,
+                clockStyle = clockStyle,
+                pagerState = pagerState,
+                onLongPress = onOpenSettings,
             )
-            if (favorites.isEmpty()) {
-                Text(
-                    text = if (focusOn) {
-                        "modo foco ligado: nenhum favorito liberado"
-                    } else {
-                        "deslize para cima, segure um app\npara fixar aqui"
-                    },
-                    style = VoidType.Caption,
-                    color = VoidColors.TextDim,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                )
-            } else {
-                favorites.forEach { app ->
-                    FavoriteRow(app = app, onLaunch = onLaunch, onUnpin = onUnpin)
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .onHorizontalSwipe(
+                        threshold = 80.dp,
+                        onSwipeLeft = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSwipeLeft()
+                        },
+                        onSwipeRight = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSwipeRight()
+                        },
+                    ),
+            ) {
+                // Com o foco ligado a home fica mais calma: some o bloco de notificações e status.
+                if (!focusOn) {
+                    InfoBlock(stats = stats, onStatusClick = onOpenHealth)
                 }
+                FocusLine(
+                    focusSinceMillis = focusSinceMillis,
+                    nowMillis = nowMillis,
+                    onClick = onToggleFocus,
+                )
+
+                // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
+                // (de 32 a 44 dp) para os 10 caberem sem rolar.
+                BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    val rowHeight = (maxHeight / favorites.size.coerceAtLeast(1)).coerceIn(32.dp, 44.dp)
+                    Column(modifier = Modifier.fillMaxSize().verticalScroll(favoritesScroll)) {
+                        if (favorites.isEmpty()) {
+                            Text(
+                                text = if (focusOn) {
+                                    "modo foco ligado: nenhum favorito liberado"
+                                } else {
+                                    "deslize para cima, segure um app\npara fixar aqui"
+                                },
+                                style = VoidType.Caption,
+                                color = VoidColors.TextDim,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                            )
+                        } else {
+                            favorites.forEach { app ->
+                                FavoriteRow(
+                                    app = app,
+                                    height = rowHeight,
+                                    onLaunch = onLaunch,
+                                    onUnpin = onUnpin,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Espaço para a pílula de busca e o botão redondo não cobrirem o último favorito.
+                Spacer(Modifier.height(88.dp))
             }
-            // Espaço para o botão redondo não cobrir o último favorito.
-            Spacer(Modifier.height(88.dp))
         }
 
         SearchPill(
@@ -143,6 +198,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun FavoriteRow(
     app: AppEntry,
+    height: Dp,
     onLaunch: (AppEntry) -> Unit,
     onUnpin: (AppEntry) -> Unit,
 ) {
@@ -151,6 +207,7 @@ private fun FavoriteRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .height(height)
             .combinedClickable(
                 onClick = { onLaunch(app) },
                 onLongClick = {
@@ -158,9 +215,9 @@ private fun FavoriteRow(
                     onUnpin(app)
                 },
             )
-            .padding(horizontal = 24.dp, vertical = 10.dp),
+            .padding(horizontal = 24.dp),
     ) {
-        AppIcon(app = app, size = 26.dp)
+        AppIcon(app = app, size = 24.dp)
         Spacer(Modifier.width(18.dp))
         Text(
             text = app.label,
@@ -172,7 +229,7 @@ private fun FavoriteRow(
     }
 }
 
-/** Ícone branco e fino do app; sem camada monocromática, vira a letra inicial em um círculo. */
+/** Ícone branco e fino do app; sem logotipo nem camada monocromática, vira a letra inicial em um círculo. */
 @Composable
 private fun AppIcon(app: AppEntry, size: Dp) {
     val context = LocalContext.current

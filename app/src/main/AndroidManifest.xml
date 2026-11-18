@@ -3,6 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Só para mostrar "wi-fi", "dados" ou "sem rede" no status. Não dá acesso à internet. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Só para medir o tamanho dos apps na tela "saúde do aparelho". Opcional: o usuário concede em Ajustes. -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"

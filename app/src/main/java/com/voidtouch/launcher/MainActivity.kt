@@ -35,6 +35,10 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.ui.SettingsScreen
+import com.voidtouch.launcher.data.ClockStyle
+import com.voidtouch.launcher.data.SettingsStore
+import com.voidtouch.launcher.data.SwipeSide
 import com.voidtouch.launcher.ui.theme.Backdrop
 import com.voidtouch.launcher.ui.theme.VoidTouchTheme
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +65,15 @@ class MainActivity : ComponentActivity() {
     /** Horário em que o modo foco foi ligado; zero significa desligado. */
     private var focusSince by mutableLongStateOf(0L)
 
-    private var backdrop: Backdrop = Backdrop.Void
+    private var backdrop by mutableStateOf(Backdrop.Void)
+
+    private var clockStyle by mutableStateOf(ClockStyle.H)
+
+    private var swipeLeftKey by mutableStateOf<String?>(null)
+
+    private var swipeRightKey by mutableStateOf<String?>(null)
+
+    private lateinit var settingsStore: SettingsStore
 
     private lateinit var favoritesStore: FavoritesStore
 
@@ -84,7 +96,11 @@ class MainActivity : ComponentActivity() {
         focusStore = FocusStore(prefs)
         focusApps = focusStore.loadApps()
         focusSince = focusStore.loadSince()
-        backdrop = Backdrop.fromKey(prefs.getString(KEY_BACKDROP, null))
+        settingsStore = SettingsStore(prefs)
+        backdrop = settingsStore.loadBackdrop()
+        clockStyle = settingsStore.loadClockStyle()
+        swipeLeftKey = settingsStore.loadSwipeApp(SwipeSide.Left)
+        swipeRightKey = settingsStore.loadSwipeApp(SwipeSide.Right)
         applyBackdrop()
 
         setContent {
@@ -97,6 +113,7 @@ class MainActivity : ComponentActivity() {
                 var focusSearch by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
                 var showHealth by remember { mutableStateOf(false) }
+                var showSettings by remember { mutableStateOf(false) }
                 // Verdadeiro enquanto se marca os apps do foco na lista completa.
                 var markingFocusApps by remember { mutableStateOf(false) }
 
@@ -104,6 +121,7 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(homeSignal) {
                     showAllApps = false
                     showHealth = false
+                    showSettings = false
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {
@@ -116,6 +134,7 @@ class MainActivity : ComponentActivity() {
                 // Um launcher não fecha com o botão voltar; aqui ele só sai das telas internas.
                 BackHandler {
                     when {
+                        showSettings -> showSettings = false
                         showHealth -> showHealth = false
                         showAllApps && markingFocusApps -> markingFocusApps = false
                         showAllApps -> showAllApps = false
@@ -130,7 +149,30 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-                    if (showHealth) {
+                    if (showSettings) {
+                        SettingsScreen(
+                            apps = apps,
+                            backdrop = backdrop,
+                            clockStyle = clockStyle,
+                            swipeLeftKey = swipeLeftKey,
+                            swipeRightKey = swipeRightKey,
+                            versionName = packageManager.getPackageInfo(packageName, 0).versionName ?: "",
+                            onBackdrop = {
+                                backdrop = it
+                                settingsStore.saveBackdrop(it)
+                                applyBackdrop()
+                            },
+                            onClockStyle = {
+                                clockStyle = it
+                                settingsStore.saveClockStyle(it)
+                            },
+                            onSwipeApp = { side, key ->
+                                if (side == SwipeSide.Left) swipeLeftKey = key else swipeRightKey = key
+                                settingsStore.saveSwipeApp(side, key)
+                            },
+                            onClose = { showSettings = false },
+                        )
+                    } else if (showHealth) {
                         HealthScreen(
                             apps = apps,
                             nowMillis = nowMillis,
@@ -150,12 +192,14 @@ class MainActivity : ComponentActivity() {
                             focusSearch = focusSearch,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
                             onTogglePin = { togglePin(it) },
+                            onOpenSettings = { showSettings = true },
                             onClose = { showAllApps = false },
                         )
                     } else {
                         HomeContent(
                             nowMillis = nowMillis,
                             stats = stats,
+                            clockStyle = clockStyle,
                             focusSinceMillis = focusSince,
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
@@ -170,7 +214,9 @@ class MainActivity : ComponentActivity() {
                             },
                             onOpenHealth = { showHealth = true },
                             onToggleFocus = ::toggleFocus,
-                            onClockLongPress = ::cycleBackdrop,
+                            onOpenSettings = { showSettings = true },
+                            onSwipeLeft = { launchByKey(apps, swipeLeftKey, focusOn) },
+                            onSwipeRight = { launchByKey(apps, swipeRightKey, focusOn) },
                         )
                     }
                 }
@@ -245,10 +291,17 @@ class MainActivity : ComponentActivity() {
         focusStore.saveApps(focusApps)
     }
 
-    private fun cycleBackdrop() {
-        backdrop = backdrop.next()
-        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_BACKDROP, backdrop.key).apply()
-        applyBackdrop()
+    private fun launchByKey(apps: List<AppEntry>, key: String?, focusOn: Boolean) {
+        if (key == null) {
+            Toast.makeText(this, "Defina o app em Ajustes", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val app = apps.firstOrNull { it.key == key } ?: return
+        if (focusOn && app.key in focusApps) {
+            Toast.makeText(this, "Modo foco ligado", Toast.LENGTH_SHORT).show()
+            return
+        }
+        AppRepository.launch(this, app)
     }
 
     private fun applyBackdrop() {
@@ -257,6 +310,5 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val PREFS = "voidtouch"
-        const val KEY_BACKDROP = "backdrop"
     }
 }
