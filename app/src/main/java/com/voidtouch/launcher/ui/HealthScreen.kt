@@ -54,6 +54,7 @@ private val PtBr: Locale = Locale.forLanguageTag("pt-BR")
 fun HealthScreen(
     apps: List<AppEntry>,
     nowMillis: Long,
+    refreshKey: Int,
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -65,7 +66,7 @@ fun HealthScreen(
         value = withContext(Dispatchers.Default) { HealthReader.read(appContext) }
     }
     // Relido quando a lista de apps é recarregada, por exemplo ao voltar da tela de limpar cache.
-    val heavy by produceState<HeavyApps>(HeavyApps.Loading, apps) {
+    val heavy by produceState<HeavyApps>(HeavyApps.Loading, apps, refreshKey) {
         value = withContext(Dispatchers.Default) { HeavyAppsReader.read(appContext, apps) }
     }
 
@@ -97,7 +98,11 @@ fun HealthScreen(
         Spacer(Modifier.height(4.dp))
 
         when (val state = heavy) {
-            HeavyApps.Loading -> Hint("calculando...")
+            HeavyApps.Loading -> {
+                LoadingLine()
+                Spacer(Modifier.height(8.dp))
+                Hint("medindo os apps…")
+            }
             HeavyApps.NeedsPermission -> {
                 Hint(
                     "para medir o tamanho dos apps, o Android pede a permissão \"acesso ao uso\". " +

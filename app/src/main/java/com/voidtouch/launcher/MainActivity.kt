@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -35,6 +34,18 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.ui.Banner
+import com.voidtouch.launcher.ui.BannerHost
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import com.voidtouch.launcher.ui.OptimizeScreen
 import com.voidtouch.launcher.ui.ChangelogScreen
 import com.voidtouch.launcher.data.Changelog
@@ -88,6 +99,14 @@ class MainActivity : ComponentActivity() {
 
     /** Verdadeiro só com a tela visível; o relógio do player para quando o app sai de cena. */
     private var screenActive by mutableStateOf(false)
+
+    /** Aviso na tela (no lugar do Toast); some sozinho. */
+    private var banner by mutableStateOf<Banner?>(null)
+    private var bannerSeq = 0
+
+    private fun say(text: String) {
+        banner = Banner(++bannerSeq, text)
+    }
 
     private val versionName: String
         get() = packageManager.getPackageInfo(packageName, 0).versionName ?: ""
@@ -184,13 +203,45 @@ class MainActivity : ComponentActivity() {
                     !focusOn || focusApps.none { it.substringBefore('/') == n.packageName }
                 }
 
+                val screen = when {
+                    changelog != null -> "changelog"
+                    showOptimize -> "optimize"
+                    showSettings -> "settings"
+                    showHealth -> "health"
+                    showAllApps -> "drawer"
+                    else -> "home"
+                }
+                // Guarda as novidades para o texto não sumir durante a animação de saída.
+                var lastNotes by remember { mutableStateOf(emptyList<ReleaseNote>()) }
+                changelog?.let { lastNotes = it }
+
+                LaunchedEffect(banner) {
+                    if (banner != null) {
+                        delay(2400)
+                        banner = null
+                    }
+                }
+
                 Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-                    val notes = changelog
-                    if (notes != null) {
-                        ChangelogScreen(title = changelogTitle, notes = notes, onClose = { changelog = null })
-                    } else if (showOptimize) {
-                        OptimizeScreen(apps = apps, onClose = { showOptimize = false })
-                    } else if (showSettings) {
+                  AnimatedContent(
+                    targetState = screen,
+                    transitionSpec = {
+                        if (targetState == "home") {
+                            // Voltar para a home: a tela de cima some e a home aparece por baixo.
+                            fadeIn(tween(200)) togetherWith fadeOut(tween(140))
+                        } else {
+                            // Ir para outra tela: entra subindo um pouco, com fade.
+                            (fadeIn(tween(220)) + slideInVertically(tween(260)) { it / 14 }) togetherWith
+                                fadeOut(tween(120))
+                        }
+                    },
+                    label = "screen",
+                  ) { current ->
+                    if (current == "changelog") {
+                        ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
+                    } else if (current == "optimize") {
+                        OptimizeScreen(apps = apps, refreshKey = refreshKey, onMessage = ::say, onClose = { showOptimize = false })
+                    } else if (current == "settings") {
                         SettingsScreen(
                             apps = apps,
                             backdrop = backdrop,
@@ -221,13 +272,14 @@ class MainActivity : ComponentActivity() {
                             },
                             onClose = { showSettings = false },
                         )
-                    } else if (showHealth) {
+                    } else if (current == "health") {
                         HealthScreen(
                             apps = apps,
                             nowMillis = nowMillis,
+                            refreshKey = refreshKey,
                             onClose = { showHealth = false },
                         )
-                    } else if (showAllApps) {
+                    } else if (current == "drawer") {
                         AppList(
                             apps = apps,
                             pinnedKeys = pinnedKeys,
@@ -274,6 +326,11 @@ class MainActivity : ComponentActivity() {
                             onSwipeRight = { launchByKey(apps, swipeRightKey, focusOn) },
                         )
                     }
+                  }
+                    BannerHost(
+                        banner = banner,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp),
+                    )
                 }
             }
         }
@@ -331,12 +388,18 @@ class MainActivity : ComponentActivity() {
     private fun togglePin(app: AppEntry) {
         val current = pinnedKeys
         pinnedKeys = when {
-            app.key in current -> current - app.key
+            app.key in current -> {
+                say("${app.label} saiu da home")
+                current - app.key
+            }
             current.size >= FavoritesStore.MAX -> {
-                Toast.makeText(this, "Máximo de ${FavoritesStore.MAX} favoritos", Toast.LENGTH_SHORT).show()
+                say("máximo de ${FavoritesStore.MAX} favoritos: solte um para fixar outro")
                 current
             }
-            else -> current + app.key
+            else -> {
+                say("${app.label} fixado na home · ${current.size + 1}/${FavoritesStore.MAX}")
+                current + app.key
+            }
         }
         favoritesStore.save(pinnedKeys)
     }
@@ -345,15 +408,13 @@ class MainActivity : ComponentActivity() {
     private fun toggleFocus() {
         if (focusSince != 0L) {
             focusSince = 0L
+            say("foco desligado")
         } else if (focusApps.isEmpty()) {
-            Toast.makeText(
-                this,
-                "Marque os apps do foco: lista completa > apps do foco",
-                Toast.LENGTH_LONG,
-            ).show()
+            say("marque os apps do foco: lista completa > apps do foco")
             return
         } else {
             focusSince = System.currentTimeMillis()
+            say("foco ligado · ${focusApps.size} app(s) escondido(s)")
         }
         focusStore.saveSince(focusSince)
     }
@@ -365,14 +426,15 @@ class MainActivity : ComponentActivity() {
 
     private fun launchByKey(apps: List<AppEntry>, key: String?, focusOn: Boolean) {
         if (key == null) {
-            Toast.makeText(this, "Defina o app em Ajustes", Toast.LENGTH_SHORT).show()
+            say("defina o app desse deslize em ajustes")
             return
         }
         val app = apps.firstOrNull { it.key == key } ?: return
         if (focusOn && app.key in focusApps) {
-            Toast.makeText(this, "Modo foco ligado", Toast.LENGTH_SHORT).show()
+            say("${app.label} está escondido pelo modo foco")
             return
         }
+        say("abrindo ${app.label}…")
         AppRepository.launch(this, app)
     }
 

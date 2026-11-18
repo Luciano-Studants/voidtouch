@@ -158,6 +158,7 @@ private fun UpdateRow(versionName: String) {
     var status by remember { mutableStateOf("verificar atualização") }
     var found by remember { mutableStateOf<UpdateInfo?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var progress by remember { mutableStateOf<Float?>(null) }
 
     fun download(info: UpdateInfo) {
         if (!Updater.canInstall(context)) {
@@ -167,8 +168,9 @@ private fun UpdateRow(versionName: String) {
         }
         busy = true
         scope.launch {
-            val apk = Updater.download(context, info) { status = "baixando… $it%" }
+            val apk = Updater.download(context, info) { status = "baixando… $it%"; progress = it / 100f }
             busy = false
+            progress = null
             if (apk == null) {
                 status = "falha ao baixar, toque para tentar de novo"
             } else {
@@ -190,6 +192,7 @@ private fun UpdateRow(versionName: String) {
                     download(info)
                 } else {
                     busy = true
+                    progress = null
                     status = "verificando…"
                     scope.launch {
                         when (val r = Updater.check(versionName)) {
@@ -207,6 +210,8 @@ private fun UpdateRow(versionName: String) {
             }
             .padding(vertical = 12.dp),
     )
+    // Barra enquanto algo acontece: indeterminada ao verificar, com avanço ao baixar.
+    if (busy) LoadingLine(progress = progress)
 }
 
 @Composable

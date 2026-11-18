@@ -6,7 +6,6 @@ import android.provider.Settings
 import android.net.Uri
 import android.content.Intent
 import android.text.format.Formatter
-import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -24,7 +23,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.animation.AnimatedVisibility
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,12 +50,36 @@ import kotlinx.coroutines.withContext
  * pesam no processamento. Nada roda sozinho: só mede com a tela aberta.
  */
 @Composable
-fun OptimizeScreen(apps: List<AppEntry>, onClose: () -> Unit) {
+fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) -> Unit, onClose: () -> Unit) {
     val context = LocalContext.current
     val appContext = context.applicationContext
     val scroll = rememberScrollState()
-    val data by produceState<OptimizeData?>(null, apps) {
-        value = withContext(Dispatchers.Default) { Optimizer.read(appContext, apps) }
+    var data by remember { mutableStateOf<OptimizeData?>(null) }
+    var measuring by remember { mutableStateOf(true) }
+    // Cache total medido antes de pedir a limpeza; depois da volta, a diferença vira o "liberado".
+    var before by remember { mutableLongStateOf(-1L) }
+    var waitingSystem by remember { mutableStateOf(false) }
+    var freed by remember { mutableStateOf<Long?>(null) }
+    var noChange by remember { mutableStateOf(false) }
+
+    // Mede de novo sempre que a tela volta a ser vista (por exemplo, depois de limpar um cache).
+    LaunchedEffect(apps, refreshKey) {
+        measuring = true
+        val result = withContext(Dispatchers.Default) { Optimizer.read(appContext, apps) }
+        if (result is OptimizeData.Ready && before >= 0L) {
+            if (result.cacheTotalBytes < before) freed = before - result.cacheTotalBytes else noChange = true
+            before = -1L
+        }
+        data = result
+        measuring = false
+        waitingSystem = false
+    }
+    LaunchedEffect(freed, noChange) {
+        if (freed != null || noChange) {
+            delay(5000)
+            freed = null
+            noChange = false
+        }
     }
 
     Column(
@@ -76,8 +105,29 @@ fun OptimizeScreen(apps: List<AppEntry>, onClose: () -> Unit) {
             modifier = Modifier.padding(top = 6.dp),
         )
 
+        // Feedback do que está acontecendo: medindo, aguardando o sistema ou resultado da limpeza.
+        Spacer(Modifier.height(16.dp))
+        when {
+            measuring -> {
+                LoadingLine()
+                Spacer(Modifier.height(8.dp))
+                Hint(if (waitingSystem) "conferindo o que foi liberado…" else "medindo ${apps.map { it.packageName }.distinct().size} apps…")
+            }
+            waitingSystem -> {
+                LoadingLine()
+                Spacer(Modifier.height(8.dp))
+                Hint("aguardando o sistema… volte aqui quando terminar")
+            }
+        }
+        AnimatedVisibility(visible = freed != null) {
+            ResultCard("✓ liberado ${size(context, freed ?: 0L)} de cache")
+        }
+        AnimatedVisibility(visible = noChange) {
+            ResultCard("nenhum cache foi liberado desde a última medição")
+        }
+
         when (val d = data) {
-            null -> Hint("calculando...")
+            null -> Unit
             OptimizeData.NeedsPermission -> {
                 Section("medição")
                 Hint("para medir cache e uso dos apps o Android pede a permissão \"acesso ao uso\". O VoidTouch só lê tamanhos e datas, nada sai do aparelho.")
@@ -92,13 +142,13 @@ fun OptimizeScreen(apps: List<AppEntry>, onClose: () -> Unit) {
                     color = VoidColors.Text,
                 )
                 Spacer(Modifier.height(10.dp))
-                Pill("limpar cache de todos") {
+                Pill(if (waitingSystem) "aguardando o sistema…" else "limpar cache de todos") {
+                    if (waitingSystem) return@Pill
+                    before = d.cacheTotalBytes
+                    waitingSystem = true
+                    onMessage("pedindo ao sistema para limpar o cache…")
                     if (!Optimizer.requestClearAllCache(context)) {
-                        Toast.makeText(
-                            context,
-                            "O sistema não aceita limpar tudo de uma vez aqui. Abrindo o armazenamento.",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        onMessage("o sistema não aceita limpar tudo de uma vez: abrindo o armazenamento")
                         Optimizer.openStorage(context)
                     }
                 }
@@ -155,6 +205,19 @@ fun OptimizeScreen(apps: List<AppEntry>, onClose: () -> Unit) {
         ) { Optimizer.openDeveloperOptions(context) }
         Shortcut("armazenamento do sistema", "arquivos grandes e lixeiras") { Optimizer.openStorage(context) }
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun ResultCard(text: String) {
+    Box(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth()
+            .border(1.dp, VoidColors.TextDim, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+            .padding(16.dp),
+    ) {
+        Text(text, style = VoidType.App, color = VoidColors.Text)
     }
 }
 

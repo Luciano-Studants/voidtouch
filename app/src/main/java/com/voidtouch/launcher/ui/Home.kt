@@ -6,7 +6,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -100,7 +102,9 @@ fun HomeContent(
             ),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Spacer(Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.End) {
+                GearButton(onClick = onOpenSettings)
+            }
             HomeCarousel(
                 nowMillis = nowMillis,
                 clockStyle = clockStyle,
@@ -221,12 +225,16 @@ private fun FavoriteRow(
     onUnpin: (AppEntry) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val source = remember { MutableInteractionSource() }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
+            .pressFeedback(source)
             .combinedClickable(
+                interactionSource = source,
+                indication = null,
                 onClick = { onLaunch(app) },
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)

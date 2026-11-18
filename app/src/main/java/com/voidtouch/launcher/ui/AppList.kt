@@ -3,6 +3,7 @@ package com.voidtouch.launcher.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -154,18 +155,13 @@ fun AppList(
                     modifier = Modifier.weight(1f).padding(end = 12.dp),
                 )
                 if (!markingFocusApps) {
-                    Text(
-                        text = "ajustes",
-                        style = VoidType.Caption,
-                        color = VoidColors.Text,
-                        modifier = Modifier
-                            .clickable {
-                                focusManager.clearFocus()
-                                onOpenSettings()
-                            }
-                            .padding(vertical = 8.dp),
+                    GearButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            onOpenSettings()
+                        },
                     )
-                    Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(8.dp))
                 }
                 Text(
                     text = if (markingFocusApps) "concluir" else "apps do foco",
@@ -208,6 +204,7 @@ fun AppList(
                 ) { app ->
                     val marked = app.key in focusApps
                     AppCell(
+                        modifier = Modifier.animateItem(),
                         app = app,
                         marked = marked,
                         pinned = app.key in pinnedKeys,
@@ -264,12 +261,20 @@ private fun AppCell(
     dimmed: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    val source = remember { MutableInteractionSource() }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .pressFeedback(source)
+            .combinedClickable(
+                interactionSource = source,
+                indication = null,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
             .padding(horizontal = 4.dp, vertical = 12.dp),
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(44.dp)) {
