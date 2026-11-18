@@ -3,7 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Só para mostrar "wi-fi", "dados" ou "sem rede" no status. Não dá acesso à internet. -->
+    <!-- Atualização: consulta a versão nova no GitHub e baixa o APK só quando você toca em "atualizar". -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- Só para mostrar "wi-fi", "dados" ou "sem rede" no status. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Só para medir o tamanho dos apps na tela "saúde do aparelho". Opcional: o usuário concede em Ajustes. -->
@@ -49,6 +53,15 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

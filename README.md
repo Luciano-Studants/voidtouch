@@ -4,7 +4,7 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
 
-> Status: **v0.8 – nova home e ajustes**. Carrossel (hora, dia, música), bloco de notificações/status, deslizes configuráveis e tela de ajustes. Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Status: **v0.8.1 – atualização dentro do app**. Em Ajustes > sobre, "verificar atualização" baixa a versão nova publicada no GitHub. (v0.8: nova home e ajustes.) Carrossel (hora, dia, música), bloco de notificações/status, deslizes configuráveis e tela de ajustes. Tudo o mais está no [plano](docs/REQUISITOS.md).
 
 **Abrir a lista completa:** deslize para cima na home ou toque no círculo (canto inferior direito). Para voltar, deslize para baixo com a lista no topo ou use o botão voltar.
 
@@ -49,3 +49,7 @@ Kotlin + Jetpack Compose, `minSdk 26`, `targetSdk 35`, uma única Activity, sem 
 Logotipos: [Simple Icons](https://simpleicons.org) (CC0); as marcas pertencem aos seus donos.
 
 Fontes: JetBrains Mono Light, Oxanium ExtraLight e Allura (licença OFL, ver [licenses](licenses/README.md)).
+
+## Atualização dentro do app (v0.8.1)
+
+O app consulta as Releases do GitHub só quando você toca em **Ajustes > verificar atualização**. Para funcionar sem desinstalar, o build precisa da chave fixa: cadastre em *Settings > Secrets and variables > Actions* os secrets `KEYSTORE_BASE64` e `KEYSTORE_PASSWORD`. Com eles, cada push na `main` assina o APK com a mesma chave e publica a Release `v<versão>`. Sem eles, o build continua funcionando com a chave de debug, mas sem Release.

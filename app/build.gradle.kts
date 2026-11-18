@@ -12,14 +12,27 @@ android {
         applicationId = "com.voidtouch.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.8.0"
+        versionCode = 9
+        versionName = "0.8.1"
+    }
+
+    // Chave fixa (vinda dos secrets do GitHub) para uma versão nova instalar por cima da anterior.
+    // Sem a chave (build local), cai na chave de debug.
+    val keystorePath = System.getenv("KEYSTORE_FILE")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("fixed") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = "voidtouch"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
-            // Uso pessoal: assinado com a chave de debug para poder instalar direto.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (keystorePath != null) "fixed" else "debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

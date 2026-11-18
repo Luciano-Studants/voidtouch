@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,7 +22,20 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Preparar chave de assinatura
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/voidtouch.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/voidtouch.jks" >> "$GITHUB_ENV"
+          else
+            echo "Sem KEYSTORE_BASE64: assinando com a chave de debug."
+          fi
+
       - name: Compilar APK release (otimizado)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Publicar APK release
@@ -28,3 +44,17 @@ jobs:
           name: voidtouch-release-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      # Só com a chave fixa: publica a versão como Release, que o app consulta para se atualizar.
+      - name: Publicar Release no GitHub
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.KEYSTORE_FILE != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          cp app/build/outputs/apk/release/*.apk voidtouch.apk
+          if gh release view "v$VER" >/dev/null 2>&1; then
+            gh release upload "v$VER" voidtouch.apk --clobber
+          else
+            gh release create "v$VER" voidtouch.apk --title "VoidTouch $VER" --notes "VoidTouch $VER" --target "$GITHUB_SHA"
+          fi

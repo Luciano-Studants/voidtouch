@@ -21,6 +21,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.voidtouch.launcher.data.UpdateCheck
+import com.voidtouch.launcher.data.UpdateInfo
+import com.voidtouch.launcher.data.Updater
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -121,7 +127,67 @@ fun SettingsScreen(
 
         Section("sobre")
         Text("VoidTouch $versionName", style = VoidType.App, color = VoidColors.TextDim)
+        UpdateRow(versionName)
     }
+}
+
+/** Linha "verificar atualização": consulta o GitHub, baixa o APK e abre o instalador. */
+@Composable
+private fun UpdateRow(versionName: String) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var status by remember { mutableStateOf("verificar atualização") }
+    var found by remember { mutableStateOf<UpdateInfo?>(null) }
+    var busy by remember { mutableStateOf(false) }
+
+    fun download(info: UpdateInfo) {
+        if (!Updater.canInstall(context)) {
+            status = "libere \"instalar apps desconhecidos\" e toque de novo"
+            Updater.openInstallPermission(context)
+            return
+        }
+        busy = true
+        scope.launch {
+            val apk = Updater.download(context, info) { status = "baixando… $it%" }
+            busy = false
+            if (apk == null) {
+                status = "falha ao baixar, toque para tentar de novo"
+            } else {
+                status = "pronto: confirme a instalação"
+                Updater.install(context, apk)
+            }
+        }
+    }
+
+    Text(
+        text = status,
+        style = VoidType.App,
+        color = VoidColors.Text,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !busy) {
+                val info = found
+                if (info != null) {
+                    download(info)
+                } else {
+                    busy = true
+                    status = "verificando…"
+                    scope.launch {
+                        when (val r = Updater.check(versionName)) {
+                            is UpdateCheck.Available -> {
+                                found = r.info
+                                status = "v${r.info.version} disponível · atualizar"
+                            }
+                            UpdateCheck.UpToDate -> status = "você já está na versão mais recente"
+                            UpdateCheck.NoRelease -> status = "nenhuma versão publicada ainda"
+                            is UpdateCheck.Failed -> status = "não deu: ${r.reason}. toque para tentar"
+                        }
+                        busy = false
+                    }
+                }
+            }
+            .padding(vertical = 12.dp),
+    )
 }
 
 @Composable
