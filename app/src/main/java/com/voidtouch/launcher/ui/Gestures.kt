@@ -11,6 +11,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 
 /**
@@ -51,7 +52,7 @@ fun Modifier.onVerticalSwipe(
     up: Boolean,
     threshold: Dp,
     enabled: () -> Boolean = { true },
-    excludeEndEdge: Dp = Dp.Zero,
+    excludeEndEdge: Dp = 0.dp,
     onSwipe: () -> Unit,
 ): Modifier {
     val currentOnSwipe by rememberUpdatedState(onSwipe)
