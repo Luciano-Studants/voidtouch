@@ -28,6 +28,8 @@ data class MediaInfo(
     val title: String,
     val artist: String,
     val playing: Boolean,
+    val durationMs: Long,
+    val art: android.graphics.Bitmap?,
     val controller: MediaController,
 )
 
@@ -56,6 +58,10 @@ object NotificationHub {
 
     fun next() {
         runCatching { media?.controller?.transportControls?.skipToNext() }
+    }
+
+    fun seekTo(positionMs: Long) {
+        runCatching { media?.controller?.transportControls?.seekTo(positionMs) }
     }
 
     fun previous() {
@@ -160,6 +166,10 @@ class VoidNotificationService : NotificationListenerService() {
                 artist = (meta?.getString(MediaMetadata.METADATA_KEY_ARTIST)
                     ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)).orEmpty(),
                 playing = it.playbackState?.state == PlaybackState.STATE_PLAYING,
+                durationMs = meta?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L,
+                art = meta?.getBitmap(MediaMetadata.METADATA_KEY_ART)
+                    ?: meta?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+                    ?: meta?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON),
                 controller = it,
             )
         }

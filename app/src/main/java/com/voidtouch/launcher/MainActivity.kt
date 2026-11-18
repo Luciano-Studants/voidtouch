@@ -35,6 +35,7 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.ui.OptimizeScreen
 import com.voidtouch.launcher.ui.ChangelogScreen
 import com.voidtouch.launcher.data.Changelog
 import com.voidtouch.launcher.data.ReleaseNote
@@ -85,6 +86,9 @@ class MainActivity : ComponentActivity() {
     /** Verdadeiro quando o acesso às notificações está liberado; relido a cada volta à tela. */
     private var notifAccess by mutableStateOf(false)
 
+    /** Verdadeiro só com a tela visível; o relógio do player para quando o app sai de cena. */
+    private var screenActive by mutableStateOf(false)
+
     private val versionName: String
         get() = packageManager.getPackageInfo(packageName, 0).versionName ?: ""
 
@@ -133,6 +137,7 @@ class MainActivity : ComponentActivity() {
                 var query by remember { mutableStateOf("") }
                 var showHealth by remember { mutableStateOf(false) }
                 var showSettings by remember { mutableStateOf(false) }
+                var showOptimize by remember { mutableStateOf(false) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
                 var changelogTitle by remember { mutableStateOf("novidades da v$versionName") }
@@ -145,6 +150,7 @@ class MainActivity : ComponentActivity() {
                     showHealth = false
                     showSettings = false
                     changelog = null
+                    showOptimize = false
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {
@@ -158,6 +164,7 @@ class MainActivity : ComponentActivity() {
                 BackHandler {
                     when {
                         changelog != null -> changelog = null
+                        showOptimize -> showOptimize = false
                         showSettings -> showSettings = false
                         showHealth -> showHealth = false
                         showAllApps && markingFocusApps -> markingFocusApps = false
@@ -181,6 +188,8 @@ class MainActivity : ComponentActivity() {
                     val notes = changelog
                     if (notes != null) {
                         ChangelogScreen(title = changelogTitle, notes = notes, onClose = { changelog = null })
+                    } else if (showOptimize) {
+                        OptimizeScreen(apps = apps, onClose = { showOptimize = false })
                     } else if (showSettings) {
                         SettingsScreen(
                             apps = apps,
@@ -192,6 +201,7 @@ class MainActivity : ComponentActivity() {
                             notificationsEnabled = notifAccess,
                             onOpenNotificationAccess = ::openNotificationAccess,
                             onOpenAppInfo = ::openAppInfo,
+                            onOpenOptimize = { showSettings = false; showOptimize = true },
                             onOpenChangelog = {
                                 changelogTitle = "novidades"
                                 changelog = Changelog.all
@@ -244,6 +254,7 @@ class MainActivity : ComponentActivity() {
                             onNotificationClick = { openNotification(it) },
                             onNotificationDismiss = { NotificationHub.dismiss(it.key) },
                             onEnableNotifications = ::openNotificationAccess,
+                            active = screenActive,
                             focusSinceMillis = focusSince,
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
@@ -275,6 +286,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        screenActive = true
         refreshClock()
         // Relógio, bateria e RAM só atualizam enquanto a tela está visível; em segundo plano não gastam nada.
         val filter = IntentFilter().apply {
@@ -287,6 +299,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        screenActive = false
         unregisterReceiver(timeReceiver)
     }
 

@@ -69,6 +69,7 @@ fun HomeContent(
     onNotificationClick: (NoteItem) -> Unit,
     onNotificationDismiss: (NoteItem) -> Unit,
     onEnableNotifications: () -> Unit,
+    active: Boolean,
     focusSinceMillis: Long,
     favorites: List<AppEntry>,
     onLaunch: (AppEntry) -> Unit,
@@ -106,6 +107,7 @@ fun HomeContent(
                 pagerState = pagerState,
                 notificationsEnabled = notificationsEnabled,
                 onEnableNotifications = onEnableNotifications,
+                active = active,
                 onLongPress = onOpenSettings,
             )
 
@@ -247,7 +249,7 @@ private fun FavoriteRow(
 
 /** Ícone branco e fino do app; sem logotipo nem camada monocromática, vira a letra inicial em um círculo. */
 @Composable
-private fun AppIcon(app: AppEntry, size: Dp) {
+internal fun AppIcon(app: AppEntry, size: Dp) {
     val context = LocalContext.current
     var icon by remember(app.key) { mutableStateOf(IconLoader.peek(app.key)) }
     LaunchedEffect(app.key) {

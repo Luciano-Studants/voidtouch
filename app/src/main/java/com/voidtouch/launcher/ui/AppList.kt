@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -97,7 +99,7 @@ fun AppList(
 ) {
     val haptic = LocalHapticFeedback.current
     val focusManager = LocalFocusManager.current
-    val listState = rememberLazyListState()
+    val listState = rememberLazyGridState()
 
     // Enquanto se marca os apps do foco, todos aparecem para poder desmarcar.
     val hiding = focusModeOn && !markingFocusApps
@@ -189,10 +191,15 @@ fun AppList(
         }
 
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = if (showRail) 40.dp else 12.dp,
+                    bottom = 24.dp,
+                ),
             ) {
                 items(
                     items = results,
@@ -200,54 +207,17 @@ fun AppList(
                     contentType = { "app" },
                 ) { app ->
                     val marked = app.key in focusApps
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {
-                                    if (markingFocusApps) onToggleFocusApp(app) else launch(app)
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    if (markingFocusApps) onToggleFocusApp(app) else onTogglePin(app)
-                                },
-                            )
-                            // Com a régua à direita, as marcas dos apps ficam um pouco mais para dentro.
-                            .padding(
-                                start = 24.dp,
-                                end = if (showRail) 44.dp else 24.dp,
-                                top = 14.dp,
-                                bottom = 14.dp,
-                            ),
-                    ) {
-                        Text(
-                            text = app.label,
-                            style = VoidType.App,
-                            // Marcados aparecem apagados enquanto se escolhe os apps do foco.
-                            color = if (markingFocusApps && marked) VoidColors.TextDim else VoidColors.Text,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (marked) {
-                            // Círculo vazio: app marcado como distração.
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .border(1.dp, VoidColors.TextDim, CircleShape),
-                            )
-                        }
-                        if (app.key in pinnedKeys) {
-                            // Ponto cheio: app fixado na home.
-                            if (marked) Spacer(Modifier.width(10.dp))
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(VoidColors.Text, CircleShape),
-                            )
-                        }
-                    }
+                    AppCell(
+                        app = app,
+                        marked = marked,
+                        pinned = app.key in pinnedKeys,
+                        dimmed = markingFocusApps && marked,
+                        onClick = { if (markingFocusApps) onToggleFocusApp(app) else launch(app) },
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            if (markingFocusApps) onToggleFocusApp(app) else onTogglePin(app)
+                        },
+                    )
                 }
             }
 
@@ -284,6 +254,55 @@ fun AppList(
     }
 }
 
+/** Célula da grade: ícone em cima, nome embaixo. Ponto cheio = fixado na home; círculo = app do foco. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AppCell(
+    app: AppEntry,
+    marked: Boolean,
+    pinned: Boolean,
+    dimmed: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = 4.dp, vertical = 12.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(44.dp)) {
+            AppIcon(app = app, size = 36.dp)
+            if (pinned) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(6.dp)
+                        .background(VoidColors.Text, CircleShape),
+                )
+            }
+            if (marked) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .size(9.dp)
+                        .border(1.dp, VoidColors.TextDim, CircleShape),
+                )
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = app.label,
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 15.sp),
+            color = if (dimmed) VoidColors.TextDim else VoidColors.Text,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
 /** Letra inicial do app, sem acento; qualquer coisa que não seja letra vira "#". */
 private fun letterOf(app: AppEntry?): Char =
     app?.searchLabel?.firstOrNull()?.takeIf { it.isLetter() }?.uppercaseChar() ?: '#'
@@ -294,7 +313,7 @@ private fun letterOf(app: AppEntry?): Char =
  */
 @Composable
 private fun ScrollRail(
-    listState: LazyListState,
+    listState: LazyGridState,
     itemCount: Int,
     letterAt: (Int) -> Char,
     onLetterChange: (Char?) -> Unit,

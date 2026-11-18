@@ -10,6 +10,15 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.10.0",
+            listOf(
+                "Lista de apps em grade de 3 colunas, com os ícones.",
+                "Textos do topo maiores: notificações em duas linhas (app e título), status e carrossel mais legíveis.",
+                "Player de música centralizado, com capa ao fundo, barra de progresso (toque para pular) e controles desenhados.",
+                "Nova tela Otimizar (Ajustes > otimizar): cache total e por app, apps parados há 30 dias ou mais e atalhos para bateria, animações e Cuidados com o dispositivo.",
+            ),
+        ),
+        ReleaseNote(
             "0.9.0",
             listOf(
                 "Notificações na home: as mais recentes aparecem na coluna da esquerda. Toque para abrir, segure para dispensar.",

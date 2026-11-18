@@ -29,8 +29,8 @@ sealed interface IconResult {
  */
 object IconLoader {
 
-    /** Tamanho do bitmap. A home mostra o ícone com 26 dp, então não precisa mais que isso. */
-    private const val SIZE_DP = 36
+    /** Tamanho do bitmap. A grade da lista mostra 36 dp e a home 24 dp; 48 dp deixa nítido em telas de alta densidade. */
+    private const val SIZE_DP = 48
 
     /** Margem dos logotipos, para ficarem do mesmo tamanho visual dos ícones do sistema. */
     private const val BRAND_INSET = 0.14f

@@ -60,7 +60,7 @@ fun InfoBlock(
             .padding(horizontal = 24.dp, vertical = 10.dp),
     ) {
         Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(text = "notificações", style = VoidType.Small, color = VoidColors.TextDim)
+            Text(text = "notificações", style = VoidType.Caption, color = VoidColors.TextDim)
             val haptic = LocalHapticFeedback.current
             if (!notificationsEnabled) {
                 Text(
@@ -73,12 +73,7 @@ fun InfoBlock(
                 Text("nenhuma", style = VoidType.Small, color = VoidColors.TextDim, modifier = Modifier.padding(top = 3.dp))
             } else {
                 notifications.take(3).forEach { n ->
-                    Text(
-                        text = "${n.appLabel} · ${n.title}",
-                        style = VoidType.Small,
-                        color = VoidColors.Text,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .combinedClickable(
@@ -88,8 +83,23 @@ fun InfoBlock(
                                     onNotificationDismiss(n)
                                 },
                             )
-                            .padding(top = 3.dp, bottom = 3.dp),
-                    )
+                            .padding(vertical = 4.dp),
+                    ) {
+                        Text(
+                            text = n.appLabel,
+                            style = VoidType.Caption,
+                            color = VoidColors.TextDim,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = n.title,
+                            style = VoidType.Small,
+                            color = VoidColors.Text,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 if (notifications.size > 3) {
                     Text("+${notifications.size - 3}", style = VoidType.Small, color = VoidColors.TextDim)
@@ -97,13 +107,13 @@ fun InfoBlock(
             }
         }
         Column(modifier = Modifier.weight(1f).clickable(onClick = onStatusClick)) {
-            Text(text = "status do celular ›", style = VoidType.Small, color = VoidColors.TextDim)
+            Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
             lines.forEach { line ->
                 Text(
                     text = line,
                     style = VoidType.Small,
                     color = VoidColors.Text,
-                    modifier = Modifier.padding(top = 3.dp),
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }

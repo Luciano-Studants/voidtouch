@@ -22,8 +22,9 @@ object VoidType {
     val Small = TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
-        fontSize = 11.sp,
-        letterSpacing = 0.4.sp,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.3.sp,
     )
 
     /** Dia da semana grande, na página "hoje é" do carrossel. */

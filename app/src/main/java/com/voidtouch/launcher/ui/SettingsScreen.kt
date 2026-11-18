@@ -55,6 +55,7 @@ fun SettingsScreen(
     onOpenNotificationAccess: () -> Unit,
     onOpenAppInfo: () -> Unit,
     onOpenChangelog: () -> Unit,
+    onOpenOptimize: () -> Unit,
     onBackdrop: (Backdrop) -> Unit,
     onClockStyle: (ClockStyle) -> Unit,
     onSwipeApp: (SwipeSide, String?) -> Unit,
@@ -128,6 +129,9 @@ fun SettingsScreen(
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
         )
+
+        Section("celular")
+        ValueRow("otimizar", onOpenOptimize)
 
         Section("notificações e música")
         ValueRow(if (notificationsEnabled) "acesso ligado" else "acesso desligado", onOpenNotificationAccess)
