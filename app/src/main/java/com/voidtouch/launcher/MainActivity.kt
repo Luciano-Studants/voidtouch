@@ -42,6 +42,8 @@ import com.voidtouch.launcher.data.FocusAction
 import com.voidtouch.launcher.data.HomeRules
 import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.NightMode
+import com.voidtouch.launcher.data.Scene
+import com.voidtouch.launcher.data.Scenes
 import java.time.Instant
 import java.time.ZoneId
 import com.voidtouch.launcher.data.Shortcuts
@@ -140,6 +142,10 @@ class MainActivity : ComponentActivity() {
     private var focusAutoOn by mutableStateOf(false)
     private var focusAutoStart by mutableIntStateOf(FocusSchedule.DEFAULT_START)
     private var focusAutoEnd by mutableIntStateOf(FocusSchedule.DEFAULT_END)
+
+    private var scenes by mutableStateOf<List<Scene>>(emptyList())
+    private var sceneActive by mutableStateOf<String?>(null)
+    private var sceneAuto by mutableStateOf(false)
 
     private var nightEnabled by mutableStateOf(false)
     private var nightStart by mutableIntStateOf(NightMode.DEFAULT_START)
@@ -266,6 +272,9 @@ class MainActivity : ComponentActivity() {
         gestures = SwipeSide.entries.associateWith { settingsStore.loadSwipeApp(it) }
         memoryMode = settingsStore.loadMemoryMode()
         nightEnabled = settingsStore.loadNightEnabled()
+        scenes = settingsStore.loadScenes()
+        sceneActive = settingsStore.loadSceneActive()?.takeIf { id -> scenes.any { it.id == id } }
+        sceneAuto = settingsStore.loadSceneAuto()
         focusAutoOn = settingsStore.loadFocusAutoOn()
         focusAutoStart = settingsStore.loadFocusAutoStart()
         focusAutoEnd = settingsStore.loadFocusAutoEnd()
@@ -405,7 +414,8 @@ class MainActivity : ComponentActivity() {
                 // A foto "neste dia" é escolhida uma vez por bloco de 3 horas, fora da thread principal.
                 // Modo noite: dentro da janela de horário a home fica escura e calma.
                 val hour = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.systemDefault()).hour
-                val night = nightEnabled && NightMode.isNight(hour, nightStart, nightEnd)
+                val quietScene = scenes.firstOrNull { it.id == sceneActive }?.quiet == true
+                val night = (nightEnabled && NightMode.isNight(hour, nightStart, nightEnd)) || quietScene
 
                 // Próximos compromissos, relidos a cada 5 minutos com a tela visível.
                 val agenda by produceState(emptyList<AgendaItem>(), calendarAccess, nowMillis / 300_000L) {
@@ -415,6 +425,11 @@ class MainActivity : ComponentActivity() {
                 // Foco automático: só age quando a janela de horário vira (entrou ou saiu).
                 LaunchedEffect(nowMillis / 60_000L, focusAutoOn, focusAutoStart, focusAutoEnd) {
                     if (focusAutoOn) applyFocusSchedule(hour)
+                }
+
+                // Cenas automáticas: só agem quando o horário escolhe uma cena diferente da última vez.
+                LaunchedEffect(nowMillis / 60_000L, sceneAuto, scenes.size) {
+                    if (sceneAuto) applySceneSchedule(hour)
                 }
 
                 val memory by produceState<MemoryShown?>(null, memoryMode, photoAccess, hiddenPhotos, nowMillis / 10_800_000L) {
@@ -516,6 +531,25 @@ class MainActivity : ComponentActivity() {
                                 focusAutoEnd = (focusAutoEnd + 1) % 24
                                 settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
                                 settingsStore.saveFocusAutoLast(null)
+                            },
+                            scenes = scenes,
+                            sceneActive = sceneActive,
+                            sceneAuto = sceneAuto,
+                            onSceneAuto = {
+                                sceneAuto = !sceneAuto
+                                settingsStore.saveSceneAuto(sceneAuto)
+                                settingsStore.saveSceneLastPick(null)
+                                say(if (sceneAuto) "cenas automáticas ligadas" else "cenas automáticas desligadas")
+                            },
+                            onSceneUse = { id -> activateScene(id) },
+                            onSceneEdit = { edited -> saveScenes(scenes.map { if (it.id == edited.id) edited else it }) },
+                            onSceneAdd = {
+                                val created = Scenes.create(scenes, "s" + System.currentTimeMillis())
+                                if (created == null) say("máximo de ${Scenes.MAX} cenas") else saveScenes(scenes + created)
+                            },
+                            onSceneDelete = { id ->
+                                if (sceneActive == id) activateScene(null)
+                                saveScenes(scenes.filter { it.id != id })
                             },
                             nightEnabled = nightEnabled,
                             nightStart = nightStart,
@@ -821,6 +855,48 @@ class MainActivity : ComponentActivity() {
             FocusAction.None -> Unit
         }
         if (last != inWindow) settingsStore.saveFocusAutoLast(inWindow)
+    }
+
+    private fun saveScenes(list: List<Scene>) {
+        scenes = list
+        settingsStore.saveScenes(list)
+    }
+
+    /** Troca de cena: guarda os favoritos da que sai, mostra os da que entra e ajusta o foco. */
+    private fun activateScene(id: String?) {
+        if (id == sceneActive) return
+        val leaving = scenes.firstOrNull { it.id == sceneActive }
+        val entering = scenes.firstOrNull { it.id == id }
+        val result = Scenes.switch(scenes, settingsStore.loadSceneDefaultPins(), sceneActive, id, pinnedKeys)
+        saveScenes(result.scenes)
+        settingsStore.saveSceneDefaultPins(result.defaultPins)
+        if (result.pins != pinnedKeys) {
+            pinnedKeys = result.pins
+            favoritesStore.save(pinnedKeys)
+        }
+        sceneActive = id
+        settingsStore.saveSceneActive(id)
+        if (leaving?.focus == true && focusSince != 0L) {
+            focusSince = 0L
+            focusStore.saveSince(0L)
+        }
+        if (entering?.focus == true) {
+            if (focusApps.isEmpty()) {
+                say("cena ${entering.name}: marque os apps do foco para ele ligar")
+            } else if (focusSince == 0L) {
+                focusSince = System.currentTimeMillis()
+                focusStore.saveSince(focusSince)
+            }
+        }
+        say(if (entering != null) "cena: ${entering.name}" else "sem cena")
+    }
+
+    /** O horário escolhe a cena; só troca quando a escolha muda, para não desfazer uma troca manual. */
+    private fun applySceneSchedule(hour: Int) {
+        val picked = Scenes.pick(scenes, hour)?.id
+        if (picked == settingsStore.loadSceneLastPick()) return
+        settingsStore.saveSceneLastPick(picked)
+        activateScene(picked)
     }
 
     private fun toggleFocusApp(app: AppEntry) {

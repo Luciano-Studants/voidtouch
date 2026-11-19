@@ -42,14 +42,35 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Saúde | RAM, armazenamento, bateria, apps pesados, desempenho sob demanda | 0.6, 0.24 |
 | Otimizar | Cache por app, limpeza guiada, apps parados, atalho Samsung | 0.10, 0.18.1 |
 | Permissões | Estado, motivo e atalho de cada permissão | 0.23 |
+| Cenas | Home por momento: horário, foco, home calma e favoritos próprios | 0.25 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
 | Testes | Busca, versões, pastas, novidades, gestos, noite, agenda, foco, backup, atualizador, regras da home, permissões, desempenho | 0.13 a 0.24 |
 
-**Ideias abertas (v2)**
+**Roadmap de novas funcionalidades (em ordem de produção)**
+
+| # | Função | Resumo | Status |
+|---|---|---|---|
+| 1 | Cenas | A home muda por horário ou toque: favoritos próprios, foco e home calma | v0.25 |
+| 2 | Busca universal | Apps, contatos, ações, configurações, atalhos, contas e conversões | a fazer |
+| 3 | Ilha dinâmica interna | Pílula no topo com atividades ao vivo (música, cronômetro, download, entrega) | a fazer |
+| 4 | Responder pela home | Responder notificações de mensagem sem abrir o app; agrupar por conversa; ler depois | a fazer |
+| 5 | Linha "agora" preditiva | Três apps prováveis para a hora, pelo histórico local de aberturas | a fazer |
+| 6 | Captura rápida | Gesto abre campo de nota; vira "a tarefa do foco" | a fazer |
+| 7 | Sessão de foco | Foco com cronômetro (25, 50 min ou livre) e resumo ao final | a fazer |
+| 8 | Relatório de uso | Tempo de tela por app, no dia e na semana | a fazer |
+| 9 | Modo carregando | Relógio grande de cabeceira enquanto carrega com a home aberta | a fazer |
+| 10 | Ações no favorito | Deslizar em um favorito abre uma segunda ação | a fazer |
+| 11 | Animação de abertura | Abrir o app a partir do ícone, com movimento de mola e vibração refinada | a fazer |
+| 12 | Paralaxe do papel de parede | Giroscópio, só com a home visível | a fazer |
+| 13 | Reordenar favoritos | Arrastar para mudar a ordem | a fazer |
+
+Descartado pelo usuário: gestos por desenho. Evitar: widgets completos do Android, blur e sombras pesadas.
+
+**Ideias menores**
 - Widget de clima, opcional e desligado por padrão.
-- Histórico local de erros, configurações pesquisáveis, ordenação manual de favoritos.
+- Histórico local de erros e configurações pesquisáveis.
 - Foco com mais de uma programação e dias da semana.
 - Divisão completa da MainActivity por tela.
 

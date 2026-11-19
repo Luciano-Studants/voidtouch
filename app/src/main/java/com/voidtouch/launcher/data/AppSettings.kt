@@ -89,6 +89,37 @@ class SettingsStore(private val prefs: SharedPreferences) {
         }.apply()
     }
 
+    fun loadScenes(): List<Scene> = Scenes.decode(prefs.getString(KEY_SCENES, "").orEmpty())
+
+    fun saveScenes(list: List<Scene>) {
+        prefs.edit().putString(KEY_SCENES, Scenes.encode(list)).apply()
+    }
+
+    fun loadSceneAuto(): Boolean = prefs.getBoolean(KEY_SCENE_AUTO, false)
+
+    fun saveSceneAuto(on: Boolean) {
+        prefs.edit().putBoolean(KEY_SCENE_AUTO, on).apply()
+    }
+
+    fun loadSceneActive(): String? = prefs.getString(KEY_SCENE_ACTIVE, null)
+
+    fun saveSceneActive(id: String?) {
+        prefs.edit().apply { if (id == null) remove(KEY_SCENE_ACTIVE) else putString(KEY_SCENE_ACTIVE, id) }.apply()
+    }
+
+    /** Última cena que o horário escolheu sozinho; serve para agir só na virada, sem desfazer escolhas manuais. */
+    fun loadSceneLastPick(): String? = prefs.getString(KEY_SCENE_LAST, null)
+
+    fun saveSceneLastPick(id: String?) {
+        prefs.edit().apply { if (id == null) remove(KEY_SCENE_LAST) else putString(KEY_SCENE_LAST, id) }.apply()
+    }
+
+    fun loadSceneDefaultPins(): List<String>? = Scenes.decodePins(prefs.getString(KEY_SCENE_DEFAULT_PINS, "").orEmpty())
+
+    fun saveSceneDefaultPins(pins: List<String>?) {
+        prefs.edit().putString(KEY_SCENE_DEFAULT_PINS, Scenes.encodePins(pins)).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -121,6 +152,11 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_FOCUS_AUTO_START = "focus_auto_start"
         const val KEY_FOCUS_AUTO_END = "focus_auto_end"
         const val KEY_FOCUS_AUTO_LAST = "focus_auto_last"
+        const val KEY_SCENES = "scenes"
+        const val KEY_SCENE_AUTO = "scene_auto"
+        const val KEY_SCENE_ACTIVE = "scene_active"
+        const val KEY_SCENE_LAST = "scene_last_pick"
+        const val KEY_SCENE_DEFAULT_PINS = "scene_default_pins"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"

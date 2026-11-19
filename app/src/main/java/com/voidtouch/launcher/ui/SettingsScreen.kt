@@ -38,6 +38,7 @@ import com.voidtouch.launcher.data.MemoryMode
 import com.voidtouch.launcher.data.GestureTarget
 import com.voidtouch.launcher.data.QuickAction
 import com.voidtouch.launcher.data.Search
+import com.voidtouch.launcher.data.Scene
 import com.voidtouch.launcher.data.SwipeSide
 import com.voidtouch.launcher.ui.theme.Backdrop
 import com.voidtouch.launcher.ui.theme.VoidColors
@@ -65,6 +66,14 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
+    scenes: List<Scene>,
+    sceneActive: String?,
+    sceneAuto: Boolean,
+    onSceneAuto: () -> Unit,
+    onSceneUse: (String?) -> Unit,
+    onSceneEdit: (Scene) -> Unit,
+    onSceneAdd: () -> Unit,
+    onSceneDelete: (String) -> Unit,
     nightEnabled: Boolean,
     nightStart: Int,
     nightEnd: Int,
@@ -151,6 +160,31 @@ fun SettingsScreen(
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("cenas")
+        ValueRow(if (sceneAuto) "troca sozinha pelo horário" else "troca só quando eu escolho", onSceneAuto)
+        var openScene by remember { mutableStateOf<String?>(null) }
+        scenes.forEach { sc ->
+            val on = sc.id == sceneActive
+            ValueRow((if (on) "● " else "○ ") + "${sc.name} · ${sc.start}h às ${sc.end}h") {
+                openScene = if (openScene == sc.id) null else sc.id
+            }
+            if (openScene == sc.id) {
+                ValueRow(if (on) "em uso · voltar para sem cena" else "usar agora") { onSceneUse(if (on) null else sc.id) }
+                ValueRow("começa às ${sc.start}h") { onSceneEdit(sc.copy(start = (sc.start + 1) % 24)) }
+                ValueRow("termina às ${sc.end}h") { onSceneEdit(sc.copy(end = (sc.end + 1) % 24)) }
+                ValueRow("modo foco: ${if (sc.focus) "liga" else "não mexe"}") { onSceneEdit(sc.copy(focus = !sc.focus)) }
+                ValueRow("home calma: ${if (sc.quiet) "sim" else "não"}") { onSceneEdit(sc.copy(quiet = !sc.quiet)) }
+                ValueRow("excluir cena") { onSceneDelete(sc.id) }
+            }
+        }
+        ValueRow("+ nova cena", onSceneAdd)
+        Text(
+            "cada cena lembra os próprios favoritos: ao sair dela, os favoritos de agora ficam guardados. A home calma esconde status, notificações e foto, como o modo noite.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
         )
 
         Section("foco automático")

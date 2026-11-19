@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.25.0",
+            listOf(
+                "Cenas: a home muda de jeito conforme o momento. Em Ajustes > cenas, crie manhã, trabalho, noite... cada uma com horário, foco ligado ou não e home calma.",
+                "Cada cena lembra os próprios favoritos: ao sair dela, os favoritos de agora ficam guardados e voltam na próxima vez.",
+                "Pode trocar sozinho pelo horário ou à mão, escolhendo \"usar agora\"; a troca à mão vale até o próximo horário de virada.",
+            ),
+        ),
+        ReleaseNote(
             "0.24.0",
             listOf(
                 "Desempenho na tela Saúde: mostra quanto levaram a abertura da home, até os apps ficarem prontos, abrir a lista de apps e cada busca, com média e pior tempo.",
