@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.data.MemoryMode
+import com.voidtouch.launcher.data.GestureTarget
+import com.voidtouch.launcher.data.QuickAction
 import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.data.SwipeSide
 import com.voidtouch.launcher.ui.theme.Backdrop
@@ -50,8 +52,7 @@ fun SettingsScreen(
     apps: List<AppEntry>,
     backdrop: Backdrop,
     clockStyle: ClockStyle,
-    swipeLeftKey: String?,
-    swipeRightKey: String?,
+    gestures: Map<SwipeSide, String?>,
     versionName: String,
     notificationsEnabled: Boolean,
     onOpenNotificationAccess: () -> Unit,
@@ -74,10 +75,10 @@ fun SettingsScreen(
 
     picking?.let { side ->
         AppPicker(
-            title = if (side == SwipeSide.Left) "app do deslize para a esquerda" else "app do deslize para a direita",
+            title = "o que o gesto \"${gestureName(side)}\" abre",
             apps = apps,
             onPick = {
-                onSwipeApp(side, it?.key)
+                onSwipeApp(side, it)
                 picking = null
             },
         )
@@ -123,15 +124,14 @@ fun SettingsScreen(
             onSelect = onClockStyle,
         )
 
-        Section("deslizar para a esquerda")
-        ValueRow(byKey[swipeLeftKey]?.label ?: "nenhum") { picking = SwipeSide.Left }
-
-        Section("deslizar para a direita")
-        ValueRow(byKey[swipeRightKey]?.label ?: "nenhum") { picking = SwipeSide.Right }
-
+        Section("gestos da home")
+        SwipeSide.entries.forEach { side ->
+            Text(gestureName(side), style = VoidType.Caption, color = VoidColors.TextDim, modifier = Modifier.padding(top = 8.dp))
+            ValueRow(targetLabel(gestures[side], byKey)) { picking = side }
+        }
         Text(
-            "os deslizes valem na home, abaixo do carrossel",
-            style = VoidType.Small,
+            "os gestos valem na home, abaixo do carrossel. Cada um abre um app ou executa uma ação (lanterna, painel de notificações, busca...)",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
         )
@@ -269,17 +269,32 @@ private fun ValueRow(value: String, onClick: () -> Unit) {
     }
 }
 
-/** Escolha de app com busca; "nenhum" limpa o gesto. */
+private fun gestureName(side: SwipeSide): String = when (side) {
+    SwipeSide.Left -> "deslizar para a esquerda"
+    SwipeSide.Right -> "deslizar para a direita"
+    SwipeSide.Down -> "deslizar para baixo"
+    SwipeSide.DoubleTap -> "toque duplo"
+}
+
+private fun targetLabel(key: String?, byKey: Map<String, AppEntry>): String =
+    GestureTarget.action(key)?.label ?: byKey[key]?.label ?: "nenhum"
+
+/** Escolha do destino de um gesto: ações rápidas e apps, com busca; "nenhum" limpa o gesto. */
 @Composable
-private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (AppEntry?) -> Unit) {
+private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (String?) -> Unit) {
     var query by remember { mutableStateOf("") }
     val results = remember(apps, query) { Search.filter(apps, query) }
+    val actions = remember(query) {
+        if (query.isBlank()) QuickAction.entries.toList()
+        else QuickAction.entries.filter { Search.normalize(it.label).contains(Search.normalize(query)) }
+    }
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 8.dp)) {
             Text(title, style = VoidType.Caption, color = VoidColors.TextDim)
             Spacer(Modifier.height(10.dp))
             SearchField(query = query, onQueryChange = { query = it }, requestFocus = false, onGo = {
-                results.firstOrNull()?.let(onPick)
+                actions.firstOrNull()?.let { onPick(GestureTarget.encode(it)) }
+                    ?: results.firstOrNull()?.let { onPick(it.key) }
             })
         }
         LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -291,6 +306,14 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (AppEntry?) -
                     modifier = Modifier.fillMaxWidth().clickable { onPick(null) }.padding(horizontal = 24.dp, vertical = 14.dp),
                 )
             }
+            items(actions, key = { "action:${it.id}" }) { action ->
+                Text(
+                    "◆ ${action.label}",
+                    style = VoidType.App,
+                    color = VoidColors.Text,
+                    modifier = Modifier.fillMaxWidth().clickable { onPick(GestureTarget.encode(action)) }.padding(horizontal = 24.dp, vertical = 14.dp),
+                )
+            }
             items(results, key = { it.key }) { app ->
                 Text(
                     app.label,
@@ -298,7 +321,7 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (AppEntry?) -
                     color = VoidColors.Text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth().clickable { onPick(app) }.padding(horizontal = 24.dp, vertical = 14.dp),
+                    modifier = Modifier.fillMaxWidth().clickable { onPick(app.key) }.padding(horizontal = 24.dp, vertical = 14.dp),
                 )
             }
         }

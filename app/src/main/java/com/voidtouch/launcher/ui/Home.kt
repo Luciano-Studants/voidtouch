@@ -1,6 +1,8 @@
 package com.voidtouch.launcher.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -87,6 +89,8 @@ fun HomeContent(
     onOpenSettings: () -> Unit,
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit,
+    onSwipeDown: () -> Unit,
+    onDoubleTap: () -> Unit,
 ) {
     val focusOn = focusSinceMillis != 0L
     val pagerState = rememberPagerState(pageCount = { CAROUSEL_PAGES })
@@ -103,6 +107,13 @@ fun HomeContent(
                 threshold = 96.dp,
                 enabled = { !favoritesScroll.canScrollForward },
                 onSwipe = onOpenDrawer,
+            )
+            // Deslizar para baixo executa o gesto configurado (por padrão, o painel de notificações).
+            .onVerticalSwipe(
+                up = false,
+                threshold = 96.dp,
+                enabled = { !favoritesScroll.canScrollBackward },
+                onSwipe = onSwipeDown,
             ),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -126,6 +137,10 @@ fun HomeContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    // Toque duplo numa área vazia (os itens clicáveis consomem o toque antes).
+                    .pointerInput(Unit) {
+                        detectTapGestures(onDoubleTap = { onDoubleTap() })
+                    }
                     .onHorizontalSwipe(
                         threshold = 80.dp,
                         onSwipeLeft = {

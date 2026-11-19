@@ -3,6 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Gesto de deslizar para baixo: abre o painel de notificações. -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
     <!-- Permite abrir a tela de desinstalar de um app pelo menu de opções da lista. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 

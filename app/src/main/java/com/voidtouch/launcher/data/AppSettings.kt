@@ -17,7 +17,8 @@ enum class ClockStyle(val key: String, val label: String, val pattern: String) {
 }
 
 /** Os dois gestos horizontais da home, cada um com um app configurável. */
-enum class SwipeSide { Left, Right }
+/** Gestos da home que abrem um app ou ação: deslizar para os lados e para baixo, e toque duplo. */
+enum class SwipeSide { Left, Right, Down, DoubleTap }
 
 /**
  * Ajustes do usuário: fundo, formato da hora e o app aberto por cada deslize horizontal.
@@ -37,8 +38,14 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_CLOCK_STYLE, style.key).apply()
     }
 
-    fun loadSwipeApp(side: SwipeSide): String? =
-        prefs.getString(swipeKey(side), null)?.takeIf { it.isNotBlank() }
+    fun loadSwipeApp(side: SwipeSide): String? {
+        val key = swipeKey(side)
+        // Deslizar para baixo vem ligado ao painel de notificações até o usuário mudar.
+        if (!prefs.contains(key)) {
+            return if (side == SwipeSide.Down) GestureTarget.encode(QuickAction.NotificationPanel) else null
+        }
+        return prefs.getString(key, null)?.takeIf { it.isNotBlank() }
+    }
 
     fun saveSwipeApp(side: SwipeSide, appKey: String?) {
         prefs.edit().putString(swipeKey(side), appKey.orEmpty()).apply()
@@ -61,6 +68,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
     private fun swipeKey(side: SwipeSide) = when (side) {
         SwipeSide.Left -> KEY_SWIPE_LEFT
         SwipeSide.Right -> KEY_SWIPE_RIGHT
+        SwipeSide.Down -> KEY_SWIPE_DOWN
+        SwipeSide.DoubleTap -> KEY_DOUBLE_TAP
     }
 
     private companion object {
@@ -71,5 +80,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"
         const val KEY_SWIPE_RIGHT = "swipe_right_app"
+        const val KEY_SWIPE_DOWN = "swipe_down_app"
+        const val KEY_DOUBLE_TAP = "double_tap_app"
     }
 }

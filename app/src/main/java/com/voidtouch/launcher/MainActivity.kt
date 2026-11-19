@@ -35,6 +35,11 @@ import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
 import com.voidtouch.launcher.data.Folder
+import com.voidtouch.launcher.data.GestureTarget
+import com.voidtouch.launcher.data.IconLoader
+import com.voidtouch.launcher.data.QuickAction
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import com.voidtouch.launcher.data.FolderStore
 import com.voidtouch.launcher.data.Folders
 import com.voidtouch.launcher.data.MemoryMode
@@ -95,9 +100,24 @@ class MainActivity : ComponentActivity() {
 
     private var clockStyle by mutableStateOf(ClockStyle.H)
 
-    private var swipeLeftKey by mutableStateOf<String?>(null)
+    private var gestures by mutableStateOf<Map<SwipeSide, String?>>(emptyMap())
 
-    private var swipeRightKey by mutableStateOf<String?>(null)
+    /** Muda quando um app é instalado, removido ou atualizado: só então a lista de apps é relida. */
+    private var appsKey by mutableIntStateOf(0)
+
+    private var torchOn = false
+
+    private val packageReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            appsKey++
+        }
+    }
+
+    private val torchCallback = object : CameraManager.TorchCallback() {
+        override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
+            torchOn = enabled
+        }
+    }
 
     private lateinit var settingsStore: SettingsStore
 
@@ -177,12 +197,20 @@ class MainActivity : ComponentActivity() {
         folders = folderStore.load()
         backdrop = settingsStore.loadBackdrop()
         clockStyle = settingsStore.loadClockStyle()
-        swipeLeftKey = settingsStore.loadSwipeApp(SwipeSide.Left)
-        swipeRightKey = settingsStore.loadSwipeApp(SwipeSide.Right)
+        gestures = SwipeSide.entries.associateWith { settingsStore.loadSwipeApp(it) }
         memoryMode = settingsStore.loadMemoryMode()
         hiddenPhotos = settingsStore.loadHiddenPhotos()
         photoAccess = MemoryReader.hasAccess(this)
         applyBackdrop()
+
+        // Só relê a lista de apps quando algo é instalado, removido ou atualizado.
+        val pkgFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        }
+        ContextCompat.registerReceiver(this, packageReceiver, pkgFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
 
         // Depois de uma atualização (ou na primeira instalação), mostra as novidades uma vez.
         val seen = prefs.getString(KEY_SEEN_VERSION, null)
@@ -192,8 +220,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             VoidTouchTheme {
-                val apps by produceState(emptyList<AppEntry>(), refreshKey) {
+                val apps by produceState(emptyList<AppEntry>(), appsKey) {
                     value = withContext(Dispatchers.Default) { AppRepository.loadApps(applicationContext) }
+                }
+                // Com a lista pronta, prepara os ícones em segundo plano (baixa prioridade) para a grade rolar lisa.
+                LaunchedEffect(apps) {
+                    if (apps.isNotEmpty()) {
+                        delay(600)
+                        withContext(Dispatchers.Default) {
+                            apps.forEach { IconLoader.load(applicationContext, it) }
+                        }
+                    }
                 }
                 var showAllApps by remember { mutableStateOf(false) }
                 // Verdadeiro quando a lista foi aberta pela pílula de busca (já abre o teclado).
@@ -237,6 +274,24 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val focusOn = focusSince != 0L
+
+                // Executa o destino de um gesto: abre um app ou faz uma ação rápida.
+                val runGesture: (SwipeSide) -> Unit = { side ->
+                    val target = gestures[side]
+                    val action = GestureTarget.action(target)
+                    when {
+                        target == null -> say("defina esse gesto em ajustes")
+                        action == QuickAction.Torch -> toggleTorch()
+                        action == QuickAction.NotificationPanel -> expandNotificationPanel()
+                        action == QuickAction.Search -> { focusSearch = true; showAllApps = true }
+                        action == QuickAction.Drawer -> { focusSearch = false; showAllApps = true }
+                        action == QuickAction.Focus -> toggleFocus()
+                        action == QuickAction.Optimize -> showOptimize = true
+                        action == QuickAction.Health -> showHealth = true
+                        action == QuickAction.Settings -> showSettings = true
+                        else -> launchByKey(apps, target, focusOn)
+                    }
+                }
                 val favorites = remember(apps, pinnedKeys, focusApps, focusOn) {
                     val byKey = apps.associateBy { it.key }
                     pinnedKeys.mapNotNull { byKey[it] }
@@ -300,8 +355,7 @@ class MainActivity : ComponentActivity() {
                             apps = apps,
                             backdrop = backdrop,
                             clockStyle = clockStyle,
-                            swipeLeftKey = swipeLeftKey,
-                            swipeRightKey = swipeRightKey,
+                            gestures = gestures,
                             versionName = versionName,
                             notificationsEnabled = notifAccess,
                             onOpenNotificationAccess = ::openNotificationAccess,
@@ -329,7 +383,7 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveClockStyle(it)
                             },
                             onSwipeApp = { side, key ->
-                                if (side == SwipeSide.Left) swipeLeftKey = key else swipeRightKey = key
+                                gestures = gestures + (side to key)
                                 settingsStore.saveSwipeApp(side, key)
                             },
                             onClose = { showSettings = false },
@@ -425,8 +479,10 @@ class MainActivity : ComponentActivity() {
                             onOpenHealth = { showHealth = true },
                             onToggleFocus = ::toggleFocus,
                             onOpenSettings = { showSettings = true },
-                            onSwipeLeft = { launchByKey(apps, swipeLeftKey, focusOn) },
-                            onSwipeRight = { launchByKey(apps, swipeRightKey, focusOn) },
+                            onSwipeLeft = { runGesture(SwipeSide.Left) },
+                            onSwipeRight = { runGesture(SwipeSide.Right) },
+                            onSwipeDown = { runGesture(SwipeSide.Down) },
+                            onDoubleTap = { runGesture(SwipeSide.DoubleTap) },
                         )
                     }
                   }
@@ -437,6 +493,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        runCatching { unregisterReceiver(packageReceiver) }
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -455,12 +516,14 @@ class MainActivity : ComponentActivity() {
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
         }
         ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        runCatching { getSystemService(CameraManager::class.java).registerTorchCallback(torchCallback, null) }
     }
 
     override fun onStop() {
         super.onStop()
         screenActive = false
         unregisterReceiver(timeReceiver)
+        runCatching { getSystemService(CameraManager::class.java).unregisterTorchCallback(torchCallback) }
     }
 
     override fun onResume() {
@@ -557,6 +620,28 @@ class MainActivity : ComponentActivity() {
         }
         say("abrindo ${app.label}…")
         AppRepository.launch(this, app)
+    }
+
+    /** Liga ou desliga a lanterna (não precisa de permissão). */
+    private fun toggleTorch() {
+        runCatching {
+            val manager = getSystemService(CameraManager::class.java)
+            val id = manager.cameraIdList.firstOrNull { cam ->
+                val c = manager.getCameraCharacteristics(cam)
+                c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true &&
+                    c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
+            } ?: return say("este aparelho não tem lanterna")
+            manager.setTorchMode(id, !torchOn)
+            say(if (torchOn) "lanterna desligada" else "lanterna ligada")
+        }.onFailure { say("não foi possível usar a lanterna") }
+    }
+
+    /** Abre o painel de notificações do sistema (método interno do Android; pode não existir em todo aparelho). */
+    private fun expandNotificationPanel() {
+        runCatching {
+            val service = getSystemService("statusbar")
+            Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
+        }.onFailure { say("este aparelho não permite abrir o painel por aqui") }
     }
 
     private fun applyBackdrop() {

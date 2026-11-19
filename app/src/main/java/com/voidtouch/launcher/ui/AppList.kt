@@ -303,7 +303,12 @@ fun AppList(
                     listState = listState,
                     itemCount = entries.size,
                     letterAt = { index -> letterOf(entries.getOrNull(index)) },
-                    onLetterChange = { railLetter = it },
+                    onLetterChange = { letter ->
+                        if (letter != null && letter != railLetter) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        railLetter = letter
+                    },
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .padding(end = 6.dp, top = 8.dp, bottom = 8.dp),

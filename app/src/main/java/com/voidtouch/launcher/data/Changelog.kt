@@ -10,6 +10,17 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.14.0",
+            listOf(
+                "Novos gestos na home: deslizar para baixo e toque duplo, além dos deslizes para os lados.",
+                "Cada gesto abre um app ou faz uma ação rápida: lanterna, painel de notificações, buscar app, lista de apps, foco, otimizar, saúde ou ajustes.",
+                "Deslizar para baixo já vem abrindo o painel de notificações.",
+                "Ícones preparados em segundo plano: a grade de apps rola mais lisa.",
+                "A lista de apps só é relida quando algo é instalado ou removido, e não a cada volta à home: a home abre mais rápido.",
+                "Toque leve ao arrastar a régua por letras.",
+            ),
+        ),
+        ReleaseNote(
             "0.13.0",
             listOf(
                 "Pastas na lista de apps: segure um app > adicionar à pasta. As pastas aparecem primeiro na grade.",
