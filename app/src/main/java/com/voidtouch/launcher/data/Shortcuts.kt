@@ -16,7 +16,7 @@ object Shortcuts {
 
     fun load(context: Context, packageName: String, limit: Int = 4): List<AppShortcut> = runCatching {
         val apps = context.getSystemService(LauncherApps::class.java)
-        if (!apps.hasShortcutHost()) return emptyList()
+        if (!apps.hasShortcutHostPermission()) return emptyList()
         val query = LauncherApps.ShortcutQuery()
             .setPackage(packageName)
             .setQueryFlags(
