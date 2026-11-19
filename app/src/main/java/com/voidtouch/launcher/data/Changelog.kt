@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.15.0",
+            listOf(
+                "Dicas de uso: uma tela rápida com todos os gestos aparece no primeiro uso e fica em Ajustes > dicas de uso.",
+                "Backup dos ajustes: salve favoritos, pastas, apps do foco, gestos e ajustes em um arquivo e restaure quando quiser (útil ao trocar de celular).",
+                "Ajustes > sobre mostra quanto tempo a última abertura levou, em milissegundos.",
+            ),
+        ),
+        ReleaseNote(
             "0.14.3",
             listOf(
                 "Correção: tocar no espaço vazio ao lado de um favorito não abre mais o app. Só o ícone e o nome respondem ao toque, e o resto da linha fica livre para o toque duplo e os deslizes.",

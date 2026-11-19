@@ -58,6 +58,10 @@ fun SettingsScreen(
     onOpenNotificationAccess: () -> Unit,
     onOpenAppInfo: () -> Unit,
     onOpenChangelog: () -> Unit,
+    onOpenTips: () -> Unit,
+    onBackupSave: () -> Unit,
+    onBackupRestore: () -> Unit,
+    openTimeMs: Long,
     onOpenOptimize: () -> Unit,
     memoryMode: MemoryMode,
     hiddenPhotos: Int,
@@ -159,9 +163,28 @@ fun SettingsScreen(
             modifier = Modifier.padding(top = 4.dp),
         )
 
+        Section("backup dos ajustes")
+        ValueRow("salvar backup em arquivo", onBackupSave)
+        ValueRow("restaurar backup de arquivo", onBackupRestore)
+        Text(
+            "guarda favoritos, pastas, apps do foco, gestos e ajustes. Útil antes de trocar de celular.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+
         Section("sobre")
         Text("VoidTouch $versionName", style = VoidType.App, color = VoidColors.TextDim)
         ValueRow("novidades", onOpenChangelog)
+        ValueRow("dicas de uso", onOpenTips)
+        if (openTimeMs > 0L) {
+            Text(
+                "última abertura: $openTimeMs ms",
+                style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                color = VoidColors.TextDim,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
         UpdateRow(versionName)
     }
 }

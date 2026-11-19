@@ -34,7 +34,10 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.data.Backup
 import com.voidtouch.launcher.data.Favorite
+import com.voidtouch.launcher.ui.TipsScreen
+import android.os.SystemClock
 import com.voidtouch.launcher.data.FavoriteKeys
 import com.voidtouch.launcher.data.Folder
 import com.voidtouch.launcher.data.GestureTarget
@@ -108,6 +111,32 @@ class MainActivity : ComponentActivity() {
     private var appsKey by mutableIntStateOf(0)
 
     private var torchOn = false
+
+    private val createdAt = SystemClock.elapsedRealtime()
+    private var openTimeMs by mutableLongStateOf(0L)
+
+    private val backupSave = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            val ok = runCatching {
+                contentResolver.openOutputStream(uri)?.use {
+                    it.write(Backup.export(getSharedPreferences(PREFS, MODE_PRIVATE)).toByteArray())
+                } != null
+            }.getOrDefault(false)
+            say(if (ok) "backup salvo" else "não foi possível salvar o backup")
+        }
+    }
+
+    private val backupRestore = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val text = runCatching { contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }.getOrNull()
+            if (text != null && Backup.import(getSharedPreferences(PREFS, MODE_PRIVATE), text)) {
+                // Recria a tela para reler tudo (favoritos, pastas, gestos...) já restaurado.
+                recreate()
+            } else {
+                say("esse arquivo não é um backup do VoidTouch")
+            }
+        }
+    }
 
     private val packageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -219,6 +248,9 @@ class MainActivity : ComponentActivity() {
         val initialNotes: List<ReleaseNote>? =
             if (seen != versionName) Changelog.forVersion(versionName)?.let { listOf(it) } else null
         prefs.edit().putString(KEY_SEEN_VERSION, versionName).apply()
+        val firstUse = !prefs.getBoolean(KEY_TIPS_SEEN, false)
+        if (firstUse) prefs.edit().putBoolean(KEY_TIPS_SEEN, true).apply()
+        openTimeMs = prefs.getLong(KEY_OPEN_MS, 0L)
 
         setContent {
             VoidTouchTheme {
@@ -243,11 +275,19 @@ class MainActivity : ComponentActivity() {
                 var showHealth by remember { mutableStateOf(false) }
                 var showSettings by remember { mutableStateOf(false) }
                 var showOptimize by remember { mutableStateOf(false) }
+                var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
                 var changelogTitle by remember { mutableStateOf("novidades da v$versionName") }
                 // Verdadeiro enquanto se marca os apps do foco na lista completa.
                 var markingFocusApps by remember { mutableStateOf(false) }
+
+                // Mede quanto a primeira tela levou para aparecer, para saber se a abertura está rápida.
+                LaunchedEffect(Unit) {
+                    val ms = SystemClock.elapsedRealtime() - createdAt
+                    openTimeMs = ms
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putLong(KEY_OPEN_MS, ms).apply()
+                }
 
                 // Apertar Home com o launcher aberto sempre volta para a home.
                 LaunchedEffect(homeSignal) {
@@ -256,6 +296,7 @@ class MainActivity : ComponentActivity() {
                     showSettings = false
                     changelog = null
                     showOptimize = false
+                    showTips = false
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {
@@ -270,6 +311,7 @@ class MainActivity : ComponentActivity() {
                 BackHandler {
                     when {
                         changelog != null -> changelog = null
+                        showTips -> showTips = false
                         showOptimize -> showOptimize = false
                         showSettings -> showSettings = false
                         showHealth -> showHealth = false
@@ -327,6 +369,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val screen = when {
+                    showTips -> "tips"
                     changelog != null -> "changelog"
                     showOptimize -> "optimize"
                     showSettings -> "settings"
@@ -360,7 +403,9 @@ class MainActivity : ComponentActivity() {
                     },
                     label = "screen",
                   ) { current ->
-                    if (current == "changelog") {
+                    if (current == "tips") {
+                        TipsScreen(onClose = { showTips = false })
+                    } else if (current == "changelog") {
                         ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
                     } else if (current == "optimize") {
                         OptimizeScreen(apps = apps, refreshKey = refreshKey, onMessage = ::say, onClose = { showOptimize = false })
@@ -383,6 +428,10 @@ class MainActivity : ComponentActivity() {
                                 say("fotos ocultas restauradas")
                             },
                             onOpenOptimize = { showSettings = false; showOptimize = true },
+                            onOpenTips = { showSettings = false; showTips = true },
+                            onBackupSave = { backupSave.launch("voidtouch-backup.json") },
+                            onBackupRestore = { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) },
+                            openTimeMs = openTimeMs,
                             onOpenChangelog = {
                                 changelogTitle = "novidades"
                                 changelog = Changelog.all
@@ -688,5 +737,7 @@ class MainActivity : ComponentActivity() {
     private companion object {
         const val PREFS = "voidtouch"
         const val KEY_SEEN_VERSION = "seen_version"
+        const val KEY_TIPS_SEEN = "tips_seen"
+        const val KEY_OPEN_MS = "last_open_ms"
     }
 }
