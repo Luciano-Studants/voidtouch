@@ -1,55 +1,72 @@
 # VoidTouch
 
-Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Galaxy A05 (2 GB de RAM).
+Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Galaxy A05 (2 GB de RAM, One UI 7). Uso pessoal, em português do Brasil.
 
-Lista de apps em texto, ícones vetoriais pequenos, preto/cinza/branco, sem cor de destaque e sem tarefas em segundo plano.
+Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma tarefa em segundo plano**: relógio, status e player só atualizam com a tela visível.
 
-> Status: **v0.8.1 – atualização dentro do app**. Em Ajustes > sobre, "verificar atualização" baixa a versão nova publicada no GitHub. (v0.8: nova home e ajustes.) Carrossel (hora, dia, música), bloco de notificações/status, deslizes configuráveis e tela de ajustes. Tudo o mais está no [plano](docs/REQUISITOS.md).
+> Versão atual: **0.24.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
 
-**Abrir a lista completa:** deslize para cima na home ou toque no círculo (canto inferior direito). Para voltar, deslize para baixo com a lista no topo ou use o botão voltar.
+## O que ele faz
 
-**Buscar:** toque em "buscar app" (canto inferior esquerdo) e digite; acentos e maiúsculas não importam ("camera" acha "Câmera"). A tecla de confirmar do teclado abre o primeiro resultado.
+**Home**
+- Carrossel de 4 páginas (deslize para os lados): hora (com a foto das memórias do dia), dia, música (player com capa, progresso e controles) e agenda (próximos 7 dias do calendário).
+- Notificações recentes (toque abre, segurar dispensa) e bloco de status do aparelho.
+- Até 10 favoritos, entre apps e pastas. Segure um favorito para soltá-lo.
+- Engrenagem no canto superior direito abre os Ajustes.
 
-**Saúde do aparelho:** toque na linha "bateria · ram" da home. Mostra RAM, armazenamento e bateria em barras finas e a lista dos 10 apps que mais ocupam espaço (app + dados), com o cache de cada um. Tocar num app abre a tela dele no Android, onde fica Armazenamento > Limpar cache. Para medir o tamanho dos apps o Android exige a permissão especial **acesso ao uso**: o botão "permitir acesso" leva direto até ela. O VoidTouch só lê os tamanhos, não tem permissão de internet e não envia nada. Sem a permissão, o resto da tela funciona normalmente.
+**Gestos da home** (Ajustes > gestos da home): deslizar para esquerda, direita e baixo, e toque duplo. Cada um abre um app ou uma ação: lanterna, painel de notificações, buscar app, lista de apps, foco, otimizar, saúde ou ajustes. Por padrão, deslizar para baixo abre o painel de notificações.
 
-**Home (v0.8):** carrossel no topo (passe para os lados: hora, dia da semana, música), depois notificações (chegam na v0.9) e status do celular (toque para abrir a saúde do aparelho), a linha do foco e os favoritos. Deslize para cima abre a lista. **Deslizar para a esquerda ou direita abaixo do carrossel abre os apps escolhidos em Ajustes.** Segure o carrossel, ou toque em "ajustes" na lista, para abrir os Ajustes (fundo, formato da hora 20H00/20:00, apps dos deslizes). Na lista, arraste a linha tracejada à direita para pular por letra.
+**Lista de apps**: grade de 3 colunas com ícones, régua tracejada para pular por letra, busca sem acento e por início de palavra. Segurar um app abre o menu: atalhos do próprio app, fixar na home, adicionar à pasta, informações e desinstalar. Pastas aparecem primeiro e também podem ser fixadas na home.
 
-**Modo foco:** na lista completa, toque em **apps do foco** (canto direito, abaixo da busca) e toque nos apps que distraem; eles ganham um círculo vazio à direita. Toque em **concluir**. Depois, na home, toque na linha **foco desligado** (abaixo do relógio) para ligar: os apps marcados somem dos favoritos, da lista e da busca, a linha de bateria e RAM some e a linha passa a mostrar há quanto tempo o foco está ligado. Toque de novo para desligar. Sem nenhum app marcado o foco não liga e o app avisa.
+**Modo foco**: esconde notificações e apps marcados, só dentro do VoidTouch. O **foco automático** liga e desliga sozinho em um horário (padrão 18h às 0h), nas viradas da janela, com a home aberta.
 
-Limite do Android: o foco esconde os apps **só dentro do VoidTouch**. Um app marcado ainda pode ser aberto por uma notificação ou pela tela de apps recentes, porque um launcher não consegue bloquear isso.
+**Modo noite**: no horário escolhido (padrão 22h às 6h) a home fica mais escura e calma, sem status, notificações e foto.
 
-**Fixar favoritos:** na lista completa, **segure** um app para fixar na home (o ponto à direita marca os fixados). Na home, segurar um favorito desafixa. Máximo de 10.
+**Memórias do dia**: de vez em quando uma foto da galeria (qualquer uma, menos capturas de tela) aparece ao lado da hora. Toque abre na galeria; o X esconde para sempre.
 
-**Trocar o fundo (provisório):** segure o dedo no relógio. Alterna entre preto, grafite e papel de parede. Vira uma opção na tela de Ajustes mais adiante.
+**Celular**: tela Saúde (RAM, armazenamento, bateria, apps mais pesados e **desempenho** medido sob demanda), tela Otimizar (limpeza de cache guiada, apps parados, atalho para os Cuidados com o dispositivo da Samsung) e painel de **permissões** com o estado de cada uma.
 
-## Instalar o APK (sem computador)
+**Ajustes**: fundo (preto, cinza ou papel de parede), formato da hora (20H00 ou 20:00), gestos, foco automático, modo noite, memórias, backup e sobre (novidades, dicas de uso, atualização e tempo de abertura).
 
-1. No GitHub, abra a aba **Actions** e entre na execução mais recente de **Build APK**.
-2. Em **Artifacts**, baixe `voidtouch-release-apk` (vem em .zip) e extraia o `.apk`. É a versão otimizada; use sempre essa.
-   Cada compilação usa uma chave nova, então para atualizar é preciso **desinstalar a versão anterior** antes de instalar a nova.
-3. Abra o `.apk` no celular. Se pedir, permita "instalar apps desconhecidos" para o navegador ou gerenciador de arquivos.
-4. Aperte o botão Home. O Android pergunta qual tela inicial usar: escolha **VoidTouch** e **Sempre**.
+**Backup**: exporta e restaura favoritos, pastas, gestos e ajustes em um arquivo JSON. O arquivo é validado por inteiro antes de restaurar; se algo estiver errado, nada é alterado.
 
-Para voltar à tela inicial da Samsung: Ajustes > Apps > Escolher apps padrão > App de tela inicial.
+## Limites do Android
+
+- Um launcher não consegue limpar o cache de outros apps nem encerrá-los; por isso a limpeza é guiada.
+- O foco esconde apps só dentro do VoidTouch.
+- O painel de notificações abre por uma chamada oculta do sistema, que pode mudar em outras versões ou marcas.
+- Atalhos dos apps só funcionam com o VoidTouch como launcher padrão.
+- Fotos que existem só na nuvem do Google Fotos não são acessíveis.
+- Compatibilidade com outras marcas de Android está adiada para a v1.0.
+
+## Instalar
+
+1. No GitHub, abra **Releases** e baixe o `.apk` da versão mais recente (ou em **Actions > Build APK > Artifacts**).
+2. Abra o `.apk` no celular e, se pedir, permita "instalar apps desconhecidos".
+3. Aperte Home e escolha **VoidTouch** > **Sempre**.
+
+Para voltar à tela da Samsung: Ajustes > Apps > Escolher apps padrão > App de tela inicial.
+
+## Atualizar dentro do app
+
+Em **Ajustes > sobre > verificar atualização**. O app só consulta as Releases do GitHub quando você toca. O APK baixado é conferido antes de instalar: tamanho, pacote, versão e assinatura. Se algo falhar, nada é instalado.
+
+Para as atualizações instalarem por cima, o build usa uma chave fixa: cadastre em *Settings > Secrets and variables > Actions* os secrets `KEYSTORE_BASE64` e `KEYSTORE_PASSWORD`. Com eles, cada push na `main` assina o APK e publica a Release `v<versão>`; sem eles o build usa a chave de debug e não publica Release. Os testes rodam antes, e se falharem a Release não sai.
 
 ## Compilar
 
-O APK é compilado automaticamente pelo GitHub Actions a cada push na `main`. Para compilar localmente é preciso JDK 17 e o Android SDK (Android Studio):
+O APK é compilado pelo GitHub Actions a cada push na `main`. Localmente, com JDK 17 e o Android SDK:
 
 ```
-./gradlew assembleRelease
+./gradlew testDebugUnitTest assembleRelease
 ```
 
 O APK sai em `app/build/outputs/apk/release/`.
 
 ## Tecnologia
 
-Kotlin + Jetpack Compose, `minSdk 26`, `targetSdk 35`, uma única Activity, sem bibliotecas além do necessário.
+Kotlin 2.0 + Jetpack Compose, `minSdk 26`, `targetSdk 35`, uma única Activity, sem bibliotecas além do necessário. A lógica pura fica em `data/` e é coberta por testes unitários.
 
 Logotipos: [Simple Icons](https://simpleicons.org) (CC0); as marcas pertencem aos seus donos.
 
 Fontes: JetBrains Mono Light, Oxanium ExtraLight e Allura (licença OFL, ver [licenses](licenses/README.md)).
-
-## Atualização dentro do app (v0.8.1)
-
-O app consulta as Releases do GitHub só quando você toca em **Ajustes > verificar atualização**. Para funcionar sem desinstalar, o build precisa da chave fixa: cadastre em *Settings > Secrets and variables > Actions* os secrets `KEYSTORE_BASE64` e `KEYSTORE_PASSWORD`. Com eles, cada push na `main` assina o APK com a mesma chave e publica a Release `v<versão>`. Sem eles, o build continua funcionando com a chave de debug, mas sem Release.
