@@ -139,7 +139,7 @@ fun SettingsScreen(
         Section("memórias do dia")
         ValueRow(memoryMode.label, onMemoryMode)
         Text(
-            "mostra, ao lado da hora, uma foto da câmera tirada por volta de hoje em anos ou meses atrás. As fotos não saem do aparelho.",
+            "mostra, ao lado da hora, uma foto da galeria (menos capturas de tela) tirada por volta de hoje em anos ou meses atrás. As fotos não saem do aparelho.",
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 4.dp),

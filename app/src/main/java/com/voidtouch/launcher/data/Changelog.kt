@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.14.1",
+            listOf(
+                "Memórias do dia: agora vale qualquer foto da galeria (câmera, WhatsApp, downloads...), só ficam de fora capturas de tela e imagens muito pequenas.",
+            ),
+        ),
+        ReleaseNote(
             "0.14.0",
             listOf(
                 "Novos gestos na home: deslizar para baixo e toque duplo, além dos deslizes para os lados.",

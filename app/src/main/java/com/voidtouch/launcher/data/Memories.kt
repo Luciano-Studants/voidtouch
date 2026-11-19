@@ -39,7 +39,7 @@ data class Memory(val id: Long, val uri: Uri, val label: String)
 data class MemoryShown(val memory: Memory, val bitmap: ImageBitmap)
 
 /**
- * "Neste dia": procura na galeria fotos da câmera tiradas por volta da data de hoje em anos
+ * "Neste dia": procura na galeria fotos (de qualquer pasta, menos capturas de tela) tiradas por volta da data de hoje em anos
  * anteriores (e há 1, 3 e 6 meses). Lê só o que é preciso, uma vez por bloco de 3 horas e com a
  * tela aberta; as fotos nunca saem do aparelho.
  */
@@ -64,6 +64,12 @@ object MemoryReader {
         Build.VERSION.SDK_INT >= 33 -> arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
         else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
+
+    /** Lado mínimo, em pixels, para a imagem contar como foto. */
+    private const val MIN_SIDE = 600
+
+    /** Trechos de pasta ou nome que indicam captura de tela (LIKE ignora maiúsculas). */
+    private val EXCLUDED_WORDS = listOf("screenshot", "captura", "screen_rec", "screenrec")
 
     private const val DAY = 24L * 60L * 60L * 1000L
 
@@ -100,21 +106,26 @@ object MemoryReader {
     }
 
     private fun query(context: Context, from: Long, to: Long): List<Long> = runCatching {
-        // Só fotos da câmera (DCIM): deixa de fora capturas de tela, downloads e imagens de apps.
-        val pathFilter = if (Build.VERSION.SDK_INT >= 29) {
-            "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ?" to "DCIM/%"
-        } else {
-            "${MediaStore.MediaColumns.DATA} LIKE ?" to "%/DCIM/%"
+        // Qualquer foto serve, menos capturas de tela: ficam de fora as pastas e nomes de prints
+        // (Screenshots, Captura de tela) e imagens muito pequenas (figurinhas, ícones, miniaturas).
+        val pathColumn = if (Build.VERSION.SDK_INT >= 29) MediaStore.MediaColumns.RELATIVE_PATH else MediaStore.MediaColumns.DATA
+        val name = MediaStore.Images.Media.DISPLAY_NAME
+        val selection = buildString {
+            append("${MediaStore.Images.Media.DATE_TAKEN} BETWEEN ? AND ?")
+            append(" AND ${MediaStore.Images.Media.WIDTH} >= ${MIN_SIDE} AND ${MediaStore.Images.Media.HEIGHT} >= ${MIN_SIDE}")
+            EXCLUDED_WORDS.forEach { append(" AND $pathColumn NOT LIKE ? AND $name NOT LIKE ?") }
         }
+        val selectionArgs = buildList {
+            add(from.toString())
+            add(to.toString())
+            EXCLUDED_WORDS.forEach { word ->
+                add("%$word%")
+                add("%$word%")
+            }
+        }.toTypedArray()
         val args = Bundle().apply {
-            putString(
-                ContentResolver.QUERY_ARG_SQL_SELECTION,
-                "${MediaStore.Images.Media.DATE_TAKEN} BETWEEN ? AND ? AND ${pathFilter.first}",
-            )
-            putStringArray(
-                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
-                arrayOf(from.toString(), to.toString(), pathFilter.second),
-            )
+            putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection)
+            putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, selectionArgs)
             putStringArray(ContentResolver.QUERY_ARG_SORT_COLUMNS, arrayOf(MediaStore.Images.Media.DATE_TAKEN))
             putInt(ContentResolver.QUERY_ARG_SORT_DIRECTION, ContentResolver.QUERY_SORT_DIRECTION_DESCENDING)
             putInt(ContentResolver.QUERY_ARG_LIMIT, 12)
