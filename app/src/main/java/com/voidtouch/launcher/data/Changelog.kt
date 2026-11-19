@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.22.0",
+            listOf(
+                "Organização interna: as regras de favoritos, foco e notificações saíram da tela principal e agora têm testes automáticos.",
+                "Nada muda no uso; serve para cada versão nova não quebrar o que já funciona.",
+            ),
+        ),
+        ReleaseNote(
             "0.21.0",
             listOf(
                 "Atualização mais segura: o arquivo baixado é conferido antes de abrir o instalador (tamanho, pacote, versão e assinatura).",

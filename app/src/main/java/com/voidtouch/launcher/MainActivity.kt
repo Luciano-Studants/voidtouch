@@ -38,6 +38,7 @@ import com.voidtouch.launcher.data.Agenda
 import com.voidtouch.launcher.data.AgendaItem
 import com.voidtouch.launcher.data.Backup
 import com.voidtouch.launcher.data.FocusAction
+import com.voidtouch.launcher.data.HomeRules
 import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.NightMode
 import java.time.Instant
@@ -377,23 +378,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 val favorites = remember(apps, pinnedKeys, folders, focusApps, focusOn) {
-                    val byKey = apps.associateBy { it.key }
-                    pinnedKeys.mapNotNull { key ->
-                        val folderId = FavoriteKeys.folderId(key)
-                        if (folderId != null) {
-                            folders.firstOrNull { it.id == folderId }?.let { f ->
-                                val n = f.keys.count { it in byKey && (!focusOn || it !in focusApps) }
-                                if (n > 0) Favorite.FolderItem(f, n) else null
-                            }
-                        } else {
-                            byKey[key]?.takeIf { !focusOn || it.key !in focusApps }?.let { Favorite.App(it) }
-                        }
-                    }
+                    HomeRules.favorites(apps, pinnedKeys, folders, focusApps, focusOn)
                 }
 
                 // Com o foco ligado, notificações dos apps marcados ficam escondidas.
                 val notifications = NotificationHub.items.filter { n ->
-                    !focusOn || focusApps.none { it.substringBefore('/') == n.packageName }
+                    !HomeRules.notificationHidden(n.packageName, focusApps, focusOn)
                 }
 
                 // A foto "neste dia" é escolhida uma vez por bloco de 3 horas, fora da thread principal.
@@ -752,35 +742,31 @@ class MainActivity : ComponentActivity() {
 
     /** Fixa ou solta um app ou pasta nos favoritos da home (limite de 10 no total). */
     private fun togglePinKey(key: String, label: String) {
-        val current = pinnedKeys
-        pinnedKeys = when {
-            key in current -> {
-                say("$label saiu da home")
-                current - key
-            }
-            current.size >= FavoritesStore.MAX -> {
-                say("máximo de ${FavoritesStore.MAX} favoritos: solte um para fixar outro")
-                current
-            }
-            else -> {
-                say("$label fixado na home · ${current.size + 1}/${FavoritesStore.MAX}")
-                current + key
-            }
+        val (next, result) = HomeRules.togglePin(pinnedKeys, key, FavoritesStore.MAX)
+        when (result) {
+            HomeRules.PinResult.Removed -> say("$label saiu da home")
+            HomeRules.PinResult.Full -> say("máximo de ${FavoritesStore.MAX} favoritos: solte um para fixar outro")
+            HomeRules.PinResult.Added -> say("$label fixado na home · ${next.size}/${FavoritesStore.MAX}")
         }
+        pinnedKeys = next
         favoritesStore.save(pinnedKeys)
     }
 
     /** Liga ou desliga o foco. Sem nenhum app marcado não há o que esconder, então avisa em vez de ligar. */
     private fun toggleFocus() {
-        if (focusSince != 0L) {
-            focusSince = 0L
-            say("foco desligado")
-        } else if (focusApps.isEmpty()) {
-            say("marque os apps do foco: lista completa > apps do foco")
-            return
-        } else {
-            focusSince = System.currentTimeMillis()
-            say("foco ligado · ${focusApps.size} app(s) escondido(s)")
+        when (HomeRules.toggleFocus(focusSince, focusApps)) {
+            HomeRules.FocusToggle.TurnedOff -> {
+                focusSince = 0L
+                say("foco desligado")
+            }
+            HomeRules.FocusToggle.NeedsApps -> {
+                say("marque os apps do foco: lista completa > apps do foco")
+                return
+            }
+            HomeRules.FocusToggle.TurnedOn -> {
+                focusSince = System.currentTimeMillis()
+                say("foco ligado · ${focusApps.size} app(s) escondido(s)")
+            }
         }
         focusStore.saveSince(focusSince)
     }
