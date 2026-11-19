@@ -329,6 +329,260 @@ fun AppList(
             }
         }
     }
+
+    AnimatedVisibility(
+        visible = sheet != null,
+        enter = fadeIn(tween(160)),
+        exit = fadeOut(tween(120)),
+    ) {
+        val current = lastSheet
+        if (current != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { sheet = null },
+            ) {
+                SheetPanel(
+                    sheet = current,
+                    folders = folders,
+                    pinned = current.appOrNull()?.let { it.key in pinnedKeys } == true,
+                    onSheet = { sheet = it },
+                    onTogglePin = onTogglePin,
+                    onFolderCreate = onFolderCreate,
+                    onFolderAdd = onFolderAdd,
+                    onFolderRemoveApp = onFolderRemoveApp,
+                    onFolderRename = onFolderRename,
+                    onFolderDelete = { id ->
+                        if (openFolderId == id) openFolderId = null
+                        onFolderDelete(id)
+                    },
+                    onAppInfo = onAppInfo,
+                    onUninstall = onUninstall,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+        }
+    }
+    }
+}
+
+/** Itens da grade: um app ou uma pasta. */
+private sealed interface Entry {
+    val key: String
+
+    data class AppItem(val app: AppEntry) : Entry {
+        override val key: String get() = app.key
+    }
+
+    data class FolderItem(val folder: Folder, val count: Int) : Entry {
+        override val key: String get() = "folder:${folder.id}"
+    }
+}
+
+/** Janelas de opções que sobem de baixo. */
+private sealed interface Sheet {
+    data class AppActions(val app: AppEntry) : Sheet
+    data class PickFolder(val app: AppEntry) : Sheet
+    data class NewFolder(val app: AppEntry) : Sheet
+    data class FolderActions(val folder: Folder) : Sheet
+    data class RenameFolder(val folder: Folder) : Sheet
+
+    fun appOrNull(): AppEntry? = when (this) {
+        is AppActions -> app
+        is PickFolder -> app
+        is NewFolder -> app
+        else -> null
+    }
+}
+
+@Composable
+private fun SheetPanel(
+    sheet: Sheet,
+    folders: List<Folder>,
+    pinned: Boolean,
+    onSheet: (Sheet?) -> Unit,
+    onTogglePin: (AppEntry) -> Unit,
+    onFolderCreate: (AppEntry, String) -> Unit,
+    onFolderAdd: (String, AppEntry) -> Unit,
+    onFolderRemoveApp: (AppEntry) -> Unit,
+    onFolderRename: (String, String) -> Unit,
+    onFolderDelete: (String) -> Unit,
+    onAppInfo: (AppEntry) -> Unit,
+    onUninstall: (AppEntry) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(VoidColors.Graphite, shape)
+            .border(1.dp, VoidColors.Line, shape)
+            // Absorve o toque para não fechar a janela ao tocar dentro dela.
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+    ) {
+        when (sheet) {
+            is Sheet.AppActions -> {
+                val app = sheet.app
+                val inFolder = folders.firstOrNull { f -> app.key in f.keys }
+                SheetTitle(app.label)
+                SheetRow(if (pinned) "tirar da home" else "fixar na home") {
+                    onTogglePin(app)
+                    onSheet(null)
+                }
+                if (inFolder != null) {
+                    SheetRow("tirar da pasta ${inFolder.name}") {
+                        onFolderRemoveApp(app)
+                        onSheet(null)
+                    }
+                } else {
+                    SheetRow("adicionar à pasta ›") { onSheet(Sheet.PickFolder(app)) }
+                }
+                SheetRow("informações do app") {
+                    onAppInfo(app)
+                    onSheet(null)
+                }
+                SheetRow("desinstalar") {
+                    onUninstall(app)
+                    onSheet(null)
+                }
+            }
+            is Sheet.PickFolder -> {
+                SheetTitle("adicionar ${sheet.app.label} a…")
+                folders.sortedBy { Search.normalize(it.name) }.forEach { f ->
+                    SheetRow("${f.name} · ${f.keys.size}") {
+                        onFolderAdd(f.id, sheet.app)
+                        onSheet(null)
+                    }
+                }
+                SheetRow("+ nova pasta") { onSheet(Sheet.NewFolder(sheet.app)) }
+            }
+            is Sheet.NewFolder -> {
+                var name by remember { mutableStateOf("") }
+                SheetTitle("nome da nova pasta")
+                SearchField(
+                    query = name,
+                    onQueryChange = { name = it },
+                    requestFocus = true,
+                    placeholder = "ex.: jogos",
+                    onGo = {
+                        onFolderCreate(sheet.app, name)
+                        onSheet(null)
+                    },
+                )
+                SheetRow("criar pasta") {
+                    onFolderCreate(sheet.app, name)
+                    onSheet(null)
+                }
+            }
+            is Sheet.FolderActions -> {
+                SheetTitle("pasta ${sheet.folder.name}")
+                SheetRow("renomear") { onSheet(Sheet.RenameFolder(sheet.folder)) }
+                SheetRow("excluir pasta (os apps voltam à lista)") {
+                    onFolderDelete(sheet.folder.id)
+                    onSheet(null)
+                }
+            }
+            is Sheet.RenameFolder -> {
+                var name by remember { mutableStateOf(sheet.folder.name) }
+                SheetTitle("renomear pasta")
+                SearchField(
+                    query = name,
+                    onQueryChange = { name = it },
+                    requestFocus = true,
+                    placeholder = "nome da pasta",
+                    onGo = {
+                        onFolderRename(sheet.folder.id, name)
+                        onSheet(null)
+                    },
+                )
+                SheetRow("salvar") {
+                    onFolderRename(sheet.folder.id, name)
+                    onSheet(null)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SheetTitle(text: String) {
+    Text(text, style = VoidType.Caption, color = VoidColors.TextDim, modifier = Modifier.padding(bottom = 6.dp))
+}
+
+@Composable
+private fun SheetRow(text: String, onClick: () -> Unit) {
+    Text(
+        text = text,
+        style = VoidType.App,
+        color = VoidColors.Text,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
+    )
+}
+
+/** Pasta na grade: contorno de pasta com a quantidade de apps dentro, e o nome embaixo. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun FolderCell(
+    folder: Folder,
+    count: Int,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val source = remember { MutableInteractionSource() }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .fillMaxWidth()
+            .pressFeedback(source)
+            .combinedClickable(
+                interactionSource = source,
+                indication = null,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .padding(horizontal = 4.dp, vertical = 12.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(44.dp)) {
+            Canvas(modifier = Modifier.size(34.dp, 28.dp)) {
+                val stroke = Stroke(width = 1.6.dp.toPx())
+                val tab = Path().apply {
+                    moveTo(0f, 5.dp.toPx())
+                    lineTo(0f, 2.dp.toPx())
+                    lineTo(12.dp.toPx(), 2.dp.toPx())
+                    lineTo(15.dp.toPx(), 5.dp.toPx())
+                }
+                drawPath(tab, VoidColors.TextDim, style = stroke)
+                drawRoundRect(
+                    color = VoidColors.Text,
+                    topLeft = Offset(0f, 5.dp.toPx()),
+                    size = Size(size.width, size.height - 5.dp.toPx()),
+                    cornerRadius = CornerRadius(4.dp.toPx()),
+                    style = stroke,
+                )
+            }
+            Text(
+                text = count.toString(),
+                style = VoidType.Caption,
+                color = VoidColors.Text,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = folder.name,
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 15.sp),
+            color = VoidColors.Text,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 /** Célula da grade: ícone em cima, nome embaixo. Ponto cheio = fixado na home; círculo = app do foco. */
