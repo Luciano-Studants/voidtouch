@@ -158,11 +158,12 @@ class MainActivity : ComponentActivity() {
     private val backupRestore = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             val text = runCatching { contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }.getOrNull()
-            if (text != null && Backup.import(getSharedPreferences(PREFS, MODE_PRIVATE), text)) {
+            val problem = if (text == null) "não foi possível ler o arquivo" else Backup.import(getSharedPreferences(PREFS, MODE_PRIVATE), text)
+            if (problem == null) {
                 // Recria a tela para reler tudo (favoritos, pastas, gestos...) já restaurado.
                 recreate()
             } else {
-                say("esse arquivo não é um backup do VoidTouch")
+                say("$problem; nada foi alterado")
             }
         }
     }

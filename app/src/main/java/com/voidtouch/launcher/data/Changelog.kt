@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.20.0",
+            listOf(
+                "Backup mais seguro: o arquivo é conferido por inteiro antes de restaurar (formato, versão, tamanhos e tipos).",
+                "Se algo estiver errado, nada é alterado e o aviso diz o motivo; antes, um arquivo ruim podia deixar os ajustes pela metade.",
+                "O backup agora guarda a data da exportação e recusa arquivos de versões mais novas do app.",
+            ),
+        ),
+        ReleaseNote(
             "0.19.0",
             listOf(
                 "Foco automático: em Ajustes, escolha o horário (padrão das 18h às 0h) e o modo foco liga e desliga sozinho.",

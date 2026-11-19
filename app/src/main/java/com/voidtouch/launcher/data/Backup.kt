@@ -28,30 +28,78 @@ object Backup {
             }
             data.put(key, entry)
         }
-        return JSONObject().put("app", "voidtouch").put("format", FORMAT).put("data", data).toString(2)
+        return JSONObject().put("app", "voidtouch").put("format", FORMAT).put("exportedAt", System.currentTimeMillis()).put("data", data).toString(2)
     }
 
-    /** Aplica o backup. Devolve falso se o arquivo não for um backup do VoidTouch. */
-    fun import(prefs: SharedPreferences, text: String): Boolean = runCatching {
-        val root = JSONObject(text)
-        if (root.optString("app") != "voidtouch") return false
-        val data = root.getJSONObject("data")
-        val edit = prefs.edit()
-        data.keys().forEach { key ->
-            if (key in SKIP) return@forEach
-            val e = data.getJSONObject(key)
-            when (e.getString("t")) {
-                "s" -> edit.putString(key, e.getString("v"))
-                "b" -> edit.putBoolean(key, e.getBoolean("v"))
-                "i" -> edit.putInt(key, e.getInt("v"))
-                "l" -> edit.putLong(key, e.getLong("v"))
-                "set" -> {
-                    val arr = e.getJSONArray("v")
-                    edit.putStringSet(key, (0 until arr.length()).map { arr.getString(it) }.toSet())
+    private const val MAX_BYTES = 1_000_000
+    private const val MAX_ENTRIES = 500
+    private const val MAX_SET = 2000
+    private const val MAX_TEXT = 200_000
+    private val KEY_RE = Regex("^[a-z0-9_:.-]{1,64}$")
+
+    /** Um item validado, pronto para gravar. */
+    class Item(val key: String, val type: String, val value: Any)
+
+    sealed class Result {
+        class Ok(val items: List<Item>) : Result()
+        class Invalid(val reason: String) : Result()
+    }
+
+    /**
+     * Confere o arquivo inteiro antes de tocar nos ajustes: formato, versão, tamanhos e tipos.
+     * Nada é gravado aqui, então um arquivo ruim nunca deixa os ajustes pela metade.
+     */
+    fun parse(text: String): Result {
+        if (text.length > MAX_BYTES) return Result.Invalid("arquivo grande demais para ser um backup")
+        try {
+            val root = JSONObject(text)
+            if (root.optString("app") != "voidtouch") return Result.Invalid("esse arquivo não é um backup do VoidTouch")
+            val format = root.optInt("format", -1)
+            if (format < 1) return Result.Invalid("backup sem versão de formato válida")
+            if (format > FORMAT) return Result.Invalid("backup feito por uma versão mais nova do VoidTouch")
+            val data = root.optJSONObject("data") ?: return Result.Invalid("backup sem dados")
+            if (data.length() > MAX_ENTRIES) return Result.Invalid("backup com itens demais")
+            val items = ArrayList<Item>()
+            for (key in data.keys()) {
+                if (key in SKIP) continue
+                if (!KEY_RE.matches(key)) return Result.Invalid("backup com item inválido")
+                val e = data.optJSONObject(key) ?: return Result.Invalid("backup corrompido")
+                val value: Any = when (e.optString("t")) {
+                    "s" -> e.getString("v").also { if (it.length > MAX_TEXT) return Result.Invalid("backup corrompido") }
+                    "b" -> e.getBoolean("v")
+                    "i" -> e.getInt("v")
+                    "l" -> e.getLong("v")
+                    "set" -> {
+                        val arr = e.getJSONArray("v")
+                        if (arr.length() > MAX_SET) return Result.Invalid("backup corrompido")
+                        (0 until arr.length()).map { arr.getString(it) }.toSet()
+                    }
+                    else -> return Result.Invalid("backup com tipo desconhecido")
                 }
+                items += Item(key, e.getString("t"), value)
+            }
+            if (items.isEmpty()) return Result.Invalid("backup vazio")
+            return Result.Ok(items)
+        } catch (ex: Exception) {
+            return Result.Invalid("arquivo corrompido ou ilegível")
+        }
+    }
+
+    /** Valida e só então grava, de uma vez. Devolve nulo se deu certo, ou o motivo da recusa. */
+    fun import(prefs: SharedPreferences, text: String): String? {
+        val parsed = parse(text)
+        if (parsed !is Result.Ok) return (parsed as Result.Invalid).reason
+        val edit = prefs.edit()
+        for (it in parsed.items) {
+            @Suppress("UNCHECKED_CAST")
+            when (it.type) {
+                "s" -> edit.putString(it.key, it.value as String)
+                "b" -> edit.putBoolean(it.key, it.value as Boolean)
+                "i" -> edit.putInt(it.key, it.value as Int)
+                "l" -> edit.putLong(it.key, it.value as Long)
+                else -> edit.putStringSet(it.key, it.value as Set<String>)
             }
         }
-        edit.apply()
-        true
-    }.getOrDefault(false)
+        return if (edit.commit()) null else "não foi possível gravar os ajustes"
+    }
 }

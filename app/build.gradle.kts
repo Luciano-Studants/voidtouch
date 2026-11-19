@@ -12,8 +12,8 @@ android {
         applicationId = "com.voidtouch.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 24
-        versionName = "0.19.0"
+        versionCode = 25
+        versionName = "0.20.0"
     }
 
     // Chave fixa (vinda dos secrets do GitHub) para uma versão nova instalar por cima da anterior.
@@ -71,4 +71,5 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")
 }
