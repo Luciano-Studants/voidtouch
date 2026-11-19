@@ -245,14 +245,15 @@ private fun UpdateRow(versionName: String) {
         }
         busy = true
         scope.launch {
-            val apk = Updater.download(context, info) { status = "baixando… $it%"; progress = it / 100f }
+            val result = Updater.download(context, info) { status = "baixando… $it%"; progress = it / 100f }
             busy = false
             progress = null
-            if (apk == null) {
-                status = "falha ao baixar, toque para tentar de novo"
-            } else {
-                status = "pronto: confirme a instalação"
-                Updater.install(context, apk)
+            when (result) {
+                is Updater.Download.Failed -> status = "${result.reason}; nada foi instalado. Toque para tentar de novo"
+                is Updater.Download.Ready -> {
+                    status = "arquivo conferido: confirme a instalação"
+                    Updater.install(context, result.file)
+                }
             }
         }
     }

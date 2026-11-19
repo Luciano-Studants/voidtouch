@@ -2,6 +2,7 @@ package com.voidtouch.launcher.data
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.core.content.FileProvider
@@ -59,20 +60,32 @@ object Updater {
         }
     }
 
-    /** Baixa o APK para o cache, avisando o progresso (0 a 100). Devolve o arquivo, ou nulo se falhar. */
-    suspend fun download(context: Context, info: UpdateInfo, onProgress: (Int) -> Unit): File? =
+    /** Resultado do download: o arquivo conferido, ou o motivo de não ser seguro instalar. */
+    sealed interface Download {
+        data class Ready(val file: File) : Download
+        data class Failed(val reason: String) : Download
+    }
+
+    /**
+     * Baixa o APK para o cache, avisando o progresso (0 a 100). Grava em arquivo temporário e só
+     * troca pelo final depois de conferir o tamanho, o pacote, a versão e a assinatura.
+     */
+    suspend fun download(context: Context, info: UpdateInfo, onProgress: (Int) -> Unit): Download =
         withContext(Dispatchers.IO) {
+            val dir = File(context.cacheDir, "updates").apply { mkdirs() }
+            val part = File(dir, "voidtouch.apk.part")
+            val target = File(dir, "voidtouch.apk")
             try {
-                val dir = File(context.cacheDir, "updates").apply { mkdirs() }
-                val target = File(dir, "voidtouch.apk")
+                part.delete()
+                target.delete()
                 val conn = open(info.apkUrl)
                 try {
-                    if (conn.responseCode != 200) return@withContext null
+                    if (conn.responseCode != 200) return@withContext Download.Failed("o servidor respondeu ${conn.responseCode}")
                     val total = conn.contentLengthLong
                     var done = 0L
                     var last = -1
                     conn.inputStream.use { input ->
-                        target.outputStream().use { out ->
+                        part.outputStream().use { out ->
                             val buf = ByteArray(32 * 1024)
                             while (true) {
                                 val n = input.read(buf)
@@ -89,14 +102,41 @@ object Updater {
                             }
                         }
                     }
+                    if (!UpdateCheckRules.sizeOk(done, total)) {
+                        part.delete()
+                        return@withContext Download.Failed("download incompleto, tente de novo")
+                    }
                 } finally {
                     conn.disconnect()
                 }
-                target
+                val problem = verify(context, part, info)
+                if (problem != null) {
+                    part.delete()
+                    return@withContext Download.Failed(problem)
+                }
+                if (!part.renameTo(target)) return@withContext Download.Failed("não foi possível preparar o arquivo")
+                Download.Ready(target)
             } catch (e: Exception) {
-                null
+                part.delete()
+                Download.Failed("falha no download, tente de novo")
             }
         }
+
+    /** Confere o APK baixado contra o app instalado. Devolve o motivo da recusa, ou nulo se estiver ok. */
+    @Suppress("DEPRECATION")
+    private fun verify(context: Context, apk: File, info: UpdateInfo): String? {
+        val pm = context.packageManager
+        val flags = PackageManager.GET_SIGNING_CERTIFICATES
+        val archive = pm.getPackageArchiveInfo(apk.absolutePath, flags) ?: return "o arquivo baixado não é um app válido"
+        if (archive.packageName != context.packageName) return "o arquivo baixado é de outro app"
+        val installed = pm.getPackageInfo(context.packageName, flags)
+        if (archive.longVersionCode <= installed.longVersionCode) return "o arquivo baixado não é mais novo que o instalado"
+        if (!UpdateCheckRules.versionMatches(archive.versionName, info.version)) return "a versão do arquivo não confere com a anunciada"
+        val newSigs = archive.signingInfo?.apkContentsSigners?.map { it.toByteArray().contentHashCode() }?.toSet().orEmpty()
+        val oldSigs = installed.signingInfo?.apkContentsSigners?.map { it.toByteArray().contentHashCode() }?.toSet().orEmpty()
+        if (newSigs.isEmpty() || newSigs != oldSigs) return "a assinatura do arquivo não confere com a do app instalado"
+        return null
+    }
 
     /** Verdadeiro se o sistema já deixa o VoidTouch instalar apps. */
     fun canInstall(context: Context): Boolean = context.packageManager.canRequestPackageInstalls()
@@ -126,4 +166,14 @@ object Updater {
             instanceFollowRedirects = true
             setRequestProperty("Accept", "application/vnd.github+json")
         }
+}
+
+/** Regras puras da conferência do download, separadas para poderem ser testadas. */
+object UpdateCheckRules {
+    /** O tamanho baixado precisa bater com o anunciado; sem tamanho anunciado, só exige algo baixado. */
+    fun sizeOk(downloaded: Long, announced: Long): Boolean =
+        downloaded > 0 && (announced <= 0 || downloaded == announced)
+
+    fun versionMatches(apkVersion: String?, announced: String): Boolean =
+        apkVersion != null && apkVersion.removePrefix("v") == announced.removePrefix("v")
 }

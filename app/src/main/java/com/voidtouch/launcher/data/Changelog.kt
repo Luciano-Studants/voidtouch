@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.21.0",
+            listOf(
+                "Atualização mais segura: o arquivo baixado é conferido antes de abrir o instalador (tamanho, pacote, versão e assinatura).",
+                "Download interrompido ou arquivo errado não chega ao instalador; o app mostra o motivo e continua funcionando na versão atual.",
+            ),
+        ),
+        ReleaseNote(
             "0.20.0",
             listOf(
                 "Backup mais seguro: o arquivo é conferido por inteiro antes de restaurar (formato, versão, tamanhos e tipos).",
