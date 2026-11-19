@@ -59,6 +59,12 @@ fun SettingsScreen(
     onOpenAppInfo: () -> Unit,
     onOpenChangelog: () -> Unit,
     onOpenTips: () -> Unit,
+    focusAutoOn: Boolean,
+    focusAutoStart: Int,
+    focusAutoEnd: Int,
+    onFocusAutoToggle: () -> Unit,
+    onFocusAutoStart: () -> Unit,
+    onFocusAutoEnd: () -> Unit,
     nightEnabled: Boolean,
     nightStart: Int,
     nightEnd: Int,
@@ -144,6 +150,19 @@ fun SettingsScreen(
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("foco automático")
+        ValueRow(if (focusAutoOn) "ligado" else "desligado", onFocusAutoToggle)
+        if (focusAutoOn) {
+            ValueRow("liga às ${focusAutoStart}h", onFocusAutoStart)
+            ValueRow("desliga às ${focusAutoEnd}h", onFocusAutoEnd)
+        }
+        Text(
+            "liga e desliga o modo foco nesse horário. Precisa de apps marcados em \"apps do foco\". A troca acontece quando a home está aberta; você pode ligar ou desligar à mão a qualquer momento.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
         )
 
         Section("modo noite")

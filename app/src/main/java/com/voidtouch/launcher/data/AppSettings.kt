@@ -65,6 +65,30 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putInt(KEY_NIGHT_START, start).putInt(KEY_NIGHT_END, end).apply()
     }
 
+    fun loadFocusAutoOn(): Boolean = prefs.getBoolean(KEY_FOCUS_AUTO_ON, false)
+
+    fun saveFocusAutoOn(on: Boolean) {
+        prefs.edit().putBoolean(KEY_FOCUS_AUTO_ON, on).apply()
+    }
+
+    fun loadFocusAutoStart(): Int = prefs.getInt(KEY_FOCUS_AUTO_START, FocusSchedule.DEFAULT_START)
+
+    fun loadFocusAutoEnd(): Int = prefs.getInt(KEY_FOCUS_AUTO_END, FocusSchedule.DEFAULT_END)
+
+    fun saveFocusAutoHours(start: Int, end: Int) {
+        prefs.edit().putInt(KEY_FOCUS_AUTO_START, start).putInt(KEY_FOCUS_AUTO_END, end).apply()
+    }
+
+    /** Último estado da janela já aplicado ao foco; nulo = programação recém-ligada. */
+    fun loadFocusAutoLast(): Boolean? =
+        if (prefs.contains(KEY_FOCUS_AUTO_LAST)) prefs.getBoolean(KEY_FOCUS_AUTO_LAST, false) else null
+
+    fun saveFocusAutoLast(value: Boolean?) {
+        prefs.edit().apply {
+            if (value == null) remove(KEY_FOCUS_AUTO_LAST) else putBoolean(KEY_FOCUS_AUTO_LAST, value)
+        }.apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -93,6 +117,10 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_NIGHT_ON = "night_on"
         const val KEY_NIGHT_START = "night_start"
         const val KEY_NIGHT_END = "night_end"
+        const val KEY_FOCUS_AUTO_ON = "focus_auto_on"
+        const val KEY_FOCUS_AUTO_START = "focus_auto_start"
+        const val KEY_FOCUS_AUTO_END = "focus_auto_end"
+        const val KEY_FOCUS_AUTO_LAST = "focus_auto_last"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"

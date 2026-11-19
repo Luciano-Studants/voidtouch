@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.19.0",
+            listOf(
+                "Foco automático: em Ajustes, escolha o horário (padrão das 18h às 0h) e o modo foco liga e desliga sozinho.",
+                "A troca acontece nas viradas do horário, então você pode ligar ou desligar à mão dentro da janela sem ser desfeito.",
+                "Precisa de apps marcados em \"apps do foco\"; sem eles, o aviso lembra de marcar.",
+            ),
+        ),
+        ReleaseNote(
             "0.18.1",
             listOf(
                 "Limpeza de cache mais honesta: o Android não deixa um app comum apagar o cache dos outros sozinho, então o botão antigo foi trocado por dois caminhos que funcionam.",

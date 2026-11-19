@@ -37,6 +37,8 @@ import com.voidtouch.launcher.ui.HomeContent
 import com.voidtouch.launcher.data.Agenda
 import com.voidtouch.launcher.data.AgendaItem
 import com.voidtouch.launcher.data.Backup
+import com.voidtouch.launcher.data.FocusAction
+import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.NightMode
 import java.time.Instant
 import java.time.ZoneId
@@ -130,6 +132,10 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("content://com.android.calendar/time/$nowMillis")))
         }.onFailure { say("não foi possível abrir o calendário") }
     }
+
+    private var focusAutoOn by mutableStateOf(false)
+    private var focusAutoStart by mutableIntStateOf(FocusSchedule.DEFAULT_START)
+    private var focusAutoEnd by mutableIntStateOf(FocusSchedule.DEFAULT_END)
 
     private var nightEnabled by mutableStateOf(false)
     private var nightStart by mutableIntStateOf(NightMode.DEFAULT_START)
@@ -255,6 +261,9 @@ class MainActivity : ComponentActivity() {
         gestures = SwipeSide.entries.associateWith { settingsStore.loadSwipeApp(it) }
         memoryMode = settingsStore.loadMemoryMode()
         nightEnabled = settingsStore.loadNightEnabled()
+        focusAutoOn = settingsStore.loadFocusAutoOn()
+        focusAutoStart = settingsStore.loadFocusAutoStart()
+        focusAutoEnd = settingsStore.loadFocusAutoEnd()
         nightStart = settingsStore.loadNightStart()
         nightEnd = settingsStore.loadNightEnd()
         hiddenPhotos = settingsStore.loadHiddenPhotos()
@@ -396,6 +405,11 @@ class MainActivity : ComponentActivity() {
                     value = withContext(Dispatchers.IO) { Agenda.read(applicationContext, nowMillis) }
                 }
 
+                // Foco automático: só age quando a janela de horário vira (entrou ou saiu).
+                LaunchedEffect(nowMillis / 60_000L, focusAutoOn, focusAutoStart, focusAutoEnd) {
+                    if (focusAutoOn) applyFocusSchedule(hour)
+                }
+
                 val memory by produceState<MemoryShown?>(null, memoryMode, photoAccess, hiddenPhotos, nowMillis / 10_800_000L) {
                     value = withContext(Dispatchers.IO) {
                         MemoryReader.pick(applicationContext, nowMillis, memoryMode, hiddenPhotos)?.let { m ->
@@ -464,6 +478,26 @@ class MainActivity : ComponentActivity() {
                                 say("fotos ocultas restauradas")
                             },
                             onOpenOptimize = { showSettings = false; showOptimize = true },
+                            focusAutoOn = focusAutoOn,
+                            focusAutoStart = focusAutoStart,
+                            focusAutoEnd = focusAutoEnd,
+                            onFocusAutoToggle = {
+                                focusAutoOn = !focusAutoOn
+                                settingsStore.saveFocusAutoOn(focusAutoOn)
+                                // Recém-ligado: nulo faz valer o horário atual na hora.
+                                settingsStore.saveFocusAutoLast(null)
+                                say(if (focusAutoOn) "foco automático: ${focusAutoStart}h às ${focusAutoEnd}h" else "foco automático desligado")
+                            },
+                            onFocusAutoStart = {
+                                focusAutoStart = (focusAutoStart + 1) % 24
+                                settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
+                                settingsStore.saveFocusAutoLast(null)
+                            },
+                            onFocusAutoEnd = {
+                                focusAutoEnd = (focusAutoEnd + 1) % 24
+                                settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
+                                settingsStore.saveFocusAutoLast(null)
+                            },
                             nightEnabled = nightEnabled,
                             nightStart = nightStart,
                             nightEnd = nightEnd,
@@ -748,6 +782,30 @@ class MainActivity : ComponentActivity() {
             say("foco ligado · ${focusApps.size} app(s) escondido(s)")
         }
         focusStore.saveSince(focusSince)
+    }
+
+    /** Liga ou desliga o foco nas viradas da janela programada; sem apps marcados, só avisa. */
+    private fun applyFocusSchedule(hour: Int) {
+        val inWindow = NightMode.isNight(hour, focusAutoStart, focusAutoEnd)
+        val last = settingsStore.loadFocusAutoLast()
+        when (FocusSchedule.decide(inWindow, last)) {
+            FocusAction.TurnOn -> {
+                if (focusApps.isEmpty()) {
+                    say("foco automático: marque os apps do foco na lista")
+                } else if (focusSince == 0L) {
+                    focusSince = System.currentTimeMillis()
+                    focusStore.saveSince(focusSince)
+                    say("foco ligado automaticamente")
+                }
+            }
+            FocusAction.TurnOff -> if (focusSince != 0L) {
+                focusSince = 0L
+                focusStore.saveSince(0L)
+                say("foco desligado automaticamente")
+            }
+            FocusAction.None -> Unit
+        }
+        if (last != inWindow) settingsStore.saveFocusAutoLast(inWindow)
     }
 
     private fun toggleFocusApp(app: AppEntry) {
