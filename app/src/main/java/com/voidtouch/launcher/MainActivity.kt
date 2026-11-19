@@ -44,6 +44,7 @@ import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.ContactsReader
 import com.voidtouch.launcher.data.Hit
 import com.voidtouch.launcher.data.LaunchCounts
+import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.Scene
 import com.voidtouch.launcher.data.Scenes
@@ -678,6 +679,8 @@ class MainActivity : ComponentActivity() {
                             stats = stats,
                             clockStyle = clockStyle,
                             notifications = notifications,
+                            live = NotificationHub.live.filter { it.kind == LiveKind.Call || !HomeRules.notificationHidden(it.packageName, focusApps, focusOn) },
+                            onLiveOpen = { runCatching { it.intent?.send() } },
                             notificationsEnabled = notifAccess,
                             onNotificationClick = { openNotification(it) },
                             onNotificationDismiss = { NotificationHub.dismiss(it.key) },

@@ -55,6 +55,7 @@ import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.IconLoader
 import com.voidtouch.launcher.data.IconResult
 import com.voidtouch.launcher.data.MemoryShown
+import com.voidtouch.launcher.notify.LiveItem
 import com.voidtouch.launcher.notify.NoteItem
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
@@ -102,6 +103,8 @@ fun HomeContent(
     onSwipeDown: () -> Unit,
     onDoubleTap: () -> Unit,
     night: Boolean,
+    live: List<LiveItem>,
+    onLiveOpen: (LiveItem) -> Unit,
 ) {
     val focusOn = focusSinceMillis != 0L
     val pagerState = rememberPagerState(pageCount = { CAROUSEL_PAGES })
@@ -133,6 +136,8 @@ fun HomeContent(
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.End) {
                 GearButton(onClick = onOpenSettings)
             }
+            // Ilha dinâmica: some na home calma (noite) para não puxar o olhar.
+            if (!night) LivePill(items = live, active = active, onOpen = onLiveOpen)
             HomeCarousel(
                 nowMillis = nowMillis,
                 clockStyle = clockStyle,

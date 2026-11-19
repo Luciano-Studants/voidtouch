@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.27.0",
+            listOf(
+                "Ilha dinâmica: uma pílula no topo da home mostra o que está acontecendo agora, como chamada, navegação, cronômetro ou timer e downloads com progresso.",
+                "Toque na pílula para abrir a lista e toque numa linha para abrir o app. Com várias atividades, mostra a mais importante e quantas mais existem.",
+                "Usa o acesso às notificações; o cronômetro só anda com a home visível, e a pílula some na home calma (noite).",
+            ),
+        ),
+        ReleaseNote(
             "0.26.0",
             listOf(
                 "Busca universal: a mesma barra agora acha ações (lanterna, foco, otimizar...), telas de configuração do Android (Wi-Fi, Bluetooth, bateria...) e contatos.",

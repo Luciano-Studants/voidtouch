@@ -23,6 +23,20 @@ data class NoteItem(
     val intent: PendingIntent?,
 )
 
+/** Uma atividade ao vivo (chamada, cronômetro, download...) para a ilha da home. */
+data class LiveItem(
+    val key: String,
+    val packageName: String,
+    val appLabel: String,
+    val title: String,
+    val kind: com.voidtouch.launcher.data.LiveKind,
+    val percent: Int?,
+    val chrono: Boolean,
+    val whenMs: Long,
+    val countDown: Boolean,
+    val intent: PendingIntent?,
+)
+
 /** A música tocando agora. */
 data class MediaInfo(
     val title: String,
@@ -40,6 +54,7 @@ data class MediaInfo(
 object NotificationHub {
     var items by mutableStateOf<List<NoteItem>>(emptyList())
     var media by mutableStateOf<MediaInfo?>(null)
+    var live by mutableStateOf<List<LiveItem>>(emptyList())
     internal var service: NotificationListenerService? = null
 
     fun hasAccess(context: Context): Boolean =
@@ -109,6 +124,7 @@ class VoidNotificationService : NotificationListenerService() {
         callbacks.clear()
         NotificationHub.service = null
         NotificationHub.items = emptyList()
+        NotificationHub.live = emptyList()
         NotificationHub.media = null
     }
 
@@ -129,6 +145,42 @@ class VoidNotificationService : NotificationListenerService() {
                 NoteItem(sbn.key, sbn.packageName, labelOf(sbn.packageName), title, sbn.notification.contentIntent)
             }
             .take(20)
+        NotificationHub.live = liveFrom(active)
+    }
+
+    /** Notificações em andamento que merecem a ilha: chamada, navegação, cronômetro e progresso. */
+    private fun liveFrom(active: Array<StatusBarNotification>): List<LiveItem> {
+        val found = active.mapNotNull { sbn ->
+            if (sbn.packageName == packageName) return@mapNotNull null
+            val n = sbn.notification
+            if ((n.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0) return@mapNotNull null
+            val extras = n.extras
+            val max = extras.getInt(android.app.Notification.EXTRA_PROGRESS_MAX, 0)
+            val progress = extras.getInt(android.app.Notification.EXTRA_PROGRESS, 0)
+            val chrono = extras.getBoolean(android.app.Notification.EXTRA_SHOW_CHRONOMETER, false)
+            val kind = com.voidtouch.launcher.data.Live.classify(
+                category = n.category,
+                ongoing = sbn.isOngoing,
+                hasProgress = max > 0,
+                showChrono = chrono,
+            ) ?: return@mapNotNull null
+            val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
+                ?: extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
+                ?: labelOf(sbn.packageName)
+            LiveItem(
+                key = sbn.key,
+                packageName = sbn.packageName,
+                appLabel = labelOf(sbn.packageName),
+                title = title,
+                kind = kind,
+                percent = com.voidtouch.launcher.data.Live.percent(progress, max),
+                chrono = chrono,
+                whenMs = n.`when`,
+                countDown = extras.getBoolean("android.chronometerCountDown", false),
+                intent = n.contentIntent,
+            )
+        }
+        return com.voidtouch.launcher.data.Live.top(found) { it.kind }
     }
 
     private fun labelOf(pkg: String): String = labels.getOrPut(pkg) {
