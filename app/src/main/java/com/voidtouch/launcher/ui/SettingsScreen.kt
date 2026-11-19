@@ -66,6 +66,9 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
+    predictOn: Boolean,
+    onPredictToggle: () -> Unit,
+    onPredictClear: () -> Unit,
     scenes: List<Scene>,
     sceneActive: String?,
     sceneAuto: Boolean,
@@ -160,6 +163,16 @@ fun SettingsScreen(
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("linha agora")
+        ValueRow(if (predictOn) "ligada" else "desligada", onPredictToggle)
+        if (predictOn) ValueRow("apagar o histórico de horários", onPredictClear)
+        Text(
+            "mostra na home os apps que você costuma abrir neste horário, só pelo seu histórico no aparelho. Nada é enviado e nada roda em segundo plano.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
         )
 
         Section("cenas")

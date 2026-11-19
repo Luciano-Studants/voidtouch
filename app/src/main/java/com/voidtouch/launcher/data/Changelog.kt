@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.29.0",
+            listOf(
+                "Linha \"agora\": abaixo do foco, a home mostra até 3 apps que você costuma abrir nesse horário. Um toque abre.",
+                "Aprende só com o seu histórico no aparelho, ao abrir apps: nada é enviado e nada roda em segundo plano. Precisa de uns dias de uso para começar a sugerir.",
+                "Não repete os favoritos nem os apps escondidos pelo foco, e some na home calma. Em Ajustes > linha agora dá para desligar ou apagar o histórico.",
+            ),
+        ),
+        ReleaseNote(
             "0.28.0",
             listOf(
                 "Notificações mais úteis na home: segure uma notificação para responder sem abrir o app (quando o app permite), guardar em \"ler depois\" ou dispensar.",

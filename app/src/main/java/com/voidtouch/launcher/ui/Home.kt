@@ -108,6 +108,7 @@ fun HomeContent(
     onDoubleTap: () -> Unit,
     night: Boolean,
     live: List<LiveItem>,
+    suggestions: List<AppEntry>,
     onLiveOpen: (LiveItem) -> Unit,
 ) {
     val focusOn = focusSinceMillis != 0L
@@ -200,6 +201,8 @@ fun HomeContent(
                     nowMillis = nowMillis,
                     onClick = onToggleFocus,
                 )
+                // "Agora": apps prováveis para este horário; some na home calma.
+                if (!night && suggestions.isNotEmpty()) NowLine(suggestions, onLaunch)
 
                 // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
                 // (de 32 a 44 dp) para os 10 caberem sem rolar.

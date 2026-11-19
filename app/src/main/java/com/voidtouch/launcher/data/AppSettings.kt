@@ -132,6 +132,18 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_READ_LATER, ReadLater.encode(list)).apply()
     }
 
+    fun loadPredictOn(): Boolean = prefs.getBoolean(KEY_PREDICT_ON, true)
+
+    fun savePredictOn(on: Boolean) {
+        prefs.edit().putBoolean(KEY_PREDICT_ON, on).apply()
+    }
+
+    fun loadPredictHistory(): String = prefs.getString(KEY_PREDICT_HISTORY, "").orEmpty()
+
+    fun savePredictHistory(json: String) {
+        prefs.edit().putString(KEY_PREDICT_HISTORY, json).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -171,6 +183,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_SCENE_DEFAULT_PINS = "scene_default_pins"
         const val KEY_LAUNCH_COUNTS = "launch_counts"
         const val KEY_READ_LATER = "read_later"
+        const val KEY_PREDICT_ON = "predict_on"
+        const val KEY_PREDICT_HISTORY = "predict_history"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"

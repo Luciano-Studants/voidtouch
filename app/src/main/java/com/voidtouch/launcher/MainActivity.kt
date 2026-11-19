@@ -48,6 +48,7 @@ import com.voidtouch.launcher.data.LaunchCounts
 import com.voidtouch.launcher.data.ReadLater
 import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.NightMode
+import com.voidtouch.launcher.data.Predict
 import com.voidtouch.launcher.data.Scene
 import com.voidtouch.launcher.data.Scenes
 import java.time.Instant
@@ -152,6 +153,8 @@ class MainActivity : ComponentActivity() {
 
     private var opens by mutableStateOf<Map<String, Int>>(emptyMap())
     private var later by mutableStateOf<List<LaterItem>>(emptyList())
+    private var predictOn by mutableStateOf(true)
+    private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
     private var contactsAccess by mutableStateOf(false)
 
     private val contactsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -291,6 +294,8 @@ class MainActivity : ComponentActivity() {
         scenes = settingsStore.loadScenes()
         opens = LaunchCounts.decode(settingsStore.loadLaunchCounts())
         later = settingsStore.loadReadLater()
+        predictOn = settingsStore.loadPredictOn()
+        predictHistory = Predict.decode(settingsStore.loadPredictHistory())
         contactsAccess = ContactsReader.hasAccess(this)
         sceneActive = settingsStore.loadSceneActive()?.takeIf { id -> scenes.any { it.id == id } }
         sceneAuto = settingsStore.loadSceneAuto()
@@ -436,6 +441,16 @@ class MainActivity : ComponentActivity() {
                 // A foto "neste dia" é escolhida uma vez por bloco de 3 horas, fora da thread principal.
                 // Modo noite: dentro da janela de horário a home fica escura e calma.
                 val hour = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.systemDefault()).hour
+                // Linha "agora": apps prováveis neste horário, sem repetir os favoritos nem os escondidos pelo foco.
+                val suggestions = remember(apps, predictHistory, predictOn, hour, pinnedKeys, focusApps, focusOn) {
+                    if (!predictOn) {
+                        emptyList()
+                    } else {
+                        val byKey = apps.associateBy { it.key }
+                        val skip = pinnedKeys.toSet() + (if (focusOn) focusApps else emptySet())
+                        Predict.suggest(predictHistory, hour, skip).mapNotNull { byKey[it] }
+                    }
+                }
                 val quietScene = scenes.firstOrNull { it.id == sceneActive }?.quiet == true
                 val night = (nightEnabled && NightMode.isNight(hour, nightStart, nightEnd)) || quietScene
 
@@ -569,6 +584,17 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
                                 settingsStore.saveFocusAutoLast(null)
                             },
+                            predictOn = predictOn,
+                            onPredictToggle = {
+                                predictOn = !predictOn
+                                settingsStore.savePredictOn(predictOn)
+                                say(if (predictOn) "linha agora ligada" else "linha agora desligada")
+                            },
+                            onPredictClear = {
+                                predictHistory = emptyMap()
+                                settingsStore.savePredictHistory("")
+                                say("histórico apagado")
+                            },
                             scenes = scenes,
                             sceneActive = sceneActive,
                             sceneAuto = sceneAuto,
@@ -700,6 +726,7 @@ class MainActivity : ComponentActivity() {
                             stats = stats,
                             clockStyle = clockStyle,
                             notifications = notifications,
+                            suggestions = suggestions,
                             live = NotificationHub.live.filter { it.kind == LiveKind.Call || !HomeRules.notificationHidden(it.packageName, focusApps, focusOn) },
                             onLiveOpen = { runCatching { it.intent?.send() } },
                             notificationsEnabled = notifAccess,
@@ -928,6 +955,11 @@ class MainActivity : ComponentActivity() {
     /** Abre o app e conta a abertura, para a busca mostrar primeiro o que você mais usa. */
     private fun launchApp(app: AppEntry) {
         opens = LaunchCounts.increment(opens, app.key)
+        if (predictOn) {
+            val hour = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.systemDefault()).hour
+            predictHistory = Predict.record(predictHistory, hour, app.key)
+            settingsStore.savePredictHistory(Predict.encode(predictHistory))
+        }
         settingsStore.saveLaunchCounts(LaunchCounts.encode(opens))
         AppRepository.launch(this, app)
     }

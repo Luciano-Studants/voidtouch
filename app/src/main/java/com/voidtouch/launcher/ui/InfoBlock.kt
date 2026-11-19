@@ -28,6 +28,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.NetworkKind
 import com.voidtouch.launcher.data.NoteGroups
@@ -270,4 +271,26 @@ private fun PanelButton(label: String, onClick: () -> Unit) {
         color = VoidColors.Text,
         modifier = Modifier.clickable(onClick = onClick).padding(vertical = 6.dp),
     )
+}
+
+/** Os apps mais prováveis para este horário, em uma linha. Só o texto responde ao toque. */
+@Composable
+fun NowLine(apps: List<AppEntry>, onLaunch: (AppEntry) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 2.dp),
+    ) {
+        Text("agora", style = VoidType.Caption, color = VoidColors.TextDim)
+        apps.forEach { app ->
+            Spacer(Modifier.width(14.dp))
+            Text(
+                text = app.label,
+                style = VoidType.Small,
+                color = VoidColors.Text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false).clickable { onLaunch(app) }.padding(vertical = 6.dp),
+            )
+        }
+    }
 }
