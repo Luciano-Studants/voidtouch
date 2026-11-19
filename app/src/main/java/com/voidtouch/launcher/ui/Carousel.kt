@@ -247,6 +247,51 @@ private fun DayPage(text: CarouselText) {
     }
 }
 
+/** Página 4: próximos compromissos do calendário do celular. */
+@Composable
+private fun AgendaPage(
+    agenda: List<AgendaItem>,
+    enabled: Boolean,
+    nowMillis: Long,
+    onEnable: () -> Unit,
+    onOpen: () -> Unit,
+) {
+    when {
+        !enabled -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                text = "ativar agenda ›",
+                style = VoidType.App,
+                color = VoidColors.Text,
+                modifier = Modifier.clickable(onClick = onEnable).padding(12.dp),
+            )
+        }
+        agenda.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("nada nos próximos 7 dias", style = VoidType.App, color = VoidColors.TextDim)
+        }
+        else -> Column(modifier = Modifier.fillMaxSize().clickable(onClick = onOpen), verticalArrangement = Arrangement.Center) {
+            Text("agenda", style = VoidType.Caption, color = VoidColors.TextDim)
+            Spacer(Modifier.height(6.dp))
+            val zone = ZoneId.systemDefault()
+            agenda.take(3).forEach { item ->
+                Column(modifier = Modifier.padding(vertical = 3.dp)) {
+                    Text(
+                        Agenda.label(item, nowMillis, zone),
+                        style = VoidType.Caption,
+                        color = VoidColors.TextDim,
+                    )
+                    Text(
+                        item.title,
+                        style = VoidType.App,
+                        color = VoidColors.Text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
 /** Página 3: player no estilo do Android, centralizado: capa ao fundo, título, artista, barra e controles. */
 @Composable
 private fun MusicPage(enabled: Boolean, onEnable: () -> Unit, active: Boolean) {
