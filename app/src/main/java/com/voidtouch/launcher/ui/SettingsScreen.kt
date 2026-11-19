@@ -31,8 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.ClockStyle
+import com.voidtouch.launcher.data.MemoryMode
 import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.data.SwipeSide
 import com.voidtouch.launcher.ui.theme.Backdrop
@@ -56,6 +58,10 @@ fun SettingsScreen(
     onOpenAppInfo: () -> Unit,
     onOpenChangelog: () -> Unit,
     onOpenOptimize: () -> Unit,
+    memoryMode: MemoryMode,
+    hiddenPhotos: Int,
+    onMemoryMode: () -> Unit,
+    onRestorePhotos: () -> Unit,
     onBackdrop: (Backdrop) -> Unit,
     onClockStyle: (ClockStyle) -> Unit,
     onSwipeApp: (SwipeSide, String?) -> Unit,
@@ -129,6 +135,16 @@ fun SettingsScreen(
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
         )
+
+        Section("memórias do dia")
+        ValueRow(memoryMode.label, onMemoryMode)
+        Text(
+            "mostra, ao lado da hora, uma foto da câmera tirada por volta de hoje em anos ou meses atrás. As fotos não saem do aparelho.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        if (hiddenPhotos > 0) ValueRow("$hiddenPhotos foto(s) oculta(s) · restaurar", onRestorePhotos)
 
         Section("celular")
         ValueRow("otimizar", onOpenOptimize)

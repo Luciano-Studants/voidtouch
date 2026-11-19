@@ -44,6 +44,20 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(swipeKey(side), appKey.orEmpty()).apply()
     }
 
+    fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
+
+    fun saveMemoryMode(mode: MemoryMode) {
+        prefs.edit().putString(KEY_MEMORY_MODE, mode.key).apply()
+    }
+
+    /** Fotos que o usuário mandou esconder; nunca mais aparecem. */
+    fun loadHiddenPhotos(): Set<Long> =
+        prefs.getStringSet(KEY_HIDDEN_PHOTOS, emptySet()).orEmpty().mapNotNull { it.toLongOrNull() }.toSet()
+
+    fun saveHiddenPhotos(ids: Set<Long>) {
+        prefs.edit().putStringSet(KEY_HIDDEN_PHOTOS, ids.map { it.toString() }.toSet()).apply()
+    }
+
     private fun swipeKey(side: SwipeSide) = when (side) {
         SwipeSide.Left -> KEY_SWIPE_LEFT
         SwipeSide.Right -> KEY_SWIPE_RIGHT
@@ -53,6 +67,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         // Mesma chave usada desde a v0.2, para o fundo escolhido não se perder.
         const val KEY_BACKDROP = "backdrop"
         const val KEY_CLOCK_STYLE = "clock_style"
+        const val KEY_MEMORY_MODE = "memory_mode"
+        const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"
         const val KEY_SWIPE_RIGHT = "swipe_right_app"
     }

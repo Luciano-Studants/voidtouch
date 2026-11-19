@@ -7,6 +7,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Memórias do dia: lê só miniaturas de fotos da câmera, no aparelho. Opcional, em Ajustes. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
     <!-- Só para mostrar "wi-fi", "dados" ou "sem rede" no status. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 

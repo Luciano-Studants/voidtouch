@@ -34,6 +34,10 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.data.MemoryMode
+import com.voidtouch.launcher.data.MemoryReader
+import com.voidtouch.launcher.data.MemoryShown
+import androidx.activity.result.contract.ActivityResultContracts
 import com.voidtouch.launcher.ui.Banner
 import com.voidtouch.launcher.ui.BannerHost
 import androidx.compose.animation.AnimatedContent
@@ -100,6 +104,35 @@ class MainActivity : ComponentActivity() {
     /** Verdadeiro só com a tela visível; o relógio do player para quando o app sai de cena. */
     private var screenActive by mutableStateOf(false)
 
+    private var memoryMode by mutableStateOf(MemoryMode.Off)
+    private var hiddenPhotos by mutableStateOf<Set<Long>>(emptySet())
+    private var photoAccess by mutableStateOf(false)
+
+    private val photoPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        photoAccess = MemoryReader.hasAccess(this)
+        if (photoAccess) {
+            say("memórias ligadas: ${memoryMode.label}")
+        } else {
+            memoryMode = MemoryMode.Off
+            settingsStore.saveMemoryMode(memoryMode)
+            say("sem acesso às fotos: memórias desligadas")
+        }
+    }
+
+    private fun cycleMemoryMode() {
+        val next = memoryMode.next()
+        memoryMode = next
+        settingsStore.saveMemoryMode(next)
+        if (next == MemoryMode.Off) {
+            say("memórias desligadas")
+        } else if (!MemoryReader.hasAccess(this)) {
+            say("o Android vai pedir acesso às fotos")
+            photoPermission.launch(MemoryReader.permissionsToRequest())
+        } else {
+            say("memórias: ${next.label}")
+        }
+    }
+
     /** Aviso na tela (no lugar do Toast); some sozinho. */
     private var banner by mutableStateOf<Banner?>(null)
     private var bannerSeq = 0
@@ -137,6 +170,9 @@ class MainActivity : ComponentActivity() {
         clockStyle = settingsStore.loadClockStyle()
         swipeLeftKey = settingsStore.loadSwipeApp(SwipeSide.Left)
         swipeRightKey = settingsStore.loadSwipeApp(SwipeSide.Right)
+        memoryMode = settingsStore.loadMemoryMode()
+        hiddenPhotos = settingsStore.loadHiddenPhotos()
+        photoAccess = MemoryReader.hasAccess(this)
         applyBackdrop()
 
         // Depois de uma atualização (ou na primeira instalação), mostra as novidades uma vez.
@@ -203,6 +239,15 @@ class MainActivity : ComponentActivity() {
                     !focusOn || focusApps.none { it.substringBefore('/') == n.packageName }
                 }
 
+                // A foto "neste dia" é escolhida uma vez por bloco de 3 horas, fora da thread principal.
+                val memory by produceState<MemoryShown?>(null, memoryMode, photoAccess, hiddenPhotos, nowMillis / 10_800_000L) {
+                    value = withContext(Dispatchers.IO) {
+                        MemoryReader.pick(applicationContext, nowMillis, memoryMode, hiddenPhotos)?.let { m ->
+                            MemoryReader.thumbnail(applicationContext, m)?.let { MemoryShown(m, it) }
+                        }
+                    }
+                }
+
                 val screen = when {
                     changelog != null -> "changelog"
                     showOptimize -> "optimize"
@@ -252,6 +297,14 @@ class MainActivity : ComponentActivity() {
                             notificationsEnabled = notifAccess,
                             onOpenNotificationAccess = ::openNotificationAccess,
                             onOpenAppInfo = ::openAppInfo,
+                            memoryMode = memoryMode,
+                            hiddenPhotos = hiddenPhotos.size,
+                            onMemoryMode = ::cycleMemoryMode,
+                            onRestorePhotos = {
+                                hiddenPhotos = emptySet()
+                                settingsStore.saveHiddenPhotos(hiddenPhotos)
+                                say("fotos ocultas restauradas")
+                            },
                             onOpenOptimize = { showSettings = false; showOptimize = true },
                             onOpenChangelog = {
                                 changelogTitle = "novidades"
@@ -307,6 +360,24 @@ class MainActivity : ComponentActivity() {
                             onNotificationDismiss = { NotificationHub.dismiss(it.key) },
                             onEnableNotifications = ::openNotificationAccess,
                             active = screenActive,
+                            memory = memory,
+                            onMemoryClick = {
+                                memory?.let {
+                                    runCatching {
+                                        startActivity(
+                                            Intent(Intent.ACTION_VIEW).setDataAndType(it.memory.uri, "image/*")
+                                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                                        )
+                                    }
+                                }
+                            },
+                            onMemoryHide = {
+                                memory?.let {
+                                    hiddenPhotos = hiddenPhotos + it.memory.id
+                                    settingsStore.saveHiddenPhotos(hiddenPhotos)
+                                    say("foto oculta: não aparece mais")
+                                }
+                            },
                             focusSinceMillis = focusSince,
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
@@ -363,6 +434,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         notifAccess = NotificationHub.hasAccess(this)
+        photoAccess = MemoryReader.hasAccess(this)
         refreshKey++
     }
 

@@ -23,7 +23,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.unit.sp
+import com.voidtouch.launcher.data.MemoryShown
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -100,6 +110,9 @@ fun HomeCarousel(
     notificationsEnabled: Boolean,
     onEnableNotifications: () -> Unit,
     active: Boolean,
+    memory: MemoryShown?,
+    onMemoryClick: () -> Unit,
+    onMemoryHide: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -138,7 +151,7 @@ fun HomeCarousel(
                     .padding(horizontal = 24.dp),
             ) {
                 when (page) {
-                    0 -> TimePage(text)
+                    0 -> TimePage(text, memory, onMemoryClick, onMemoryHide)
                     1 -> DayPage(text)
                     else -> MusicPage(notificationsEnabled, onEnableNotifications, active)
                 }
@@ -148,13 +161,71 @@ fun HomeCarousel(
     }
 }
 
-/** Página 1: hora grande, mês em letra manuscrita e o dia por extenso (a home aprovada na v0.3). */
+/** Página 1: hora grande, mês em letra manuscrita e o dia por extenso; à direita, a foto "neste dia". */
 @Composable
-private fun TimePage(text: CarouselText) {
-    Column {
-        Text(text = text.time, style = VoidType.Clock, color = VoidColors.Text)
-        Text(text = text.month, style = VoidType.Month, color = VoidColors.Text)
-        Text(text = text.weekdayAndDay, style = VoidType.App, color = VoidColors.TextDim)
+private fun TimePage(text: CarouselText, memory: MemoryShown?, onMemoryClick: () -> Unit, onMemoryHide: () -> Unit) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = text.time, style = VoidType.Clock, color = VoidColors.Text)
+            Text(text = text.month, style = VoidType.Month, color = VoidColors.Text)
+            Text(text = text.weekdayAndDay, style = VoidType.App, color = VoidColors.TextDim)
+        }
+        AnimatedVisibility(
+            visible = memory != null,
+            enter = fadeIn(tween(400)),
+            exit = fadeOut(tween(200)),
+        ) {
+            // Guarda a última foto para ela não sumir de uma vez durante o fade de saída.
+            var last by remember { mutableStateOf<MemoryShown?>(null) }
+            if (memory != null) last = memory
+            last?.let { MemoryCard(it, onMemoryClick, onMemoryHide) }
+        }
+    }
+}
+
+@Composable
+private fun MemoryCard(shown: MemoryShown, onClick: () -> Unit, onHide: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .padding(start = 12.dp, top = 6.dp)
+            .size(width = 104.dp, height = 132.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(VoidColors.Graphite)
+            .clickable(onClick = onClick),
+    ) {
+        Image(
+            bitmap = shown.bitmap,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alpha = 0.92f,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))))
+                .padding(start = 8.dp, end = 8.dp, top = 18.dp, bottom = 6.dp),
+        ) {
+            Text(shown.memory.label, style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 15.sp), color = VoidColors.Text)
+        }
+        // Botão de esconder: some com esta foto para sempre (dá para restaurar em Ajustes).
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.55f))
+                .clickable(onClick = onHide),
+        ) {
+            Canvas(modifier = Modifier.size(10.dp)) {
+                val w = size.width
+                drawLine(Color.White, Offset(0f, 0f), Offset(w, w), strokeWidth = 1.6.dp.toPx(), cap = StrokeCap.Round)
+                drawLine(Color.White, Offset(w, 0f), Offset(0f, w), strokeWidth = 1.6.dp.toPx(), cap = StrokeCap.Round)
+            }
+        }
     }
 }
 

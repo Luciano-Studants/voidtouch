@@ -47,6 +47,7 @@ import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.IconLoader
 import com.voidtouch.launcher.data.IconResult
+import com.voidtouch.launcher.data.MemoryShown
 import com.voidtouch.launcher.notify.NoteItem
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
@@ -72,6 +73,9 @@ fun HomeContent(
     onNotificationDismiss: (NoteItem) -> Unit,
     onEnableNotifications: () -> Unit,
     active: Boolean,
+    memory: MemoryShown?,
+    onMemoryClick: () -> Unit,
+    onMemoryHide: () -> Unit,
     focusSinceMillis: Long,
     favorites: List<AppEntry>,
     onLaunch: (AppEntry) -> Unit,
@@ -112,6 +116,9 @@ fun HomeContent(
                 notificationsEnabled = notificationsEnabled,
                 onEnableNotifications = onEnableNotifications,
                 active = active,
+                memory = memory,
+                onMemoryClick = onMemoryClick,
+                onMemoryHide = onMemoryHide,
                 onLongPress = onOpenSettings,
             )
 

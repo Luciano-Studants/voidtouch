@@ -10,6 +10,15 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.12.0",
+            listOf(
+                "Memórias do dia: ao lado da hora aparece, de vez em quando, uma foto da câmera tirada por volta de hoje em anos ou meses atrás.",
+                "Toque na foto para abri-la na galeria; o X esconde essa foto para sempre.",
+                "Ajustes > memórias do dia: desligado, de vez em quando ou sempre; e restaurar as fotos ocultas.",
+                "As fotos nunca saem do aparelho e só uma miniatura é carregada.",
+            ),
+        ),
+        ReleaseNote(
             "0.11.0",
             listOf(
                 "Ajustes virou uma engrenagem no canto superior direito da home (e da lista de apps).",
