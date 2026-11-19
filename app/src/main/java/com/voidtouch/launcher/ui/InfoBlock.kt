@@ -75,7 +75,6 @@ fun InfoBlock(
                 notifications.take(3).forEach { n ->
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
                             .combinedClickable(
                                 onClick = { onNotificationClick(n) },
                                 onLongClick = {
@@ -106,15 +105,18 @@ fun InfoBlock(
                 }
             }
         }
-        Column(modifier = Modifier.weight(1f).clickable(onClick = onStatusClick)) {
-            Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
-            lines.forEach { line ->
-                Text(
-                    text = line,
-                    style = VoidType.Small,
-                    color = VoidColors.Text,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+        // Só o bloco de texto abre a saúde do aparelho; o espaço vazio em volta fica livre para os gestos.
+        Box(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.clickable(onClick = onStatusClick)) {
+                Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
+                lines.forEach { line ->
+                    Text(
+                        text = line,
+                        style = VoidType.Small,
+                        color = VoidColors.Text,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
             }
         }
     }

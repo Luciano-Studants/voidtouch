@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -256,51 +257,54 @@ private fun FavoriteRow(
 ) {
     val haptic = LocalHapticFeedback.current
     val source = remember { MutableInteractionSource() }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(height)
-            .pressFeedback(source)
-            .combinedClickable(
-                interactionSource = source,
-                indication = null,
-                onClick = onOpen,
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onUnpin()
-                },
-            )
-            .padding(horizontal = 24.dp),
-    ) {
-        when (item) {
-            is Favorite.App -> {
-                AppIcon(app = item.app, size = 24.dp)
-                Spacer(Modifier.width(18.dp))
-                Text(
-                    text = item.app.label,
-                    style = VoidType.App,
-                    color = VoidColors.Text,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+    // A linha ocupa a largura toda, mas só o conteúdo (ícone e nome) responde ao toque: o espaço
+    // vazio ao lado fica livre para o toque duplo e os deslizes da home.
+    Box(modifier = Modifier.fillMaxWidth().height(height).padding(start = 24.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxHeight()
+                .pressFeedback(source)
+                .combinedClickable(
+                    interactionSource = source,
+                    indication = null,
+                    onClick = onOpen,
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onUnpin()
+                    },
                 )
-            }
-            is Favorite.FolderItem -> {
-                FolderGlyph(width = 24.dp, height = 20.dp)
-                Spacer(Modifier.width(18.dp))
-                Text(
-                    text = item.folder.name,
-                    style = VoidType.App,
-                    color = VoidColors.Text,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Text(
-                    text = "  ${item.count}",
-                    style = VoidType.Caption,
-                    color = VoidColors.TextDim,
-                )
+                .padding(end = 20.dp),
+        ) {
+            when (item) {
+                is Favorite.App -> {
+                    AppIcon(app = item.app, size = 24.dp)
+                    Spacer(Modifier.width(18.dp))
+                    Text(
+                        text = item.app.label,
+                        style = VoidType.App,
+                        color = VoidColors.Text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                is Favorite.FolderItem -> {
+                    FolderGlyph(width = 24.dp, height = 20.dp)
+                    Spacer(Modifier.width(18.dp))
+                    Text(
+                        text = item.folder.name,
+                        style = VoidType.App,
+                        color = VoidColors.Text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Text(
+                        text = "  ${item.count}",
+                        style = VoidType.Caption,
+                        color = VoidColors.TextDim,
+                    )
+                }
             }
         }
     }

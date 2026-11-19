@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.14.3",
+            listOf(
+                "Correção: tocar no espaço vazio ao lado de um favorito não abre mais o app. Só o ícone e o nome respondem ao toque, e o resto da linha fica livre para o toque duplo e os deslizes.",
+                "O mesmo vale para o bloco de status e para as notificações: só o texto responde.",
+            ),
+        ),
+        ReleaseNote(
             "0.14.2",
             listOf(
                 "Pastas podem ser fixadas nos favoritos da home: segure a pasta na lista > fixar na home.",
