@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,7 @@ import com.voidtouch.launcher.data.FolderStore
 import com.voidtouch.launcher.data.Folders
 import com.voidtouch.launcher.data.MemoryMode
 import com.voidtouch.launcher.data.MemoryReader
+import com.voidtouch.launcher.data.Perf
 import com.voidtouch.launcher.data.MemoryShown
 import androidx.activity.result.contract.ActivityResultContracts
 import com.voidtouch.launcher.ui.Banner
@@ -299,6 +301,7 @@ class MainActivity : ComponentActivity() {
                 // Com a lista pronta, prepara os ícones em segundo plano (baixa prioridade) para a grade rolar lisa.
                 LaunchedEffect(apps) {
                     if (apps.isNotEmpty()) {
+                        if (!Perf.stats.has(Perf.READY)) Perf.stats.record(Perf.READY, SystemClock.elapsedRealtime() - createdAt)
                         delay(600)
                         withContext(Dispatchers.Default) {
                             apps.forEach { IconLoader.load(applicationContext, it) }
@@ -326,6 +329,7 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     val ms = SystemClock.elapsedRealtime() - createdAt
                     openTimeMs = ms
+                    Perf.stats.record(Perf.OPEN, ms)
                     getSharedPreferences(PREFS, MODE_PRIVATE).edit().putLong(KEY_OPEN_MS, ms).apply()
                 }
 
@@ -338,6 +342,14 @@ class MainActivity : ComponentActivity() {
                     showOptimize = false
                     showPermissions = false
                     showTips = false
+                }
+                // Mede quanto a lista de apps leva para aparecer (até o primeiro quadro desenhado).
+                LaunchedEffect(showAllApps) {
+                    if (showAllApps) {
+                        val t0 = SystemClock.elapsedRealtime()
+                        withFrameNanos { }
+                        Perf.stats.record(Perf.DRAWER, SystemClock.elapsedRealtime() - t0)
+                    }
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {

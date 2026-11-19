@@ -75,6 +75,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.AppShortcut
+import com.voidtouch.launcher.data.Perf
 import com.voidtouch.launcher.data.Shortcuts
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
@@ -152,7 +153,12 @@ fun AppList(
     // e depois só os apps que não estão em nenhuma pasta.
     val entries = remember(visible, folders, query, openFolderId, byKey, folderKeys) {
         when {
-            query.isNotBlank() -> Search.filter(visible, query).map { Entry.AppItem(it) }
+            query.isNotBlank() -> {
+                val t0 = System.nanoTime()
+                val found = Search.filter(visible, query).map { Entry.AppItem(it) }
+                Perf.stats.record(Perf.SEARCH, (System.nanoTime() - t0) / 1_000_000)
+                found
+            }
             openFolder != null ->
                 openFolder.keys.mapNotNull { byKey[it] }.sortedBy { it.searchLabel }.map { Entry.AppItem(it) }
             else -> folders.sortedBy { Search.normalize(it.name) }.mapNotNull { f ->

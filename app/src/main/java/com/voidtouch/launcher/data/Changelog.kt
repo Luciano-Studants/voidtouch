@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.24.0",
+            listOf(
+                "Desempenho na tela Saúde: mostra quanto levaram a abertura da home, até os apps ficarem prontos, abrir a lista de apps e cada busca, com média e pior tempo.",
+                "As medidas são feitas só quando você usa o app e ficam na memória; nada roda em segundo plano.",
+            ),
+        ),
+        ReleaseNote(
             "0.23.0",
             listOf(
                 "Painel de permissões em Ajustes > permissões: mostra se cada uma está ligada, para que serve e abre a configuração certa com um toque.",

@@ -37,6 +37,7 @@ import com.voidtouch.launcher.data.HealthReader
 import com.voidtouch.launcher.data.HealthSnapshot
 import com.voidtouch.launcher.data.HeavyApps
 import com.voidtouch.launcher.data.HeavyAppsReader
+import com.voidtouch.launcher.data.Perf
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
 import kotlinx.coroutines.Dispatchers
@@ -113,6 +114,9 @@ fun HealthScreen(
             }
             is HeavyApps.Ready -> HeavyList(context, state)
         }
+
+        Spacer(Modifier.height(28.dp))
+        PerfSection(refreshKey = refreshKey, nowMillis = nowMillis)
 
         Spacer(Modifier.height(28.dp))
         TextPill(text = "abrir armazenamento do sistema", onClick = { openStorageSettings(context) })
@@ -269,4 +273,28 @@ private fun openUsageAccess(context: Context) {
 
 private fun openStorageSettings(context: Context) {
     start(context, Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS))
+}
+
+/** Tempos medidos nesta sessão do app, em milissegundos. Só mostra o que já foi medido. */
+@Composable
+private fun PerfSection(refreshKey: Int, nowMillis: Long) {
+    // Lê a cada atualização da tela; é só um acesso à memória.
+    @Suppress("UNUSED_VARIABLE") val tick = refreshKey + nowMillis
+    Text(text = "desempenho", style = VoidType.App, color = VoidColors.Text)
+    Spacer(Modifier.height(4.dp))
+    var any = false
+    Perf.ALL.forEach { name ->
+        val s = Perf.stats.summary(name) ?: return@forEach
+        any = true
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Text(name, style = VoidType.Caption, color = VoidColors.TextDim, modifier = Modifier.weight(1f))
+            Text(
+                if (s.count > 1) "${s.last} ms · média ${s.average} · pior ${s.worst}" else "${s.last} ms",
+                style = VoidType.Caption,
+                color = VoidColors.Text,
+            )
+        }
+    }
+    if (!any) Hint("ainda sem medidas: abra a lista de apps e use a busca")
+    Hint("medido nesta sessão, sem rodar nada em segundo plano")
 }
