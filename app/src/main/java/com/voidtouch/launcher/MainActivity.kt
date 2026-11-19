@@ -41,6 +41,9 @@ import com.voidtouch.launcher.data.Backup
 import com.voidtouch.launcher.data.FocusAction
 import com.voidtouch.launcher.data.HomeRules
 import com.voidtouch.launcher.data.FocusSchedule
+import com.voidtouch.launcher.data.ContactsReader
+import com.voidtouch.launcher.data.Hit
+import com.voidtouch.launcher.data.LaunchCounts
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.Scene
 import com.voidtouch.launcher.data.Scenes
@@ -142,6 +145,14 @@ class MainActivity : ComponentActivity() {
     private var focusAutoOn by mutableStateOf(false)
     private var focusAutoStart by mutableIntStateOf(FocusSchedule.DEFAULT_START)
     private var focusAutoEnd by mutableIntStateOf(FocusSchedule.DEFAULT_END)
+
+    private var opens by mutableStateOf<Map<String, Int>>(emptyMap())
+    private var contactsAccess by mutableStateOf(false)
+
+    private val contactsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        contactsAccess = granted
+        say(if (granted) "contatos ligados na busca" else "sem acesso aos contatos")
+    }
 
     private var scenes by mutableStateOf<List<Scene>>(emptyList())
     private var sceneActive by mutableStateOf<String?>(null)
@@ -273,6 +284,8 @@ class MainActivity : ComponentActivity() {
         memoryMode = settingsStore.loadMemoryMode()
         nightEnabled = settingsStore.loadNightEnabled()
         scenes = settingsStore.loadScenes()
+        opens = LaunchCounts.decode(settingsStore.loadLaunchCounts())
+        contactsAccess = ContactsReader.hasAccess(this)
         sceneActive = settingsStore.loadSceneActive()?.takeIf { id -> scenes.any { it.id == id } }
         sceneAuto = settingsStore.loadSceneAuto()
         focusAutoOn = settingsStore.loadFocusAutoOn()
@@ -486,6 +499,8 @@ class MainActivity : ComponentActivity() {
                             notificationAccess = notifAccess,
                             onOpenNotificationAccess = ::openNotificationAccess,
                             onRequestPhotos = { photoPermission.launch(MemoryReader.permissionsToRequest()) },
+                            contactsAccess = contactsAccess,
+                            onRequestContacts = { contactsPermission.launch(android.Manifest.permission.READ_CONTACTS) },
                             onRequestCalendar = { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) },
                             onOpenAppInfo = ::openAppInfo,
                             onClose = { showPermissions = false },
@@ -609,7 +624,7 @@ class MainActivity : ComponentActivity() {
                             query = query,
                             onQueryChange = { query = it },
                             focusSearch = focusSearch,
-                            onLaunch = { AppRepository.launch(this@MainActivity, it) },
+                            onLaunch = { launchApp(it) },
                             onTogglePin = { togglePin(it) },
                             folders = folders,
                             onFolderCreate = { app, name ->
@@ -638,6 +653,21 @@ class MainActivity : ComponentActivity() {
                             onUninstall = { uninstall(it) },
                             onStartShortcut = { sc ->
                                 if (!Shortcuts.start(this@MainActivity, sc)) say("não foi possível abrir o atalho")
+                            },
+                            opens = opens,
+                            onHit = { hit ->
+                                openHit(hit) { action ->
+                                    when (action) {
+                                        QuickAction.Torch -> toggleTorch()
+                                        QuickAction.NotificationPanel -> expandNotificationPanel()
+                                        QuickAction.Search -> focusSearch = true
+                                        QuickAction.Drawer -> Unit
+                                        QuickAction.Focus -> toggleFocus()
+                                        QuickAction.Optimize -> { showAllApps = false; showOptimize = true }
+                                        QuickAction.Health -> { showAllApps = false; showHealth = true }
+                                        QuickAction.Settings -> { showAllApps = false; showSettings = true }
+                                    }
+                                }
                             },
                             onOpenSettings = { showSettings = true },
                             onClose = { showAllApps = false },
@@ -678,7 +708,7 @@ class MainActivity : ComponentActivity() {
                             },
                             focusSinceMillis = focusSince,
                             favorites = favorites,
-                            onLaunch = { AppRepository.launch(this@MainActivity, it) },
+                            onLaunch = { launchApp(it) },
                             onUnpin = { fav ->
                                 when (fav) {
                                     is Favorite.App -> togglePin(fav.app)
@@ -857,6 +887,30 @@ class MainActivity : ComponentActivity() {
         if (last != inWindow) settingsStore.saveFocusAutoLast(inWindow)
     }
 
+    /** Abre o app e conta a abertura, para a busca mostrar primeiro o que você mais usa. */
+    private fun launchApp(app: AppEntry) {
+        opens = LaunchCounts.increment(opens, app.key)
+        settingsStore.saveLaunchCounts(LaunchCounts.encode(opens))
+        AppRepository.launch(this, app)
+    }
+
+    /** Executa um resultado da busca que não é app. */
+    private fun openHit(hit: Hit, runAction: (QuickAction) -> Unit) {
+        when (hit) {
+            is Hit.Answer -> {
+                val text = hit.title.substringAfter("= ", hit.title)
+                (getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                    .setPrimaryClip(android.content.ClipData.newPlainText("resultado", text))
+                say("copiado: $text")
+            }
+            is Hit.Action -> runAction(hit.action)
+            is Hit.Setting -> runCatching { startActivity(Intent(hit.intentAction).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                .onFailure { say("não foi possível abrir ${hit.title}") }
+            is Hit.Contact -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                .onFailure { say("não foi possível abrir o contato") }
+        }
+    }
+
     private fun saveScenes(list: List<Scene>) {
         scenes = list
         settingsStore.saveScenes(list)
@@ -915,7 +969,7 @@ class MainActivity : ComponentActivity() {
             return
         }
         say("abrindo ${app.label}…")
-        AppRepository.launch(this, app)
+        launchApp(app)
     }
 
     /** Liga ou desliga a lanterna (não precisa de permissão). */

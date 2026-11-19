@@ -17,7 +17,7 @@ object Search {
      * têm uma palavra começando com ele, depois os que apenas contêm. Dentro de cada grupo
      * mantém a ordem alfabética da lista original.
      */
-    fun filter(apps: List<AppEntry>, query: String): List<AppEntry> {
+    fun filter(apps: List<AppEntry>, query: String, opens: Map<String, Int> = emptyMap()): List<AppEntry> {
         val q = normalize(query)
         if (q.isEmpty()) return apps
 
@@ -32,6 +32,8 @@ object Search {
                 name.contains(q) -> contains += app
             }
         }
-        return startsWith + wordStart + contains
+        // Dentro de cada grupo, os mais abertos vêm primeiro; empate mantém a ordem alfabética.
+        fun ranked(list: List<AppEntry>) = if (opens.isEmpty()) list else list.sortedByDescending { opens[it.key] ?: 0 }
+        return ranked(startsWith) + ranked(wordStart) + ranked(contains)
     }
 }

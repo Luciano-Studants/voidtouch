@@ -45,6 +45,8 @@ fun PermissionsScreen(
     notificationAccess: Boolean,
     onOpenNotificationAccess: () -> Unit,
     onRequestPhotos: () -> Unit,
+    contactsAccess: Boolean,
+    onRequestContacts: () -> Unit,
     onRequestCalendar: () -> Unit,
     onOpenAppInfo: () -> Unit,
     onClose: () -> Unit,
@@ -75,6 +77,12 @@ fun PermissionsScreen(
             "agenda no carrossel: só leitura dos próximos compromissos",
             calendar,
             { if (calendar) onOpenAppInfo() else onRequestCalendar() },
+        ),
+        PermissionItem(
+            "contatos",
+            "busca universal: acha contatos pelo nome; nada é copiado nem enviado",
+            contactsAccess,
+            { if (contactsAccess) onOpenAppInfo() else onRequestContacts() },
         ),
         PermissionItem(
             "acesso ao uso",

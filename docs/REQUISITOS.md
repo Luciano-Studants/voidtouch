@@ -43,6 +43,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Otimizar | Cache por app, limpeza guiada, apps parados, atalho Samsung | 0.10, 0.18.1 |
 | Permissões | Estado, motivo e atalho de cada permissão | 0.23 |
 | Cenas | Home por momento: horário, foco, home calma e favoritos próprios | 0.25 |
+| Busca universal | Contas, conversões, ações, configurações do Android e contatos na mesma barra | 0.26 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
@@ -53,7 +54,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | # | Função | Resumo | Status |
 |---|---|---|---|
 | 1 | Cenas | A home muda por horário ou toque: favoritos próprios, foco e home calma | v0.25 |
-| 2 | Busca universal | Apps, contatos, ações, configurações, atalhos, contas e conversões | a fazer |
+| 2 | Busca universal | Apps, contatos, ações, configurações, contas e conversões; aprende o que você mais abre | v0.26 |
 | 3 | Ilha dinâmica interna | Pílula no topo com atividades ao vivo (música, cronômetro, download, entrega) | a fazer |
 | 4 | Responder pela home | Responder notificações de mensagem sem abrir o app; agrupar por conversa; ler depois | a fazer |
 | 5 | Linha "agora" preditiva | Três apps prováveis para a hora, pelo histórico local de aberturas | a fazer |

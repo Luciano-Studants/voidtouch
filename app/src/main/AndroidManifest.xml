@@ -23,6 +23,7 @@
 
     <!-- Só para mostrar "wi-fi", "dados" ou "sem rede" no status. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <!-- Só para medir o tamanho dos apps na tela "saúde do aparelho". Opcional: o usuário concede em Ajustes. -->
     <uses-permission

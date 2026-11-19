@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -73,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.AppShortcut
 import com.voidtouch.launcher.data.Perf
@@ -82,7 +84,10 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.voidtouch.launcher.data.FavoriteKeys
+import com.voidtouch.launcher.data.ContactsReader
 import com.voidtouch.launcher.data.Folder
+import com.voidtouch.launcher.data.Hit
+import com.voidtouch.launcher.data.UniversalSearch
 import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
@@ -129,6 +134,8 @@ fun AppList(
     onUninstall: (AppEntry) -> Unit,
     onStartShortcut: (AppShortcut) -> Unit,
     onOpenSettings: () -> Unit,
+    opens: Map<String, Int>,
+    onHit: (Hit) -> Unit,
     onClose: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -155,7 +162,7 @@ fun AppList(
         when {
             query.isNotBlank() -> {
                 val t0 = System.nanoTime()
-                val found = Search.filter(visible, query).map { Entry.AppItem(it) }
+                val found = Search.filter(visible, query, opens).map { Entry.AppItem(it) }
                 Perf.stats.record(Perf.SEARCH, (System.nanoTime() - t0) / 1_000_000)
                 found
             }
@@ -167,6 +174,18 @@ fun AppList(
             } + visible.filter { it.key !in folderKeys }.map { Entry.AppItem(it) }
         }
     }
+    // Resultados que não são apps: conta, conversão, ações, configurações e (com permissão) contatos.
+    val context = LocalContext.current
+    val extras = remember(query) { if (openFolder == null) UniversalSearch.hits(query) else emptyList() }
+    val contacts by produceState(emptyList<Hit.Contact>(), query) {
+        if (query.isBlank() || openFolderId != null) {
+            value = emptyList()
+        } else {
+            delay(150)
+            value = withContext(Dispatchers.IO) { ContactsReader.search(context, query) }
+        }
+    }
+    val allHits = extras + contacts
     val showRail = entries.size > RAIL_MIN_ITEMS
     var railLetter by remember { mutableStateOf<Char?>(null) }
 
@@ -258,7 +277,7 @@ fun AppList(
             }
         }
 
-        if (entries.isEmpty()) {
+        if (entries.isEmpty() && allHits.isEmpty()) {
             Text(
                 text = "nenhum app encontrado",
                 style = VoidType.App,
@@ -278,6 +297,14 @@ fun AppList(
                     bottom = 24.dp,
                 ),
             ) {
+                if (allHits.isNotEmpty()) {
+                    items(items = allHits, key = { "hit:$it" }, span = { GridItemSpan(maxLineSpan) }) { hit ->
+                        HitRow(hit, onClick = {
+                            focusManager.clearFocus()
+                            onHit(hit)
+                        })
+                    }
+                }
                 items(
                     items = entries,
                     key = { it.key },
@@ -828,4 +855,27 @@ internal fun SearchField(
             }
         },
     )
+}
+
+/** Uma linha de resultado que não é app: resposta, ação, configuração ou contato. */
+@Composable
+private fun HitRow(hit: Hit, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        Text(
+            text = if (hit is Hit.Answer) "= ${hit.title}" else hit.title,
+            style = VoidType.App,
+            color = VoidColors.Text,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(text = hit.hint, style = VoidType.Caption, color = VoidColors.TextDim, maxLines = 1)
+    }
 }

@@ -10,6 +10,15 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.26.0",
+            listOf(
+                "Busca universal: a mesma barra agora acha ações (lanterna, foco, otimizar...), telas de configuração do Android (Wi-Fi, Bluetooth, bateria...) e contatos.",
+                "Faz contas e conversões: \"15% de 230\", \"(2+3)*4\", \"10 km em mi\", \"100 f para c\". Tocar na resposta copia.",
+                "A busca aprende: os apps que você mais abre aparecem primeiro entre os resultados parecidos.",
+                "Contatos só entram se você ligar em Ajustes > permissões; o app não copia nem envia nada.",
+            ),
+        ),
+        ReleaseNote(
             "0.25.0",
             listOf(
                 "Cenas: a home muda de jeito conforme o momento. Em Ajustes > cenas, crie manhã, trabalho, noite... cada uma com horário, foco ligado ou não e home calma.",
