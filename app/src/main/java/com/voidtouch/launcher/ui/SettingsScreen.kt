@@ -75,6 +75,7 @@ fun SettingsScreen(
     onBackupRestore: () -> Unit,
     openTimeMs: Long,
     onOpenOptimize: () -> Unit,
+    onOpenPermissions: () -> Unit,
     memoryMode: MemoryMode,
     hiddenPhotos: Int,
     onMemoryMode: () -> Unit,
@@ -190,6 +191,7 @@ fun SettingsScreen(
 
         Section("celular")
         ValueRow("otimizar", onOpenOptimize)
+        ValueRow("permissões", onOpenPermissions)
 
         Section("notificações e música")
         ValueRow(if (notificationsEnabled) "acesso ligado" else "acesso desligado", onOpenNotificationAccess)

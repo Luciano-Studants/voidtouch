@@ -73,6 +73,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.voidtouch.launcher.ui.OptimizeScreen
+import com.voidtouch.launcher.ui.PermissionsScreen
 import com.voidtouch.launcher.ui.ChangelogScreen
 import com.voidtouch.launcher.data.Changelog
 import com.voidtouch.launcher.data.ReleaseNote
@@ -313,6 +314,7 @@ class MainActivity : ComponentActivity() {
                 var showHealth by remember { mutableStateOf(false) }
                 var showSettings by remember { mutableStateOf(false) }
                 var showOptimize by remember { mutableStateOf(false) }
+                var showPermissions by remember { mutableStateOf(false) }
                 var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
@@ -334,6 +336,7 @@ class MainActivity : ComponentActivity() {
                     showSettings = false
                     changelog = null
                     showOptimize = false
+                    showPermissions = false
                     showTips = false
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
@@ -350,6 +353,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         changelog != null -> changelog = null
                         showTips -> showTips = false
+                        showPermissions -> showPermissions = false
                         showOptimize -> showOptimize = false
                         showSettings -> showSettings = false
                         showHealth -> showHealth = false
@@ -412,6 +416,7 @@ class MainActivity : ComponentActivity() {
                 val screen = when {
                     showTips -> "tips"
                     changelog != null -> "changelog"
+                    showPermissions -> "permissions"
                     showOptimize -> "optimize"
                     showSettings -> "settings"
                     showHealth -> "health"
@@ -448,6 +453,16 @@ class MainActivity : ComponentActivity() {
                         TipsScreen(onClose = { showTips = false })
                     } else if (current == "changelog") {
                         ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
+                    } else if (current == "permissions") {
+                        PermissionsScreen(
+                            refreshKey = refreshKey,
+                            notificationAccess = notifAccess,
+                            onOpenNotificationAccess = ::openNotificationAccess,
+                            onRequestPhotos = { photoPermission.launch(MemoryReader.permissionsToRequest()) },
+                            onRequestCalendar = { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) },
+                            onOpenAppInfo = ::openAppInfo,
+                            onClose = { showPermissions = false },
+                        )
                     } else if (current == "optimize") {
                         OptimizeScreen(apps = apps, refreshKey = refreshKey, onMessage = ::say, onClose = { showOptimize = false })
                     } else if (current == "settings") {
@@ -469,6 +484,7 @@ class MainActivity : ComponentActivity() {
                                 say("fotos ocultas restauradas")
                             },
                             onOpenOptimize = { showSettings = false; showOptimize = true },
+                            onOpenPermissions = { showSettings = false; showPermissions = true },
                             focusAutoOn = focusAutoOn,
                             focusAutoStart = focusAutoStart,
                             focusAutoEnd = focusAutoEnd,

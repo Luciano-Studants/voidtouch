@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.23.0",
+            listOf(
+                "Painel de permissões em Ajustes > permissões: mostra se cada uma está ligada, para que serve e abre a configuração certa com um toque.",
+                "Cobre notificações, fotos, calendário, acesso ao uso e instalar apps desconhecidos.",
+            ),
+        ),
+        ReleaseNote(
             "0.22.0",
             listOf(
                 "Organização interna: as regras de favoritos, foco e notificações saíram da tela principal e agora têm testes automáticos.",
