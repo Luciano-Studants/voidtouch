@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.14.2",
+            listOf(
+                "Pastas podem ser fixadas nos favoritos da home: segure a pasta na lista > fixar na home.",
+                "Na home, a pasta aparece com ícone de pasta e a quantidade de apps; tocar abre a lista já dentro dela.",
+                "Segurar a pasta na home a tira dos favoritos. O limite de 10 favoritos vale para apps e pastas juntos.",
+            ),
+        ),
+        ReleaseNote(
             "0.14.1",
             listOf(
                 "Memórias do dia: agora vale qualquer foto da galeria (câmera, WhatsApp, downloads...), só ficam de fora capturas de tela e imagens muito pequenas.",

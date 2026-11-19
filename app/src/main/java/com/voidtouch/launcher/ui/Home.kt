@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.ClockStyle
+import com.voidtouch.launcher.data.Favorite
+import com.voidtouch.launcher.data.Folder
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.IconLoader
 import com.voidtouch.launcher.data.IconResult
@@ -79,9 +81,10 @@ fun HomeContent(
     onMemoryClick: () -> Unit,
     onMemoryHide: () -> Unit,
     focusSinceMillis: Long,
-    favorites: List<AppEntry>,
+    favorites: List<Favorite>,
     onLaunch: (AppEntry) -> Unit,
-    onUnpin: (AppEntry) -> Unit,
+    onUnpin: (Favorite) -> Unit,
+    onOpenFolder: (Folder) -> Unit,
     onOpenDrawer: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenHealth: () -> Unit,
@@ -188,12 +191,17 @@ fun HomeContent(
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                             )
                         } else {
-                            favorites.forEach { app ->
+                            favorites.forEach { item ->
                                 FavoriteRow(
-                                    app = app,
+                                    item = item,
                                     height = rowHeight,
-                                    onLaunch = onLaunch,
-                                    onUnpin = onUnpin,
+                                    onOpen = {
+                                        when (item) {
+                                            is Favorite.App -> onLaunch(item.app)
+                                            is Favorite.FolderItem -> onOpenFolder(item.folder)
+                                        }
+                                    },
+                                    onUnpin = { onUnpin(item) },
                                 )
                             }
                         }
@@ -241,10 +249,10 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FavoriteRow(
-    app: AppEntry,
+    item: Favorite,
     height: Dp,
-    onLaunch: (AppEntry) -> Unit,
-    onUnpin: (AppEntry) -> Unit,
+    onOpen: () -> Unit,
+    onUnpin: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val source = remember { MutableInteractionSource() }
@@ -257,23 +265,44 @@ private fun FavoriteRow(
             .combinedClickable(
                 interactionSource = source,
                 indication = null,
-                onClick = { onLaunch(app) },
+                onClick = onOpen,
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onUnpin(app)
+                    onUnpin()
                 },
             )
             .padding(horizontal = 24.dp),
     ) {
-        AppIcon(app = app, size = 24.dp)
-        Spacer(Modifier.width(18.dp))
-        Text(
-            text = app.label,
-            style = VoidType.App,
-            color = VoidColors.Text,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        when (item) {
+            is Favorite.App -> {
+                AppIcon(app = item.app, size = 24.dp)
+                Spacer(Modifier.width(18.dp))
+                Text(
+                    text = item.app.label,
+                    style = VoidType.App,
+                    color = VoidColors.Text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            is Favorite.FolderItem -> {
+                FolderGlyph(width = 24.dp, height = 20.dp)
+                Spacer(Modifier.width(18.dp))
+                Text(
+                    text = item.folder.name,
+                    style = VoidType.App,
+                    color = VoidColors.Text,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Text(
+                    text = "  ${item.count}",
+                    style = VoidType.Caption,
+                    color = VoidColors.TextDim,
+                )
+            }
+        }
     }
 }
 

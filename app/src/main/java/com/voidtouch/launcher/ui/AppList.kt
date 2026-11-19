@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
+import com.voidtouch.launcher.data.FavoriteKeys
 import com.voidtouch.launcher.data.Folder
 import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.ui.theme.VoidColors
@@ -115,6 +116,8 @@ fun AppList(
     onFolderRemoveApp: (AppEntry) -> Unit,
     onFolderRename: (String, String) -> Unit,
     onFolderDelete: (String) -> Unit,
+    onTogglePinFolder: (Folder) -> Unit,
+    startFolderId: String?,
     onAppInfo: (AppEntry) -> Unit,
     onUninstall: (AppEntry) -> Unit,
     onOpenSettings: () -> Unit,
@@ -130,7 +133,7 @@ fun AppList(
         if (hiding) apps.filter { it.key !in focusApps } else apps
     }
     val hiddenCount = apps.size - visible.size
-    var openFolderId by remember { mutableStateOf<String?>(null) }
+    var openFolderId by remember { mutableStateOf(startFolderId) }
     var sheet by remember { mutableStateOf<Sheet?>(null) }
     var lastSheet by remember { mutableStateOf<Sheet?>(null) }
     if (sheet != null) lastSheet = sheet
@@ -272,6 +275,7 @@ fun AppList(
                             modifier = Modifier.animateItem(),
                             folder = entry.folder,
                             count = entry.count,
+                            pinned = FavoriteKeys.folder(entry.folder.id) in pinnedKeys,
                             onClick = { openFolderId = entry.folder.id },
                             onLongClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -352,6 +356,8 @@ fun AppList(
                     sheet = current,
                     folders = folders,
                     pinned = current.appOrNull()?.let { it.key in pinnedKeys } == true,
+                    folderPinned = (current as? Sheet.FolderActions)?.let { FavoriteKeys.folder(it.folder.id) in pinnedKeys } == true,
+                    onTogglePinFolder = onTogglePinFolder,
                     onSheet = { sheet = it },
                     onTogglePin = onTogglePin,
                     onFolderCreate = onFolderCreate,
@@ -406,6 +412,8 @@ private fun SheetPanel(
     sheet: Sheet,
     folders: List<Folder>,
     pinned: Boolean,
+    folderPinned: Boolean,
+    onTogglePinFolder: (Folder) -> Unit,
     onSheet: (Sheet?) -> Unit,
     onTogglePin: (AppEntry) -> Unit,
     onFolderCreate: (AppEntry, String) -> Unit,
@@ -483,6 +491,10 @@ private fun SheetPanel(
             }
             is Sheet.FolderActions -> {
                 SheetTitle("pasta ${sheet.folder.name}")
+                SheetRow(if (folderPinned) "tirar da home" else "fixar na home") {
+                    onTogglePinFolder(sheet.folder)
+                    onSheet(null)
+                }
                 SheetRow("renomear") { onSheet(Sheet.RenameFolder(sheet.folder)) }
                 SheetRow("excluir pasta (os apps voltam à lista)") {
                     onFolderDelete(sheet.folder.id)
@@ -529,12 +541,37 @@ private fun SheetRow(text: String, onClick: () -> Unit) {
     )
 }
 
+/** Contorno de pasta desenhado (aba e corpo), usado na grade e nos favoritos. */
+@Composable
+internal fun FolderGlyph(width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
+    Canvas(modifier = Modifier.size(width, height)) {
+        val unit = size.height / 28f
+        val stroke = Stroke(width = 1.6.dp.toPx().coerceAtMost(2f * unit * 1.dp.toPx()))
+        val top = 5.dp.toPx() * unit
+        val tab = Path().apply {
+            moveTo(0f, top)
+            lineTo(0f, 2.dp.toPx() * unit)
+            lineTo(12.dp.toPx() * unit, 2.dp.toPx() * unit)
+            lineTo(15.dp.toPx() * unit, top)
+        }
+        drawPath(tab, VoidColors.TextDim, style = stroke)
+        drawRoundRect(
+            color = VoidColors.Text,
+            topLeft = Offset(0f, top),
+            size = Size(size.width, size.height - top),
+            cornerRadius = CornerRadius(4.dp.toPx() * unit),
+            style = stroke,
+        )
+    }
+}
+
 /** Pasta na grade: contorno de pasta com a quantidade de apps dentro, e o nome embaixo. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FolderCell(
     folder: Folder,
     count: Int,
+    pinned: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -554,21 +591,13 @@ private fun FolderCell(
             .padding(horizontal = 4.dp, vertical = 12.dp),
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(44.dp)) {
-            Canvas(modifier = Modifier.size(34.dp, 28.dp)) {
-                val stroke = Stroke(width = 1.6.dp.toPx())
-                val tab = Path().apply {
-                    moveTo(0f, 5.dp.toPx())
-                    lineTo(0f, 2.dp.toPx())
-                    lineTo(12.dp.toPx(), 2.dp.toPx())
-                    lineTo(15.dp.toPx(), 5.dp.toPx())
-                }
-                drawPath(tab, VoidColors.TextDim, style = stroke)
-                drawRoundRect(
-                    color = VoidColors.Text,
-                    topLeft = Offset(0f, 5.dp.toPx()),
-                    size = Size(size.width, size.height - 5.dp.toPx()),
-                    cornerRadius = CornerRadius(4.dp.toPx()),
-                    style = stroke,
+            FolderGlyph(width = 34.dp, height = 28.dp)
+            if (pinned) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(6.dp)
+                        .background(VoidColors.Text, CircleShape),
                 )
             }
             Text(

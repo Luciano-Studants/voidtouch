@@ -34,6 +34,8 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.data.Favorite
+import com.voidtouch.launcher.data.FavoriteKeys
 import com.voidtouch.launcher.data.Folder
 import com.voidtouch.launcher.data.GestureTarget
 import com.voidtouch.launcher.data.IconLoader
@@ -233,6 +235,8 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 var showAllApps by remember { mutableStateOf(false) }
+                // Pasta que a lista já abre aberta (quando se toca numa pasta fixada na home).
+                var startFolder by remember { mutableStateOf<String?>(null) }
                 // Verdadeiro quando a lista foi aberta pela pílula de busca (já abre o teclado).
                 var focusSearch by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
@@ -256,6 +260,7 @@ class MainActivity : ComponentActivity() {
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
                 LaunchedEffect(showAllApps) {
                     if (!showAllApps) {
+                        startFolder = null
                         query = ""
                         focusSearch = false
                         markingFocusApps = false
@@ -292,10 +297,19 @@ class MainActivity : ComponentActivity() {
                         else -> launchByKey(apps, target, focusOn)
                     }
                 }
-                val favorites = remember(apps, pinnedKeys, focusApps, focusOn) {
+                val favorites = remember(apps, pinnedKeys, folders, focusApps, focusOn) {
                     val byKey = apps.associateBy { it.key }
-                    pinnedKeys.mapNotNull { byKey[it] }
-                        .filter { !focusOn || it.key !in focusApps }
+                    pinnedKeys.mapNotNull { key ->
+                        val folderId = FavoriteKeys.folderId(key)
+                        if (folderId != null) {
+                            folders.firstOrNull { it.id == folderId }?.let { f ->
+                                val n = f.keys.count { it in byKey && (!focusOn || it !in focusApps) }
+                                if (n > 0) Favorite.FolderItem(f, n) else null
+                            }
+                        } else {
+                            byKey[key]?.takeIf { !focusOn || it.key !in focusApps }?.let { Favorite.App(it) }
+                        }
+                    }
                 }
 
                 // Com o foco ligado, notificações dos apps marcados ficam escondidas.
@@ -426,6 +440,8 @@ class MainActivity : ComponentActivity() {
                                 updateFolders(Folders.rename(folders, id, name))
                                 say("pasta renomeada")
                             },
+                            onTogglePinFolder = { togglePinFolder(it) },
+                            startFolderId = startFolder,
                             onFolderDelete = { id ->
                                 updateFolders(Folders.delete(folders, id))
                                 say("pasta excluída: os apps voltaram à lista")
@@ -467,7 +483,17 @@ class MainActivity : ComponentActivity() {
                             focusSinceMillis = focusSince,
                             favorites = favorites,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
-                            onUnpin = { togglePin(it) },
+                            onUnpin = { fav ->
+                                when (fav) {
+                                    is Favorite.App -> togglePin(fav.app)
+                                    is Favorite.FolderItem -> togglePinFolder(fav.folder)
+                                }
+                            },
+                            onOpenFolder = { f ->
+                                focusSearch = false
+                                startFolder = f.id
+                                showAllApps = true
+                            },
                             onOpenDrawer = {
                                 focusSearch = false
                                 showAllApps = true
@@ -551,6 +577,12 @@ class MainActivity : ComponentActivity() {
     private fun updateFolders(list: List<Folder>) {
         folders = list
         folderStore.save(list)
+        // Pasta que deixou de existir sai dos favoritos.
+        val cleaned = FavoriteKeys.withoutMissingFolders(pinnedKeys, list)
+        if (cleaned != pinnedKeys) {
+            pinnedKeys = cleaned
+            favoritesStore.save(cleaned)
+        }
     }
 
     private fun openPackageInfo(pkg: String) {
@@ -569,20 +601,25 @@ class MainActivity : ComponentActivity() {
         runCatching { item.intent?.send() }
     }
 
-    private fun togglePin(app: AppEntry) {
+    private fun togglePin(app: AppEntry) = togglePinKey(app.key, app.label)
+
+    private fun togglePinFolder(folder: Folder) = togglePinKey(FavoriteKeys.folder(folder.id), "pasta ${folder.name}")
+
+    /** Fixa ou solta um app ou pasta nos favoritos da home (limite de 10 no total). */
+    private fun togglePinKey(key: String, label: String) {
         val current = pinnedKeys
         pinnedKeys = when {
-            app.key in current -> {
-                say("${app.label} saiu da home")
-                current - app.key
+            key in current -> {
+                say("$label saiu da home")
+                current - key
             }
             current.size >= FavoritesStore.MAX -> {
                 say("máximo de ${FavoritesStore.MAX} favoritos: solte um para fixar outro")
                 current
             }
             else -> {
-                say("${app.label} fixado na home · ${current.size + 1}/${FavoritesStore.MAX}")
-                current + app.key
+                say("$label fixado na home · ${current.size + 1}/${FavoritesStore.MAX}")
+                current + key
             }
         }
         favoritesStore.save(pinnedKeys)

@@ -70,3 +70,21 @@ class FoldersTest {
         assertEquals(listOf("B"), result.map { it.name })
     }
 }
+
+class FavoriteKeysTest {
+    @Test
+    fun folderKeyRoundTrip() {
+        assertEquals("7", FavoriteKeys.folderId(FavoriteKeys.folder("7")))
+        assertEquals(null, FavoriteKeys.folderId("com.a/com.a.Main"))
+    }
+
+    @Test
+    fun missingFoldersAreDropped() {
+        val folders = Folders.create(emptyList(), "A", "x/1")
+        val keys = listOf("com.a/Main", FavoriteKeys.folder(folders[0].id), FavoriteKeys.folder("999"))
+        assertEquals(
+            listOf("com.a/Main", FavoriteKeys.folder(folders[0].id)),
+            FavoriteKeys.withoutMissingFolders(keys, folders),
+        )
+    }
+}
