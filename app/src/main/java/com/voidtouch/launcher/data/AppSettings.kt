@@ -51,6 +51,20 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(swipeKey(side), appKey.orEmpty()).apply()
     }
 
+    fun loadNightEnabled(): Boolean = prefs.getBoolean(KEY_NIGHT_ON, false)
+
+    fun saveNightEnabled(on: Boolean) {
+        prefs.edit().putBoolean(KEY_NIGHT_ON, on).apply()
+    }
+
+    fun loadNightStart(): Int = prefs.getInt(KEY_NIGHT_START, NightMode.DEFAULT_START)
+
+    fun loadNightEnd(): Int = prefs.getInt(KEY_NIGHT_END, NightMode.DEFAULT_END)
+
+    fun saveNightHours(start: Int, end: Int) {
+        prefs.edit().putInt(KEY_NIGHT_START, start).putInt(KEY_NIGHT_END, end).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -76,6 +90,9 @@ class SettingsStore(private val prefs: SharedPreferences) {
         // Mesma chave usada desde a v0.2, para o fundo escolhido não se perder.
         const val KEY_BACKDROP = "backdrop"
         const val KEY_CLOCK_STYLE = "clock_style"
+        const val KEY_NIGHT_ON = "night_on"
+        const val KEY_NIGHT_START = "night_start"
+        const val KEY_NIGHT_END = "night_end"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"

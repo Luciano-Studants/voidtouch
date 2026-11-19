@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -95,6 +96,7 @@ fun HomeContent(
     onSwipeRight: () -> Unit,
     onSwipeDown: () -> Unit,
     onDoubleTap: () -> Unit,
+    night: Boolean,
 ) {
     val focusOn = focusSinceMillis != 0L
     val pagerState = rememberPagerState(pageCount = { CAROUSEL_PAGES })
@@ -105,6 +107,8 @@ fun HomeContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            // À noite a home inteira fica mais escura para cansar menos a vista.
+            .graphicsLayer { alpha = if (night) 0.65f else 1f }
             // Deslizar para cima abre a lista completa (a menos que os favoritos estejam rolando).
             .onVerticalSwipe(
                 up = true,
@@ -158,7 +162,7 @@ fun HomeContent(
                     ),
             ) {
                 // Com o foco ligado a home fica mais calma: some o bloco de notificações e status.
-                if (!focusOn) {
+                if (!focusOn && !night) {
                     InfoBlock(
                         stats = stats,
                         notifications = notifications,

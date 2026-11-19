@@ -35,6 +35,9 @@ import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
 import com.voidtouch.launcher.data.Backup
+import com.voidtouch.launcher.data.NightMode
+import java.time.Instant
+import java.time.ZoneId
 import com.voidtouch.launcher.data.Shortcuts
 import com.voidtouch.launcher.data.Favorite
 import com.voidtouch.launcher.ui.TipsScreen
@@ -112,6 +115,10 @@ class MainActivity : ComponentActivity() {
     private var appsKey by mutableIntStateOf(0)
 
     private var torchOn = false
+
+    private var nightEnabled by mutableStateOf(false)
+    private var nightStart by mutableIntStateOf(NightMode.DEFAULT_START)
+    private var nightEnd by mutableIntStateOf(NightMode.DEFAULT_END)
 
     private val createdAt = SystemClock.elapsedRealtime()
     private var openTimeMs by mutableLongStateOf(0L)
@@ -231,6 +238,9 @@ class MainActivity : ComponentActivity() {
         clockStyle = settingsStore.loadClockStyle()
         gestures = SwipeSide.entries.associateWith { settingsStore.loadSwipeApp(it) }
         memoryMode = settingsStore.loadMemoryMode()
+        nightEnabled = settingsStore.loadNightEnabled()
+        nightStart = settingsStore.loadNightStart()
+        nightEnd = settingsStore.loadNightEnd()
         hiddenPhotos = settingsStore.loadHiddenPhotos()
         photoAccess = MemoryReader.hasAccess(this)
         applyBackdrop()
@@ -361,6 +371,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // A foto "neste dia" é escolhida uma vez por bloco de 3 horas, fora da thread principal.
+                // Modo noite: dentro da janela de horário a home fica escura e calma.
+                val hour = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.systemDefault()).hour
+                val night = nightEnabled && NightMode.isNight(hour, nightStart, nightEnd)
+
                 val memory by produceState<MemoryShown?>(null, memoryMode, photoAccess, hiddenPhotos, nowMillis / 10_800_000L) {
                     value = withContext(Dispatchers.IO) {
                         MemoryReader.pick(applicationContext, nowMillis, memoryMode, hiddenPhotos)?.let { m ->
@@ -429,6 +443,22 @@ class MainActivity : ComponentActivity() {
                                 say("fotos ocultas restauradas")
                             },
                             onOpenOptimize = { showSettings = false; showOptimize = true },
+                            nightEnabled = nightEnabled,
+                            nightStart = nightStart,
+                            nightEnd = nightEnd,
+                            onNightToggle = {
+                                nightEnabled = !nightEnabled
+                                settingsStore.saveNightEnabled(nightEnabled)
+                                say(if (nightEnabled) "modo noite ligado: ${nightStart}h às ${nightEnd}h" else "modo noite desligado")
+                            },
+                            onNightStart = {
+                                nightStart = (nightStart + 1) % 24
+                                settingsStore.saveNightHours(nightStart, nightEnd)
+                            },
+                            onNightEnd = {
+                                nightEnd = (nightEnd + 1) % 24
+                                settingsStore.saveNightHours(nightStart, nightEnd)
+                            },
                             onOpenTips = { showSettings = false; showTips = true },
                             onBackupSave = { backupSave.launch("voidtouch-backup.json") },
                             onBackupRestore = { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) },
@@ -515,7 +545,8 @@ class MainActivity : ComponentActivity() {
                             onNotificationDismiss = { NotificationHub.dismiss(it.key) },
                             onEnableNotifications = ::openNotificationAccess,
                             active = screenActive,
-                            memory = memory,
+                            memory = if (night) null else memory,
+                            night = night,
                             onMemoryClick = {
                                 memory?.let {
                                     runCatching {

@@ -59,6 +59,12 @@ fun SettingsScreen(
     onOpenAppInfo: () -> Unit,
     onOpenChangelog: () -> Unit,
     onOpenTips: () -> Unit,
+    nightEnabled: Boolean,
+    nightStart: Int,
+    nightEnd: Int,
+    onNightToggle: () -> Unit,
+    onNightStart: () -> Unit,
+    onNightEnd: () -> Unit,
     onBackupSave: () -> Unit,
     onBackupRestore: () -> Unit,
     openTimeMs: Long,
@@ -138,6 +144,19 @@ fun SettingsScreen(
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("modo noite")
+        ValueRow(if (nightEnabled) "ligado" else "desligado", onNightToggle)
+        if (nightEnabled) {
+            ValueRow("começa às ${nightStart}h", onNightStart)
+            ValueRow("termina às ${nightEnd}h", onNightEnd)
+        }
+        Text(
+            "no horário escolhido a home fica mais escura e mais calma: some o bloco de status e notificações e a foto do dia. Toque nos horários para mudar de hora em hora.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
         )
 
         Section("memórias do dia")

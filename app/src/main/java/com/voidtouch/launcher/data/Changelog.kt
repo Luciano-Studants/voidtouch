@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.17.0",
+            listOf(
+                "Modo noite: em Ajustes, escolha o horário (padrão das 22h às 6h). Nesse período a home fica mais escura e calma: some o bloco de status e notificações e a foto do dia.",
+            ),
+        ),
+        ReleaseNote(
             "0.16.0",
             listOf(
                 "Atalhos dos apps: ao segurar um app na lista, o menu mostra os atalhos do próprio app (como \"nova mensagem\" ou \"selfie\") no topo, e um toque abre direto.",
