@@ -57,6 +57,8 @@ import android.media.session.PlaybackState
 import android.os.SystemClock
 import com.voidtouch.launcher.notify.MediaInfo
 import kotlinx.coroutines.delay
+import com.voidtouch.launcher.data.Agenda
+import com.voidtouch.launcher.data.AgendaItem
 import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.notify.NotificationHub
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,8 +69,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** Quantas páginas o carrossel tem: hora, dia da semana e música. */
-const val CAROUSEL_PAGES = 3
+/** Quantas páginas o carrossel tem: hora, dia da semana, música e agenda. */
+const val CAROUSEL_PAGES = 4
 
 private val PtBr: Locale = Locale.forLanguageTag("pt-BR")
 private val MonthFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM", PtBr)
@@ -110,6 +112,10 @@ fun HomeCarousel(
     notificationsEnabled: Boolean,
     onEnableNotifications: () -> Unit,
     active: Boolean,
+    agenda: List<AgendaItem>,
+    agendaEnabled: Boolean,
+    onEnableAgenda: () -> Unit,
+    onAgendaClick: () -> Unit,
     memory: MemoryShown?,
     onMemoryClick: () -> Unit,
     onMemoryHide: () -> Unit,
@@ -153,7 +159,8 @@ fun HomeCarousel(
                 when (page) {
                     0 -> TimePage(text, memory, onMemoryClick, onMemoryHide)
                     1 -> DayPage(text)
-                    else -> MusicPage(notificationsEnabled, onEnableNotifications, active)
+                    2 -> MusicPage(notificationsEnabled, onEnableNotifications, active)
+                    else -> AgendaPage(agenda, agendaEnabled, nowMillis, onEnableAgenda, onAgendaClick)
                 }
             }
         }

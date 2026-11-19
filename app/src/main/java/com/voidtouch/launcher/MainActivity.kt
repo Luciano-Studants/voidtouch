@@ -34,6 +34,8 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.data.Agenda
+import com.voidtouch.launcher.data.AgendaItem
 import com.voidtouch.launcher.data.Backup
 import com.voidtouch.launcher.data.NightMode
 import java.time.Instant
@@ -116,6 +118,19 @@ class MainActivity : ComponentActivity() {
 
     private var torchOn = false
 
+    private var calendarAccess by mutableStateOf(false)
+
+    private val calendarPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        calendarAccess = granted
+        say(if (granted) "agenda ligada" else "sem acesso ao calendário")
+    }
+
+    private fun openCalendar(nowMillis: Long) {
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("content://com.android.calendar/time/$nowMillis")))
+        }.onFailure { say("não foi possível abrir o calendário") }
+    }
+
     private var nightEnabled by mutableStateOf(false)
     private var nightStart by mutableIntStateOf(NightMode.DEFAULT_START)
     private var nightEnd by mutableIntStateOf(NightMode.DEFAULT_END)
@@ -176,6 +191,7 @@ class MainActivity : ComponentActivity() {
 
     private val photoPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         photoAccess = MemoryReader.hasAccess(this)
+        calendarAccess = Agenda.hasAccess(this)
         if (photoAccess) {
             say("memórias ligadas: ${memoryMode.label}")
         } else {
@@ -375,6 +391,11 @@ class MainActivity : ComponentActivity() {
                 val hour = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.systemDefault()).hour
                 val night = nightEnabled && NightMode.isNight(hour, nightStart, nightEnd)
 
+                // Próximos compromissos, relidos a cada 5 minutos com a tela visível.
+                val agenda by produceState(emptyList<AgendaItem>(), calendarAccess, nowMillis / 300_000L) {
+                    value = withContext(Dispatchers.IO) { Agenda.read(applicationContext, nowMillis) }
+                }
+
                 val memory by produceState<MemoryShown?>(null, memoryMode, photoAccess, hiddenPhotos, nowMillis / 10_800_000L) {
                     value = withContext(Dispatchers.IO) {
                         MemoryReader.pick(applicationContext, nowMillis, memoryMode, hiddenPhotos)?.let { m ->
@@ -545,6 +566,10 @@ class MainActivity : ComponentActivity() {
                             onNotificationDismiss = { NotificationHub.dismiss(it.key) },
                             onEnableNotifications = ::openNotificationAccess,
                             active = screenActive,
+                            agenda = agenda,
+                            agendaEnabled = calendarAccess,
+                            onEnableAgenda = { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) },
+                            onAgendaClick = { openCalendar(nowMillis) },
                             memory = if (night) null else memory,
                             night = night,
                             onMemoryClick = {
@@ -640,6 +665,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         notifAccess = NotificationHub.hasAccess(this)
         photoAccess = MemoryReader.hasAccess(this)
+        calendarAccess = Agenda.hasAccess(this)
         refreshKey++
     }
 

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
+import com.voidtouch.launcher.data.AgendaItem
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.ClockStyle
 import com.voidtouch.launcher.data.Favorite
@@ -79,6 +80,10 @@ fun HomeContent(
     onNotificationDismiss: (NoteItem) -> Unit,
     onEnableNotifications: () -> Unit,
     active: Boolean,
+    agenda: List<AgendaItem>,
+    agendaEnabled: Boolean,
+    onEnableAgenda: () -> Unit,
+    onAgendaClick: () -> Unit,
     memory: MemoryShown?,
     onMemoryClick: () -> Unit,
     onMemoryHide: () -> Unit,
@@ -135,6 +140,10 @@ fun HomeContent(
                 notificationsEnabled = notificationsEnabled,
                 onEnableNotifications = onEnableNotifications,
                 active = active,
+                agenda = agenda,
+                agendaEnabled = agendaEnabled,
+                onEnableAgenda = onEnableAgenda,
+                onAgendaClick = onAgendaClick,
                 memory = memory,
                 onMemoryClick = onMemoryClick,
                 onMemoryHide = onMemoryHide,

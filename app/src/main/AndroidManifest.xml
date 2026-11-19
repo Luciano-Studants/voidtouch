@@ -3,6 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Página "agenda" do carrossel: lê só os próximos compromissos, no aparelho. Opcional. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
     <!-- Gesto de deslizar para baixo: abre o painel de notificações. -->
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
 

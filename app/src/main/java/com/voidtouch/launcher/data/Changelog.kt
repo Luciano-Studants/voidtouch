@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.18.0",
+            listOf(
+                "Nova página no carrossel: agenda. Mostra os próximos compromissos do calendário do celular (hoje, amanhã e os dias seguintes). Toque para abrir o calendário.",
+                "A agenda pede permissão de calendário só quando você tocar em \"ativar agenda\"; os dados não saem do aparelho.",
+            ),
+        ),
+        ReleaseNote(
             "0.17.0",
             listOf(
                 "Modo noite: em Ajustes, escolha o horário (padrão das 22h às 6h). Nesse período a home fica mais escura e calma: some o bloco de status e notificações e a foto do dia.",
