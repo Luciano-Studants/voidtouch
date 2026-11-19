@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.18.1",
+            listOf(
+                "Limpeza de cache mais honesta: o Android não deixa um app comum apagar o cache dos outros sozinho, então o botão antigo foi trocado por dois caminhos que funcionam.",
+                "Limpeza guiada: mostra o app com mais cache e abre a tela dele no sistema; depois de limpar e voltar, o próximo aparece, com opção de pular.",
+                "Limpeza de todos de uma vez: abre Cuidados com o dispositivo da Samsung, e o VoidTouch confere quanto foi liberado ao voltar.",
+            ),
+        ),
+        ReleaseNote(
             "0.18.0",
             listOf(
                 "Nova página no carrossel: agenda. Mostra os próximos compromissos do calendário do celular (hoje, amanhã e os dias seguintes). Toque para abrir o calendário.",

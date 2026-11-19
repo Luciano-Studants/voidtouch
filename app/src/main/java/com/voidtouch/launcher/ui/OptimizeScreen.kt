@@ -61,6 +61,7 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
     var waitingSystem by remember { mutableStateOf(false) }
     var freed by remember { mutableStateOf<Long?>(null) }
     var noChange by remember { mutableStateOf(false) }
+    var skipped by remember { mutableStateOf(emptySet<String>()) }
 
     // Mede de novo sempre que a tela volta a ser vista (por exemplo, depois de limpar um cache).
     LaunchedEffect(apps, refreshKey) {
@@ -141,19 +142,58 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
                     style = VoidType.Day,
                     color = VoidColors.Text,
                 )
-                Spacer(Modifier.height(10.dp))
-                Pill(if (waitingSystem) "aguardando o sistema…" else "limpar cache de todos") {
+                Spacer(Modifier.height(6.dp))
+                Hint("o Android não deixa um app comum apagar o cache dos outros sozinho. Há dois caminhos que funcionam:")
+
+                // 1) Limpeza guiada: o app mostra o maior cache e leva direto à tela do app no sistema.
+                val next = d.topCache.firstOrNull { it.app.packageName !in skipped && it.cacheBytes >= 1_000_000L }
+                Spacer(Modifier.height(14.dp))
+                Text("limpeza guiada", style = VoidType.Caption, color = VoidColors.TextDim)
+                Spacer(Modifier.height(8.dp))
+                if (next == null) {
+                    ResultCard("✓ nenhum app com cache relevante")
+                } else {
+                    Text(
+                        "${next.app.label} · ${size(context, next.cacheBytes)}",
+                        style = VoidType.App,
+                        color = VoidColors.Text,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Hint("toque em Armazenamento > Limpar cache e volte: o próximo aparece sozinho")
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Pill("abrir ${next.app.label}") {
+                            before = d.cacheTotalBytes
+                            Optimizer.openAppInfo(context, next.app.packageName)
+                        }
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            "pular",
+                            style = VoidType.Caption,
+                            color = VoidColors.TextDim,
+                            modifier = Modifier
+                                .clickable { skipped = skipped + next.app.packageName }
+                                .padding(12.dp),
+                        )
+                    }
+                }
+
+                // 2) Limpeza de todos de uma vez: só o app de manutenção do próprio fabricante consegue.
+                Spacer(Modifier.height(20.dp))
+                Text("todos de uma vez", style = VoidType.Caption, color = VoidColors.TextDim)
+                Spacer(Modifier.height(8.dp))
+                Pill(if (waitingSystem) "aguardando o sistema…" else "abrir a limpeza da Samsung") {
                     if (waitingSystem) return@Pill
                     before = d.cacheTotalBytes
                     waitingSystem = true
-                    onMessage("pedindo ao sistema para limpar o cache…")
-                    if (!Optimizer.requestClearAllCache(context)) {
-                        onMessage("o sistema não aceita limpar tudo de uma vez: abrindo o armazenamento")
-                        Optimizer.openStorage(context)
-                    }
+                    onMessage("abrindo Cuidados com o dispositivo")
+                    Optimizer.openDeviceCare(context)
                 }
-                Spacer(Modifier.height(10.dp))
-                Hint("ou toque num app abaixo > Armazenamento > Limpar cache")
+                Spacer(Modifier.height(6.dp))
+                Hint("em Cuidados com o dispositivo > Armazenamento, use o botão de limpar. Ao voltar, o VoidTouch confere quanto foi liberado.")
+                Spacer(Modifier.height(18.dp))
+                Text("maiores caches", style = VoidType.Caption, color = VoidColors.TextDim)
+                Spacer(Modifier.height(4.dp))
                 d.topCache.forEach { item ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
