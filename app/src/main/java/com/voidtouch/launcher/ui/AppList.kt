@@ -74,6 +74,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
+import com.voidtouch.launcher.data.AppShortcut
+import com.voidtouch.launcher.data.Shortcuts
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.voidtouch.launcher.data.FavoriteKeys
 import com.voidtouch.launcher.data.Folder
 import com.voidtouch.launcher.data.Search
@@ -120,6 +126,7 @@ fun AppList(
     startFolderId: String?,
     onAppInfo: (AppEntry) -> Unit,
     onUninstall: (AppEntry) -> Unit,
+    onStartShortcut: (AppShortcut) -> Unit,
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -370,6 +377,7 @@ fun AppList(
                     },
                     onAppInfo = onAppInfo,
                     onUninstall = onUninstall,
+                    onStartShortcut = onStartShortcut,
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
@@ -423,6 +431,7 @@ private fun SheetPanel(
     onFolderDelete: (String) -> Unit,
     onAppInfo: (AppEntry) -> Unit,
     onUninstall: (AppEntry) -> Unit,
+    onStartShortcut: (AppShortcut) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
@@ -440,6 +449,17 @@ private fun SheetPanel(
                 val app = sheet.app
                 val inFolder = folders.firstOrNull { f -> app.key in f.keys }
                 SheetTitle(app.label)
+                // Atalhos do próprio app (nova mensagem, selfie...), lidos fora da thread principal.
+                val context = LocalContext.current
+                val shortcuts by produceState(emptyList<AppShortcut>(), app.key) {
+                    value = withContext(Dispatchers.IO) { Shortcuts.load(context.applicationContext, app.packageName) }
+                }
+                shortcuts.forEach { sc ->
+                    SheetRow("↗ ${sc.label}") {
+                        onStartShortcut(sc)
+                        onSheet(null)
+                    }
+                }
                 SheetRow(if (pinned) "tirar da home" else "fixar na home") {
                     onTogglePin(app)
                     onSheet(null)

@@ -35,6 +35,7 @@ import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
 import com.voidtouch.launcher.data.Backup
+import com.voidtouch.launcher.data.Shortcuts
 import com.voidtouch.launcher.data.Favorite
 import com.voidtouch.launcher.ui.TipsScreen
 import android.os.SystemClock
@@ -497,6 +498,9 @@ class MainActivity : ComponentActivity() {
                             },
                             onAppInfo = { openPackageInfo(it.packageName) },
                             onUninstall = { uninstall(it) },
+                            onStartShortcut = { sc ->
+                                if (!Shortcuts.start(this@MainActivity, sc)) say("não foi possível abrir o atalho")
+                            },
                             onOpenSettings = { showSettings = true },
                             onClose = { showAllApps = false },
                         )

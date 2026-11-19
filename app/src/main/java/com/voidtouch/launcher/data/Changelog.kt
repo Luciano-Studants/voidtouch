@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.16.0",
+            listOf(
+                "Atalhos dos apps: ao segurar um app na lista, o menu mostra os atalhos do próprio app (como \"nova mensagem\" ou \"selfie\") no topo, e um toque abre direto.",
+            ),
+        ),
+        ReleaseNote(
             "0.15.0",
             listOf(
                 "Dicas de uso: uma tela rápida com todos os gestos aparece no primeiro uso e fica em Ajustes > dicas de uso.",
