@@ -48,7 +48,7 @@ object Updater {
                 }
                 when {
                     url == null -> UpdateCheck.NoRelease
-                    isNewer(version, installedVersion) -> UpdateCheck.Available(UpdateInfo(version, url))
+                    Version.isNewer(version, installedVersion) -> UpdateCheck.Available(UpdateInfo(version, url))
                     else -> UpdateCheck.UpToDate
                 }
             } finally {
@@ -126,16 +126,4 @@ object Updater {
             instanceFollowRedirects = true
             setRequestProperty("Accept", "application/vnd.github+json")
         }
-
-    /** Compara "0.9.0" com "0.8.1" número a número. */
-    internal fun isNewer(candidate: String, installed: String): Boolean {
-        val a = candidate.split('.').map { it.toIntOrNull() ?: 0 }
-        val b = installed.split('.').map { it.toIntOrNull() ?: 0 }
-        for (i in 0 until maxOf(a.size, b.size)) {
-            val x = a.getOrElse(i) { 0 }
-            val y = b.getOrElse(i) { 0 }
-            if (x != y) return x > y
-        }
-        return false
-    }
 }

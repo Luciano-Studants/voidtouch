@@ -10,6 +10,16 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.13.0",
+            listOf(
+                "Pastas na lista de apps: segure um app > adicionar à pasta. As pastas aparecem primeiro na grade.",
+                "Segurar um app abre um menu: fixar na home, pasta, informações do app e desinstalar.",
+                "Segurar uma pasta permite renomear ou excluir; voltar ou deslizar para baixo sai da pasta.",
+                "A busca procura em todos os apps, inclusive os que estão em pastas.",
+                "Testes automáticos (busca, pastas, versões e novidades) rodando a cada build.",
+            ),
+        ),
+        ReleaseNote(
             "0.12.0",
             listOf(
                 "Memórias do dia: ao lado da hora aparece, de vez em quando, uma foto da câmera tirada por volta de hoje em anos ou meses atrás.",

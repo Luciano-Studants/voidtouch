@@ -62,6 +62,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 8. Modo foco. **(v0.7)**
 9. Ajustes e persistência. **(v0.8: tela de ajustes, carrossel da home, bloco de status, deslizes esquerda/direita configuráveis, régua tracejada na gaveta)**
 10. Notificações e player de música reais. **(v0.9: NotificationListenerService/MediaSession, fluxo de permissão incluindo "configurações restritas")**
-11. Pastas na gaveta, chave de assinatura fixa (secret do GitHub), otimização final e APK de release. **(v1.0)**
+11. Pastas na gaveta **(v0.13)**, chave de assinatura fixa **(v0.8.1)**, atualizador interno **(v0.8.1)**, memórias do dia **(v0.12)**, testes automáticos **(v0.13)**.
+12. Compatibilidade com outras marcas de Android e otimização final. **(v1.0)**
 
-A v1 termina quando a etapa 11 funcionar no A05. Ideias novas entram na lista da v2 e não interrompem a ordem acima.
+A v1 termina quando a etapa 12 funcionar no A05. Ideias novas entram na lista da v2 e não interrompem a ordem acima.

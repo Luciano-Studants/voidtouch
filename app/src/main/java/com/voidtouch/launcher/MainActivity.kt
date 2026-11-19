@@ -34,6 +34,9 @@ import com.voidtouch.launcher.data.FocusStore
 import com.voidtouch.launcher.ui.AppList
 import com.voidtouch.launcher.ui.HealthScreen
 import com.voidtouch.launcher.ui.HomeContent
+import com.voidtouch.launcher.data.Folder
+import com.voidtouch.launcher.data.FolderStore
+import com.voidtouch.launcher.data.Folders
 import com.voidtouch.launcher.data.MemoryMode
 import com.voidtouch.launcher.data.MemoryReader
 import com.voidtouch.launcher.data.MemoryShown
@@ -97,6 +100,10 @@ class MainActivity : ComponentActivity() {
     private var swipeRightKey by mutableStateOf<String?>(null)
 
     private lateinit var settingsStore: SettingsStore
+
+    private lateinit var folderStore: FolderStore
+
+    private var folders by mutableStateOf<List<Folder>>(emptyList())
 
     /** Verdadeiro quando o acesso às notificações está liberado; relido a cada volta à tela. */
     private var notifAccess by mutableStateOf(false)
@@ -166,6 +173,8 @@ class MainActivity : ComponentActivity() {
         focusApps = focusStore.loadApps()
         focusSince = focusStore.loadSince()
         settingsStore = SettingsStore(prefs)
+        folderStore = FolderStore(prefs)
+        folders = folderStore.load()
         backdrop = settingsStore.loadBackdrop()
         clockStyle = settingsStore.loadClockStyle()
         swipeLeftKey = settingsStore.loadSwipeApp(SwipeSide.Left)
@@ -346,6 +355,29 @@ class MainActivity : ComponentActivity() {
                             focusSearch = focusSearch,
                             onLaunch = { AppRepository.launch(this@MainActivity, it) },
                             onTogglePin = { togglePin(it) },
+                            folders = folders,
+                            onFolderCreate = { app, name ->
+                                updateFolders(Folders.create(folders, name, app.key))
+                                say("pasta criada com ${app.label}")
+                            },
+                            onFolderAdd = { id, app ->
+                                updateFolders(Folders.addApp(folders, id, app.key))
+                                say("${app.label} entrou na pasta")
+                            },
+                            onFolderRemoveApp = { app ->
+                                updateFolders(Folders.removeApp(folders, app.key))
+                                say("${app.label} saiu da pasta")
+                            },
+                            onFolderRename = { id, name ->
+                                updateFolders(Folders.rename(folders, id, name))
+                                say("pasta renomeada")
+                            },
+                            onFolderDelete = { id ->
+                                updateFolders(Folders.delete(folders, id))
+                                say("pasta excluída: os apps voltaram à lista")
+                            },
+                            onAppInfo = { openPackageInfo(it.packageName) },
+                            onUninstall = { uninstall(it) },
                             onOpenSettings = { showSettings = true },
                             onClose = { showAllApps = false },
                         )
@@ -451,6 +483,23 @@ class MainActivity : ComponentActivity() {
         runCatching {
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }
+    }
+
+    private fun updateFolders(list: List<Folder>) {
+        folders = list
+        folderStore.save(list)
+    }
+
+    private fun openPackageInfo(pkg: String) {
+        runCatching {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null)))
+        }
+    }
+
+    private fun uninstall(app: AppEntry) {
+        runCatching {
+            startActivity(Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null)))
+        }.onFailure { say("não foi possível desinstalar ${app.label}") }
     }
 
     private fun openNotification(item: NoteItem) {

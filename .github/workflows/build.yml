@@ -33,6 +33,9 @@ jobs:
             echo "Sem KEYSTORE_BASE64: assinando com a chave de debug."
           fi
 
+      - name: Rodar testes
+        run: ./gradlew testDebugUnitTest --stacktrace
+
       - name: Compilar APK release (otimizado)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

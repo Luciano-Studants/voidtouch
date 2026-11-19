@@ -1,5 +1,17 @@
 package com.voidtouch.launcher.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -59,8 +71,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
+import com.voidtouch.launcher.data.Folder
 import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
@@ -95,6 +109,14 @@ fun AppList(
     focusSearch: Boolean,
     onLaunch: (AppEntry) -> Unit,
     onTogglePin: (AppEntry) -> Unit,
+    folders: List<Folder>,
+    onFolderCreate: (AppEntry, String) -> Unit,
+    onFolderAdd: (String, AppEntry) -> Unit,
+    onFolderRemoveApp: (AppEntry) -> Unit,
+    onFolderRename: (String, String) -> Unit,
+    onFolderDelete: (String) -> Unit,
+    onAppInfo: (AppEntry) -> Unit,
+    onUninstall: (AppEntry) -> Unit,
     onOpenSettings: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -108,9 +130,34 @@ fun AppList(
         if (hiding) apps.filter { it.key !in focusApps } else apps
     }
     val hiddenCount = apps.size - visible.size
-    val results = remember(visible, query) { Search.filter(visible, query) }
-    val showRail = results.size > RAIL_MIN_ITEMS
+    var openFolderId by remember { mutableStateOf<String?>(null) }
+    var sheet by remember { mutableStateOf<Sheet?>(null) }
+    var lastSheet by remember { mutableStateOf<Sheet?>(null) }
+    if (sheet != null) lastSheet = sheet
+
+    val byKey = remember(visible) { visible.associateBy { it.key } }
+    val folderKeys = remember(folders) { folders.flatMap { it.keys }.toSet() }
+    val openFolder = folders.firstOrNull { it.id == openFolderId }
+    // Busca vasculha tudo; dentro de uma pasta só os apps dela; na lista principal, pastas primeiro
+    // e depois só os apps que não estão em nenhuma pasta.
+    val entries = remember(visible, folders, query, openFolderId, byKey, folderKeys) {
+        when {
+            query.isNotBlank() -> Search.filter(visible, query).map { Entry.AppItem(it) }
+            openFolder != null ->
+                openFolder.keys.mapNotNull { byKey[it] }.sortedBy { it.searchLabel }.map { Entry.AppItem(it) }
+            else -> folders.sortedBy { Search.normalize(it.name) }.mapNotNull { f ->
+                val n = f.keys.count { it in byKey }
+                if (n > 0) Entry.FolderItem(f, n) else null
+            } + visible.filter { it.key !in folderKeys }.map { Entry.AppItem(it) }
+        }
+    }
+    val showRail = entries.size > RAIL_MIN_ITEMS
     var railLetter by remember { mutableStateOf<Char?>(null) }
+
+    // Voltar fecha primeiro a janela de opções, depois a pasta aberta.
+    BackHandler(enabled = sheet != null || openFolder != null) {
+        if (sheet != null) sheet = null else openFolderId = null
+    }
 
     fun launch(app: AppEntry) {
         focusManager.clearFocus()
@@ -119,23 +166,25 @@ fun AppList(
 
     val caption = when {
         markingFocusApps -> "toque nos apps que distraem: eles somem no modo foco"
-        query.isNotBlank() -> "${results.size} encontrado(s)"
+        query.isNotBlank() -> "${entries.size} encontrado(s)"
+        openFolder != null -> "pasta ${openFolder.name} · ${entries.size} app(s)"
         hiding -> "modo foco ligado: $hiddenCount app(s) escondido(s)"
-        else -> "segure um app para fixar na home"
+        else -> "segure um app para ver as opções"
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .onVerticalSwipe(
                 up = false,
                 threshold = 96.dp,
-                enabled = { !listState.canScrollBackward },
+                enabled = { !listState.canScrollBackward && sheet == null },
                 // A faixa da régua é só da régua: arrastar nela não fecha a lista.
                 excludeEndEdge = 44.dp,
                 onSwipe = {
                     focusManager.clearFocus()
-                    onClose()
+                    if (openFolderId != null) openFolderId = null else onClose()
                 },
             ),
     ) {
@@ -144,10 +193,26 @@ fun AppList(
                 query = query,
                 onQueryChange = onQueryChange,
                 requestFocus = focusSearch,
-                onGo = { results.firstOrNull()?.let(::launch) },
+                onGo = {
+                    when (val first = entries.firstOrNull()) {
+                        is Entry.AppItem -> launch(first.app)
+                        is Entry.FolderItem -> openFolderId = first.folder.id
+                        null -> Unit
+                    }
+                },
             )
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (openFolder != null && query.isBlank()) {
+                    Text(
+                        text = "‹",
+                        style = VoidType.App,
+                        color = VoidColors.Text,
+                        modifier = Modifier
+                            .clickable { openFolderId = null }
+                            .padding(end = 12.dp, top = 8.dp, bottom = 8.dp),
+                    )
+                }
                 Text(
                     text = caption,
                     style = VoidType.Caption,
@@ -177,7 +242,7 @@ fun AppList(
             }
         }
 
-        if (results.isEmpty()) {
+        if (entries.isEmpty()) {
             Text(
                 text = "nenhum app encontrado",
                 style = VoidType.App,
@@ -198,31 +263,46 @@ fun AppList(
                 ),
             ) {
                 items(
-                    items = results,
+                    items = entries,
                     key = { it.key },
-                    contentType = { "app" },
-                ) { app ->
-                    val marked = app.key in focusApps
-                    AppCell(
-                        modifier = Modifier.animateItem(),
-                        app = app,
-                        marked = marked,
-                        pinned = app.key in pinnedKeys,
-                        dimmed = markingFocusApps && marked,
-                        onClick = { if (markingFocusApps) onToggleFocusApp(app) else launch(app) },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            if (markingFocusApps) onToggleFocusApp(app) else onTogglePin(app)
-                        },
-                    )
+                    contentType = { if (it is Entry.FolderItem) "folder" else "app" },
+                ) { entry ->
+                    when (entry) {
+                        is Entry.FolderItem -> FolderCell(
+                            modifier = Modifier.animateItem(),
+                            folder = entry.folder,
+                            count = entry.count,
+                            onClick = { openFolderId = entry.folder.id },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                sheet = Sheet.FolderActions(entry.folder)
+                            },
+                        )
+                        is Entry.AppItem -> {
+                            val app = entry.app
+                            val marked = app.key in focusApps
+                            AppCell(
+                                modifier = Modifier.animateItem(),
+                                app = app,
+                                marked = marked,
+                                pinned = app.key in pinnedKeys,
+                                dimmed = markingFocusApps && marked,
+                                onClick = { if (markingFocusApps) onToggleFocusApp(app) else launch(app) },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    if (markingFocusApps) onToggleFocusApp(app) else sheet = Sheet.AppActions(app)
+                                },
+                            )
+                        }
+                    }
                 }
             }
 
             if (showRail) {
                 ScrollRail(
                     listState = listState,
-                    itemCount = results.size,
-                    letterAt = { index -> letterOf(results.getOrNull(index)) },
+                    itemCount = entries.size,
+                    letterAt = { index -> letterOf(entries.getOrNull(index)) },
                     onLetterChange = { railLetter = it },
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
@@ -309,8 +389,10 @@ private fun AppCell(
 }
 
 /** Letra inicial do app, sem acento; qualquer coisa que não seja letra vira "#". */
-private fun letterOf(app: AppEntry?): Char =
-    app?.searchLabel?.firstOrNull()?.takeIf { it.isLetter() }?.uppercaseChar() ?: '#'
+private fun letterOf(entry: Entry?): Char = when (entry) {
+    is Entry.AppItem -> entry.app.searchLabel.firstOrNull()?.takeIf { it.isLetter() }?.uppercaseChar() ?: '#'
+    else -> '#'
+}
 
 /**
  * Régua de rolagem: uma linha tracejada na lateral com um traço cheio que mostra onde a lista
@@ -388,6 +470,7 @@ internal fun SearchField(
     onQueryChange: (String) -> Unit,
     requestFocus: Boolean,
     onGo: () -> Unit,
+    placeholder: String = "buscar app",
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -418,7 +501,7 @@ internal fun SearchField(
             Column {
                 Box(modifier = Modifier.padding(vertical = 6.dp)) {
                     if (query.isEmpty()) {
-                        Text(text = "buscar app", style = VoidType.App, color = VoidColors.TextDim)
+                        Text(text = placeholder, style = VoidType.App, color = VoidColors.TextDim)
                     }
                     inner()
                 }
