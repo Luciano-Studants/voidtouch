@@ -26,6 +26,7 @@ private val Tips = listOf(
     "toque duplo" to "num espaço vazio da home, executa o gesto configurado",
     "carrossel do topo" to "passe para os lados: hora, dia, música e agenda; segure para abrir Ajustes",
     "favoritos" to "toque abre; segure para tirar da home. Apps e pastas se fixam pelo menu da lista",
+    "notificações" to "toque abre o app; segure para responder sem abrir, guardar em \"ler depois\" ou dispensar",
     "foco" to "toque na linha \"foco\" para esconder os apps que distraem",
     "status do celular" to "toque no bloco de status para ver a saúde do aparelho e otimizar",
 )

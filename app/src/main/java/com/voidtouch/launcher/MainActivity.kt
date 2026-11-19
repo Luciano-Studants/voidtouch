@@ -43,7 +43,9 @@ import com.voidtouch.launcher.data.HomeRules
 import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.ContactsReader
 import com.voidtouch.launcher.data.Hit
+import com.voidtouch.launcher.data.LaterItem
 import com.voidtouch.launcher.data.LaunchCounts
+import com.voidtouch.launcher.data.ReadLater
 import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.Scene
@@ -82,6 +84,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.voidtouch.launcher.ui.OptimizeScreen
 import com.voidtouch.launcher.ui.PermissionsScreen
+import com.voidtouch.launcher.ui.ReadLaterScreen
 import com.voidtouch.launcher.ui.ChangelogScreen
 import com.voidtouch.launcher.data.Changelog
 import com.voidtouch.launcher.data.ReleaseNote
@@ -148,6 +151,7 @@ class MainActivity : ComponentActivity() {
     private var focusAutoEnd by mutableIntStateOf(FocusSchedule.DEFAULT_END)
 
     private var opens by mutableStateOf<Map<String, Int>>(emptyMap())
+    private var later by mutableStateOf<List<LaterItem>>(emptyList())
     private var contactsAccess by mutableStateOf(false)
 
     private val contactsPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -286,6 +290,7 @@ class MainActivity : ComponentActivity() {
         nightEnabled = settingsStore.loadNightEnabled()
         scenes = settingsStore.loadScenes()
         opens = LaunchCounts.decode(settingsStore.loadLaunchCounts())
+        later = settingsStore.loadReadLater()
         contactsAccess = ContactsReader.hasAccess(this)
         sceneActive = settingsStore.loadSceneActive()?.takeIf { id -> scenes.any { it.id == id } }
         sceneAuto = settingsStore.loadSceneAuto()
@@ -341,6 +346,7 @@ class MainActivity : ComponentActivity() {
                 var showSettings by remember { mutableStateOf(false) }
                 var showOptimize by remember { mutableStateOf(false) }
                 var showPermissions by remember { mutableStateOf(false) }
+                var showLater by remember { mutableStateOf(false) }
                 var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
@@ -364,6 +370,7 @@ class MainActivity : ComponentActivity() {
                     changelog = null
                     showOptimize = false
                     showPermissions = false
+                    showLater = false
                     showTips = false
                 }
                 // Mede quanto a lista de apps leva para aparecer (até o primeiro quadro desenhado).
@@ -388,6 +395,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         changelog != null -> changelog = null
                         showTips -> showTips = false
+                        showLater -> showLater = false
                         showPermissions -> showPermissions = false
                         showOptimize -> showOptimize = false
                         showSettings -> showSettings = false
@@ -457,6 +465,7 @@ class MainActivity : ComponentActivity() {
                 val screen = when {
                     showTips -> "tips"
                     changelog != null -> "changelog"
+                    showLater -> "later"
                     showPermissions -> "permissions"
                     showOptimize -> "optimize"
                     showSettings -> "settings"
@@ -494,6 +503,18 @@ class MainActivity : ComponentActivity() {
                         TipsScreen(onClose = { showTips = false })
                     } else if (current == "changelog") {
                         ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
+                    } else if (current == "later") {
+                        ReadLaterScreen(
+                            items = later,
+                            onOpenApp = { item ->
+                                packageManager.getLaunchIntentForPackage(item.pkg)?.let { runCatching { startActivity(it) } }
+                            },
+                            onRemove = { item ->
+                                later = ReadLater.remove(later, item.id)
+                                settingsStore.saveReadLater(later)
+                            },
+                            onClose = { showLater = false },
+                        )
                     } else if (current == "permissions") {
                         PermissionsScreen(
                             refreshKey = refreshKey,
@@ -684,6 +705,20 @@ class MainActivity : ComponentActivity() {
                             notificationsEnabled = notifAccess,
                             onNotificationClick = { openNotification(it) },
                             onNotificationDismiss = { NotificationHub.dismiss(it.key) },
+                            onNotificationReply = { item, text ->
+                                say(if (NotificationHub.reply(this@MainActivity, item, text)) "resposta enviada" else "não foi possível responder")
+                            },
+                            onNotificationLater = { item ->
+                                later = ReadLater.add(
+                                    later,
+                                    LaterItem(item.key + System.currentTimeMillis(), item.packageName, item.appLabel, item.title, item.text, System.currentTimeMillis()),
+                                )
+                                settingsStore.saveReadLater(later)
+                                NotificationHub.dismiss(item.key)
+                                say("guardado em ler depois")
+                            },
+                            laterCount = later.size,
+                            onOpenLater = { showLater = true },
                             onEnableNotifications = ::openNotificationAccess,
                             active = screenActive,
                             agenda = agenda,

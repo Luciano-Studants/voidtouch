@@ -19,6 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -27,6 +30,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.NetworkKind
+import com.voidtouch.launcher.data.NoteGroups
 import com.voidtouch.launcher.notify.NoteItem
 import androidx.compose.ui.text.style.TextOverflow
 import com.voidtouch.launcher.ui.theme.VoidColors
@@ -47,6 +51,10 @@ fun InfoBlock(
     notificationsEnabled: Boolean,
     onNotificationClick: (NoteItem) -> Unit,
     onNotificationDismiss: (NoteItem) -> Unit,
+    onNotificationReply: (NoteItem, String) -> Unit,
+    onNotificationLater: (NoteItem) -> Unit,
+    laterCount: Int,
+    onOpenLater: () -> Unit,
     onEnableNotifications: () -> Unit,
     onStatusClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -72,14 +80,17 @@ fun InfoBlock(
             } else if (notifications.isEmpty()) {
                 Text("nenhuma", style = VoidType.Small, color = VoidColors.TextDim, modifier = Modifier.padding(top = 3.dp))
             } else {
-                notifications.take(3).forEach { n ->
+                val groups = remember(notifications) { NoteGroups.group(notifications) { it.packageName + "|" + it.title } }
+                var panelFor by remember { mutableStateOf<String?>(null) }
+                groups.take(3).forEach { g ->
+                    val n = g.first
                     Column(
                         modifier = Modifier
                             .combinedClickable(
                                 onClick = { onNotificationClick(n) },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onNotificationDismiss(n)
+                                    panelFor = if (panelFor == n.key) null else n.key
                                 },
                             )
                             .padding(vertical = 4.dp),
@@ -92,17 +103,42 @@ fun InfoBlock(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = n.title,
+                            text = if (g.count > 1) "${n.title} (${g.count})" else n.title,
                             style = VoidType.Small,
                             color = VoidColors.Text,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (n.text.isNotBlank()) {
+                            Text(
+                                text = n.text,
+                                style = VoidType.Caption,
+                                color = VoidColors.TextDim,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                    if (panelFor == n.key) {
+                        NotePanel(
+                            item = n,
+                            onReply = { text -> onNotificationReply(n, text); panelFor = null },
+                            onLater = { onNotificationLater(n); panelFor = null },
+                            onDismiss = { g.items.forEach(onNotificationDismiss); panelFor = null },
+                        )
                     }
                 }
-                if (notifications.size > 3) {
-                    Text("+${notifications.size - 3}", style = VoidType.Small, color = VoidColors.TextDim)
+                if (groups.size > 3) {
+                    Text("+${groups.size - 3}", style = VoidType.Small, color = VoidColors.TextDim)
                 }
+            }
+            if (laterCount > 0) {
+                Text(
+                    text = "ler depois ($laterCount) ›",
+                    style = VoidType.Caption,
+                    color = VoidColors.Text,
+                    modifier = Modifier.clickable(onClick = onOpenLater).padding(top = 6.dp, bottom = 2.dp),
+                )
             }
         }
         // Só o bloco de texto abre a saúde do aparelho; o espaço vazio em volta fica livre para os gestos.
@@ -196,4 +232,42 @@ private fun formatFocus(sinceMillis: Long, nowMillis: Long): String {
         else -> String.format(PtBr, "%d h %02d min", minutes / 60L, minutes % 60L)
     }
     return "foco ligado · $elapsed"
+}
+
+/** Opções de uma notificação (segurar): responder sem abrir o app, guardar para depois ou dispensar. */
+@Composable
+private fun NotePanel(item: NoteItem, onReply: (String) -> Unit, onLater: () -> Unit, onDismiss: () -> Unit) {
+    var replying by remember { mutableStateOf(false) }
+    var text by remember { mutableStateOf("") }
+    Column(modifier = Modifier.padding(bottom = 6.dp)) {
+        Row {
+            if (item.replyInput != null) {
+                PanelButton("responder") { replying = !replying }
+                Spacer(Modifier.width(14.dp))
+            }
+            PanelButton("ler depois", onLater)
+            Spacer(Modifier.width(14.dp))
+            PanelButton("dispensar", onDismiss)
+        }
+        if (replying) {
+            SearchField(
+                query = text,
+                onQueryChange = { text = it },
+                requestFocus = true,
+                onGo = { if (text.isNotBlank()) onReply(text.trim()) },
+                placeholder = "responder…",
+            )
+            if (text.isNotBlank()) PanelButton("enviar") { onReply(text.trim()) }
+        }
+    }
+}
+
+@Composable
+private fun PanelButton(label: String, onClick: () -> Unit) {
+    Text(
+        text = label,
+        style = VoidType.Caption,
+        color = VoidColors.Text,
+        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 6.dp),
+    )
 }

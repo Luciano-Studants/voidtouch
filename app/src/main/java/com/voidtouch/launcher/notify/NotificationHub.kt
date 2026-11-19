@@ -20,7 +20,11 @@ data class NoteItem(
     val packageName: String,
     val appLabel: String,
     val title: String,
+    val text: String,
     val intent: PendingIntent?,
+    /** Resposta direta, quando a notificação aceita (mensagens). */
+    val replyIntent: PendingIntent? = null,
+    val replyInput: android.app.RemoteInput? = null,
 )
 
 /** Uma atividade ao vivo (chamada, cronômetro, download...) para a ilha da home. */
@@ -59,6 +63,19 @@ object NotificationHub {
 
     fun hasAccess(context: Context): Boolean =
         NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+
+    /** Envia a resposta pela própria notificação do app. Devolve falso se não der. */
+    fun reply(context: Context, item: NoteItem, text: String): Boolean {
+        val input = item.replyInput ?: return false
+        val pending = item.replyIntent ?: return false
+        return runCatching {
+            val intent = android.content.Intent()
+            val bundle = android.os.Bundle().apply { putCharSequence(input.resultKey, text) }
+            android.app.RemoteInput.addResultsToIntent(arrayOf(input), intent, bundle)
+            pending.send(context, 0, intent)
+            true
+        }.getOrDefault(false)
+    }
 
     fun dismiss(key: String) {
         runCatching { service?.cancelNotification(key) }
@@ -142,7 +159,14 @@ class VoidNotificationService : NotificationListenerService() {
                 val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
                     ?: extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
                     ?: return@mapNotNull null
-                NoteItem(sbn.key, sbn.packageName, labelOf(sbn.packageName), title, sbn.notification.contentIntent)
+                val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString().orEmpty()
+                val replyAction = sbn.notification.actions?.firstOrNull { a -> a.remoteInputs?.any { it.allowFreeFormInput } == true }
+                val replyInput = replyAction?.remoteInputs?.firstOrNull { it.allowFreeFormInput }
+                NoteItem(
+                    sbn.key, sbn.packageName, labelOf(sbn.packageName), title, text, sbn.notification.contentIntent,
+                    replyIntent = replyAction?.actionIntent.takeIf { replyInput != null },
+                    replyInput = replyInput,
+                )
             }
             .take(20)
         NotificationHub.live = liveFrom(active)

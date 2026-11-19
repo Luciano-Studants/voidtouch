@@ -11,7 +11,7 @@ import org.json.JSONObject
  */
 object Backup {
     private const val FORMAT = 1
-    private val SKIP = setOf("focus_since", "seen_version", "tips_seen", "last_open_ms")
+    private val SKIP = setOf("focus_since", "seen_version", "tips_seen", "last_open_ms", "read_later")
 
     fun export(prefs: SharedPreferences): String {
         val data = JSONObject()

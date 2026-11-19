@@ -126,6 +126,12 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_LAUNCH_COUNTS, json).apply()
     }
 
+    fun loadReadLater(): List<LaterItem> = ReadLater.decode(prefs.getString(KEY_READ_LATER, "").orEmpty())
+
+    fun saveReadLater(list: List<LaterItem>) {
+        prefs.edit().putString(KEY_READ_LATER, ReadLater.encode(list)).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -164,6 +170,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_SCENE_LAST = "scene_last_pick"
         const val KEY_SCENE_DEFAULT_PINS = "scene_default_pins"
         const val KEY_LAUNCH_COUNTS = "launch_counts"
+        const val KEY_READ_LATER = "read_later"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"

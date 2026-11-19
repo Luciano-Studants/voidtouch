@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.28.0",
+            listOf(
+                "Notificações mais úteis na home: segure uma notificação para responder sem abrir o app (quando o app permite), guardar em \"ler depois\" ou dispensar.",
+                "Cada notificação mostra também o texto da mensagem, e as da mesma conversa aparecem juntas, com a contagem.",
+                "Ler depois: o contador aparece abaixo das notificações e abre uma lista de até 30 itens, guardados só no aparelho e fora do backup.",
+            ),
+        ),
+        ReleaseNote(
             "0.27.0",
             listOf(
                 "Ilha dinâmica: uma pílula no topo da home mostra o que está acontecendo agora, como chamada, navegação, cronômetro ou timer e downloads com progresso.",
