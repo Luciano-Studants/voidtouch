@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.37.0",
+            listOf(
+                "Cores do papel de parede: com o fundo em papel de parede, o texto, as linhas e a camada escura ganham um leve tom da cor dominante da imagem.",
+                "A luminosidade é fixa, então o tema continua escuro e a leitura não piora. Imagens cinzas ficam neutras.",
+                "Em Ajustes > papel de parede dá para desligar.",
+            ),
+        ),
+        ReleaseNote(
             "0.36.0",
             listOf(
                 "Reordenar favoritos: em Ajustes > favoritos > ordem dos favoritos, setas ↑ ↓ mudam a posição de cada app ou pasta da home.",

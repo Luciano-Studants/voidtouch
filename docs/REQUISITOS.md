@@ -54,6 +54,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Animação de abertura | App abre crescendo do ponto tocado; toque com mola e vibração leve | 0.34 |
 | Paralaxe do papel de parede | Fundo em papel de parede se move com a inclinação; sensor só com tela visível | 0.35 |
 | Reordenar favoritos | Tela em Ajustes com setas ↑ ↓ para mudar a ordem dos favoritos | 0.36 |
+| Cores do papel de parede | Texto, linhas e camada escura ganham o tom dominante da imagem (luminosidade fixa) | 0.37 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
@@ -76,7 +77,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | 11 | Animação de abertura | Abrir o app a partir do ponto tocado, com movimento de mola e vibração leve | v0.34 |
 | 12 | Paralaxe do papel de parede | Inclinação (acelerômetro), só com a home visível | v0.35 |
 | 13 | Reordenar favoritos | Setas ↑ ↓ para mudar a ordem | v0.36 |
-| 14 | Cores do papel de parede | A interface adapta o tom (textos e detalhes) à paleta do papel de parede, mantendo o tema escuro e a leitura | a fazer |
+| 14 | Cores do papel de parede | A interface adapta o tom (textos e detalhes) à paleta do papel de parede, mantendo o tema escuro e a leitura | v0.37 |
 | 15 | Conjuntos de cores | Trocar o conjunto de cores do sistema por paletas prontas (e a automática do item 14), com prévia | a fazer |
 
 Descartado pelo usuário: gestos por desenho. Evitar: widgets completos do Android, blur e sombras pesadas.

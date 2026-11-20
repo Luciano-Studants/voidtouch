@@ -66,6 +66,8 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
+    wallTone: Boolean,
+    onWallTone: () -> Unit,
     parallax: Boolean,
     onParallax: () -> Unit,
     openAnim: Boolean,
@@ -180,6 +182,13 @@ fun SettingsScreen(
         ValueRow("ordem dos favoritos", onOpenFavoritesOrder)
 
         Section("papel de parede")
+        ValueRow(if (wallTone) "cores do papel de parede: ligadas" else "cores do papel de parede: desligadas", onWallTone)
+        Text(
+            "com o fundo em papel de parede, o texto e as linhas ganham um leve tom da cor dominante da imagem. A luminosidade é fixa, então a leitura não piora.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
+        )
         ValueRow(if (parallax) "paralaxe: ligada" else "paralaxe: desligada", onParallax)
         Text(
             "com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular. Só funciona com a home visível e usa o acelerômetro apenas nesse momento.",

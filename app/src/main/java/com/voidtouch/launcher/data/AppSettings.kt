@@ -174,6 +174,12 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putBoolean(KEY_PARALLAX, on).apply()
     }
 
+    fun loadWallTone(): Boolean = prefs.getBoolean(KEY_WALL_TONE, true)
+
+    fun saveWallTone(on: Boolean) {
+        prefs.edit().putBoolean(KEY_WALL_TONE, on).apply()
+    }
+
     fun loadOpenHaptic(): Boolean = prefs.getBoolean(KEY_OPEN_HAPTIC, true)
 
     fun saveOpenHaptic(on: Boolean) {
@@ -225,6 +231,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_DOCK_ON = "dock_on"
         const val KEY_DOCK_AWAKE = "dock_awake"
         const val KEY_OPEN_ANIM = "open_anim"
+        const val KEY_WALL_TONE = "wall_tone"
         const val KEY_PARALLAX = "parallax"
         const val KEY_OPEN_HAPTIC = "open_haptic"
         const val KEY_MEMORY_MODE = "memory_mode"
