@@ -12,8 +12,8 @@ android {
         applicationId = "com.voidtouch.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 40
-        versionName = "0.34.0"
+        versionCode = 41
+        versionName = "0.35.0"
     }
 
     // Chave fixa (vinda dos secrets do GitHub) para uma versão nova instalar por cima da anterior.

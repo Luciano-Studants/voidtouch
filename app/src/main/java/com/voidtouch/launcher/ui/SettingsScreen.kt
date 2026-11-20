@@ -66,6 +66,8 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
+    parallax: Boolean,
+    onParallax: () -> Unit,
     openAnim: Boolean,
     onOpenAnim: () -> Unit,
     openHaptic: Boolean,
@@ -168,6 +170,15 @@ fun SettingsScreen(
         }
         Text(
             "os gestos valem na home, abaixo do carrossel. Cada um abre um app ou executa uma ação (lanterna, painel de notificações, busca...)",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("papel de parede")
+        ValueRow(if (parallax) "paralaxe: ligada" else "paralaxe: desligada", onParallax)
+        Text(
+            "com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular. Só funciona com a home visível e usa o acelerômetro apenas nesse momento.",
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),

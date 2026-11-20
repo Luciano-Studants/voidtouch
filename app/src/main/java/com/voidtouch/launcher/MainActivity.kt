@@ -55,6 +55,10 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.data.Parallax
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.data.Notes
 import com.voidtouch.launcher.data.Predict
@@ -174,6 +178,10 @@ class MainActivity : ComponentActivity() {
     private var lastTouchX = 0f
     private var lastTouchY = 0f
     private var openAnim by mutableStateOf(true)
+    private var parallax by mutableStateOf(true)
+    private var tiltX by mutableStateOf(0f)
+    private var tiltY by mutableStateOf(0f)
+    private var wallpaperBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
     private var openHaptic by mutableStateOf(true)
     private var predictOn by mutableStateOf(true)
     private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
@@ -320,6 +328,7 @@ class MainActivity : ComponentActivity() {
         predictOn = settingsStore.loadPredictOn()
         dockOn = settingsStore.loadDockOn()
         openAnim = settingsStore.loadOpenAnim()
+        parallax = settingsStore.loadParallax()
         openHaptic = settingsStore.loadOpenHaptic()
         dockAwake = settingsStore.loadDockAwake()
         notes = settingsStore.loadNotes()
@@ -580,6 +589,22 @@ class MainActivity : ComponentActivity() {
                         }
                         .safeDrawingPadding(),
                 ) {
+                  val wp = wallpaperBitmap
+                  if (backdrop == Backdrop.Wallpaper && parallax && wp != null) {
+                      val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { Parallax.MAX_DP.dp.toPx() }
+                      androidx.compose.foundation.Image(
+                          bitmap = wp.asImageBitmap(),
+                          contentDescription = null,
+                          contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                          modifier = Modifier
+                              .fillMaxSize()
+                              .graphicsLayer {
+                                  scaleX = Parallax.OVERSCAN; scaleY = Parallax.OVERSCAN
+                                  translationX = -tiltX * maxPx; translationY = tiltY * maxPx
+                              },
+                      )
+                      Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0x8C000000)))
+                  }
                   AnimatedContent(
                     targetState = screen,
                     transitionSpec = {
@@ -680,6 +705,12 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
                                 settingsStore.saveFocusAutoLast(null)
                             },
+                            parallax = parallax,
+                            onParallax = {
+                                parallax = !parallax
+                                settingsStore.saveParallax(parallax)
+                                refreshTilt()
+                            },
                             openAnim = openAnim,
                             onOpenAnim = {
                                 openAnim = !openAnim
@@ -759,6 +790,7 @@ class MainActivity : ComponentActivity() {
                                 backdrop = it
                                 settingsStore.saveBackdrop(it)
                                 applyBackdrop()
+                                refreshTilt()
                             },
                             onClockStyle = {
                                 clockStyle = it
@@ -969,12 +1001,14 @@ class MainActivity : ComponentActivity() {
         }
         ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         runCatching { getSystemService(CameraManager::class.java).registerTorchCallback(torchCallback, null) }
+        startTilt()
     }
 
     override fun onStop() {
         super.onStop()
         screenActive = false
         unregisterReceiver(timeReceiver)
+        stopTilt()
         runCatching { getSystemService(CameraManager::class.java).unregisterTorchCallback(torchCallback) }
     }
 
@@ -1244,6 +1278,50 @@ class MainActivity : ComponentActivity() {
             Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
         }.onFailure { say("este aparelho não permite abrir o painel por aqui") }
     }
+
+    private val tiltListener = object : android.hardware.SensorEventListener {
+        override fun onSensorChanged(e: android.hardware.SensorEvent) {
+            // Em retrato: x positivo = inclinado para a esquerda; y positivo = topo para cima.
+            tiltX = Parallax.smooth(tiltX, Parallax.target(e.values[0]))
+            tiltY = Parallax.smooth(tiltY, Parallax.target(e.values[1] - 9.81f * 0.6f))
+        }
+        override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
+    }
+
+    /** Liga o acelerômetro só com a tela visível; fora dela nada fica registrado. */
+    private fun startTilt() {
+        if (backdrop != Backdrop.Wallpaper || !parallax) return
+        runCatching {
+            if (wallpaperBitmap == null) wallpaperBitmap = loadWallpaper()
+            val sm = getSystemService(android.hardware.SensorManager::class.java)
+            val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) ?: return
+            sm.registerListener(tiltListener, sensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
+        }
+    }
+
+    private fun refreshTilt() {
+        stopTilt()
+        if (screenActive) startTilt()
+    }
+
+    private fun stopTilt() {
+        runCatching { getSystemService(android.hardware.SensorManager::class.java).unregisterListener(tiltListener) }
+        wallpaperBitmap = null
+    }
+
+    /** Papel de parede reduzido à tela, para não pesar na memória (2 GB). */
+    private fun loadWallpaper(): android.graphics.Bitmap? = runCatching {
+        val d = android.app.WallpaperManager.getInstance(this).drawable ?: return null
+        val m = resources.displayMetrics
+        val w = m.widthPixels; val h = m.heightPixels
+        val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.RGB_565)
+        val c = android.graphics.Canvas(bmp)
+        val scale = maxOf(w.toFloat() / d.intrinsicWidth, h.toFloat() / d.intrinsicHeight)
+        val dw = (d.intrinsicWidth * scale).toInt(); val dh = (d.intrinsicHeight * scale).toInt()
+        d.setBounds((w - dw) / 2, (h - dh) / 2, (w + dw) / 2, (h + dh) / 2)
+        d.draw(c)
+        bmp
+    }.getOrNull()
 
     private fun applyBackdrop() {
         window.setBackgroundDrawable(ColorDrawable(backdrop.argb))

@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.35.0",
+            listOf(
+                "Paralaxe: com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular.",
+                "O sensor só fica ligado com a tela visível e a imagem é reduzida ao tamanho da tela, sem pesar na memória.",
+                "Em Ajustes > papel de parede dá para ligar e desligar.",
+            ),
+        ),
+        ReleaseNote(
             "0.34.0",
             listOf(
                 "Animação de abertura: o app se abre crescendo do ponto onde você tocou, como nos launchers de ponta.",

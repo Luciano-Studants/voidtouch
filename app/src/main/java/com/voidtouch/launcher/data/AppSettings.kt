@@ -168,6 +168,12 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putBoolean(KEY_OPEN_ANIM, on).apply()
     }
 
+    fun loadParallax(): Boolean = prefs.getBoolean(KEY_PARALLAX, true)
+
+    fun saveParallax(on: Boolean) {
+        prefs.edit().putBoolean(KEY_PARALLAX, on).apply()
+    }
+
     fun loadOpenHaptic(): Boolean = prefs.getBoolean(KEY_OPEN_HAPTIC, true)
 
     fun saveOpenHaptic(on: Boolean) {
@@ -219,6 +225,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_DOCK_ON = "dock_on"
         const val KEY_DOCK_AWAKE = "dock_awake"
         const val KEY_OPEN_ANIM = "open_anim"
+        const val KEY_PARALLAX = "parallax"
         const val KEY_OPEN_HAPTIC = "open_haptic"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
