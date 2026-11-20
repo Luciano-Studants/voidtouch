@@ -55,6 +55,7 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.data.ColorSets
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.FavoritesOrderScreen
 import com.voidtouch.launcher.ui.OrderRow
@@ -182,7 +183,7 @@ class MainActivity : ComponentActivity() {
     private var lastTouchY = 0f
     private var openAnim by mutableStateOf(true)
     private var parallax by mutableStateOf(true)
-    private var wallTone by mutableStateOf(true)
+    private var colorSet by mutableStateOf(ColorSets.DEFAULT)
     private var tiltX by mutableStateOf(0f)
     private var tiltY by mutableStateOf(0f)
     private var wallpaperBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
@@ -333,7 +334,7 @@ class MainActivity : ComponentActivity() {
         dockOn = settingsStore.loadDockOn()
         openAnim = settingsStore.loadOpenAnim()
         parallax = settingsStore.loadParallax()
-        wallTone = settingsStore.loadWallTone()
+        colorSet = settingsStore.loadColorSet()
         openHaptic = settingsStore.loadOpenHaptic()
         dockAwake = settingsStore.loadDockAwake()
         notes = settingsStore.loadNotes()
@@ -729,10 +730,10 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
                                 settingsStore.saveFocusAutoLast(null)
                             },
-                            wallTone = wallTone,
-                            onWallTone = {
-                                wallTone = !wallTone
-                                settingsStore.saveWallTone(wallTone)
+                            colorSet = colorSet,
+                            onColorSet = {
+                                colorSet = it
+                                settingsStore.saveColorSet(it)
                                 refreshTone()
                             },
                             parallax = parallax,
@@ -1357,8 +1358,9 @@ class MainActivity : ComponentActivity() {
 
     /** Calcula o tom do papel de parede numa miniatura de 32x32 (nada fica guardado em memória). */
     private fun refreshTone() {
-        var palette = com.voidtouch.launcher.data.WallTone.NEUTRAL
-        if (backdrop == Backdrop.Wallpaper && wallTone) {
+        val set = ColorSets.fromKey(colorSet)
+        var wall: com.voidtouch.launcher.data.Tone? = null
+        if (set.auto && backdrop == Backdrop.Wallpaper) {
             runCatching {
                 val d = android.app.WallpaperManager.getInstance(this).drawable
                 if (d != null) {
@@ -1369,10 +1371,11 @@ class MainActivity : ComponentActivity() {
                     val px = IntArray(n * n)
                     bmp.getPixels(px, 0, n, 0, 0, n, n)
                     bmp.recycle()
-                    palette = com.voidtouch.launcher.data.WallTone.palette(com.voidtouch.launcher.data.WallTone.fromPixels(px))
+                    wall = com.voidtouch.launcher.data.WallTone.fromPixels(px)
                 }
             }
         }
+        val palette = ColorSets.palette(set, wall, backdrop == Backdrop.Wallpaper)
         VoidColors.apply(palette)
         applyBackdrop()
     }

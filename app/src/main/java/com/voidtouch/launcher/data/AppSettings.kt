@@ -174,10 +174,12 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putBoolean(KEY_PARALLAX, on).apply()
     }
 
-    fun loadWallTone(): Boolean = prefs.getBoolean(KEY_WALL_TONE, true)
+    /** Conjunto de cores escolhido. Quem desligou "cores do papel de parede" (v0.37) migra para o neutro. */
+    fun loadColorSet(): String =
+        prefs.getString(KEY_COLOR_SET, null) ?: if (prefs.getBoolean(KEY_WALL_TONE, true)) ColorSets.DEFAULT else "neutral"
 
-    fun saveWallTone(on: Boolean) {
-        prefs.edit().putBoolean(KEY_WALL_TONE, on).apply()
+    fun saveColorSet(key: String) {
+        prefs.edit().putString(KEY_COLOR_SET, key).apply()
     }
 
     fun loadOpenHaptic(): Boolean = prefs.getBoolean(KEY_OPEN_HAPTIC, true)
@@ -231,6 +233,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_DOCK_ON = "dock_on"
         const val KEY_DOCK_AWAKE = "dock_awake"
         const val KEY_OPEN_ANIM = "open_anim"
+        const val KEY_COLOR_SET = "color_set"
         const val KEY_WALL_TONE = "wall_tone"
         const val KEY_PARALLAX = "parallax"
         const val KEY_OPEN_HAPTIC = "open_haptic"

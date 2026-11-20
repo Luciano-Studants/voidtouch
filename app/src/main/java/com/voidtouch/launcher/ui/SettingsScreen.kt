@@ -41,6 +41,9 @@ import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.data.Scene
 import com.voidtouch.launcher.data.SwipeSide
 import com.voidtouch.launcher.ui.theme.Backdrop
+import com.voidtouch.launcher.data.ColorSets
+import com.voidtouch.launcher.data.Tone
+import com.voidtouch.launcher.data.WallTone
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.theme.VoidType
 
@@ -66,8 +69,8 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
-    wallTone: Boolean,
-    onWallTone: () -> Unit,
+    colorSet: String,
+    onColorSet: (String) -> Unit,
     parallax: Boolean,
     onParallax: () -> Unit,
     openAnim: Boolean,
@@ -182,9 +185,35 @@ fun SettingsScreen(
         ValueRow("ordem dos favoritos", onOpenFavoritesOrder)
 
         Section("papel de parede")
-        ValueRow(if (wallTone) "cores do papel de parede: ligadas" else "cores do papel de parede: desligadas", onWallTone)
         Text(
-            "com o fundo em papel de parede, o texto e as linhas ganham um leve tom da cor dominante da imagem. A luminosidade é fixa, então a leitura não piora.",
+            "conjunto de cores · toque para trocar; cada nome já aparece na cor dele",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        ColorSets.all.forEach { set ->
+            val pal = ColorSets.palette(set, WallTone.fromPixels(IntArray(0)) ?: Tone(30f, 0.8f), true)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().clickable { onColorSet(set.key) }.padding(vertical = 12.dp),
+            ) {
+                Text(
+                    set.name,
+                    style = VoidType.App,
+                    color = androidx.compose.ui.graphics.Color(pal.text),
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "texto",
+                    style = VoidType.Small,
+                    color = androidx.compose.ui.graphics.Color(pal.dim),
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(if (set.key == colorSet) "●" else "○", style = VoidType.App, color = VoidColors.Text)
+            }
+        }
+        Text(
+            "o automático segue o papel de parede e só vale com o fundo em papel de parede. A luminosidade é fixa, então a leitura é a mesma em todos.",
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
