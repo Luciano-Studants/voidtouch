@@ -50,6 +50,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Captura rápida | Anotações e tarefa do foco na home | 0.30 |
 | Sessão de foco | Foco de 25, 50, 90 min ou sem fim, com contagem e resumo | 0.31 |
 | Relatório de uso | Tempo de tela de hoje e de 7 dias, por app e por dia | 0.32 |
+| Modo carregando | Relógio de cabeceira com bateria e música ao carregar | 0.33 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
@@ -67,7 +68,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | 6 | Captura rápida | Gesto abre campo de nota; vira "a tarefa do foco" | v0.30 |
 | 7 | Sessão de foco | Foco com cronômetro (25, 50 min ou livre) e resumo ao final | v0.31 |
 | 8 | Relatório de uso | Tempo de tela por app, no dia e na semana | v0.32 |
-| 9 | Modo carregando | Relógio grande de cabeceira enquanto carrega com a home aberta | a fazer |
+| 9 | Modo carregando | Relógio grande de cabeceira enquanto carrega com a home aberta | v0.33 |
 | 10 | Ações no favorito | Deslizar em um favorito abre uma segunda ação | a fazer |
 | 11 | Animação de abertura | Abrir o app a partir do ícone, com movimento de mola e vibração refinada | a fazer |
 | 12 | Paralaxe do papel de parede | Giroscópio, só com a home visível | a fazer |

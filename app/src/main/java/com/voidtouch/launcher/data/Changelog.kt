@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.33.0",
+            listOf(
+                "Modo carregando: com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira, com data, bateria e a música que está tocando.",
+                "Um toque sai; o relógio só volta depois que você desconectar e conectar o carregador de novo. O conteúdo muda de lugar um pouco a cada minuto para não marcar a tela.",
+                "Em Ajustes > modo carregando dá para desligar e escolher se a tela fica acesa enquanto ele aparece.",
+            ),
+        ),
+        ReleaseNote(
             "0.32.1",
             listOf(
                 "Correção: em Ajustes, deslizar para baixo não fecha mais a tela e a lista rola normalmente. Para sair, use \"fechar\" ou o voltar.",

@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.LaunchedEffect
+import android.view.WindowManager
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,6 +52,7 @@ import com.voidtouch.launcher.data.LaterItem
 import com.voidtouch.launcher.data.LaunchCounts
 import com.voidtouch.launcher.data.ReadLater
 import com.voidtouch.launcher.data.LiveKind
+import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.data.Notes
@@ -88,6 +93,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.voidtouch.launcher.ui.OptimizeScreen
 import com.voidtouch.launcher.ui.CaptureScreen
+import com.voidtouch.launcher.ui.DockScreen
 import com.voidtouch.launcher.ui.PermissionsScreen
 import com.voidtouch.launcher.ui.UsageScreen
 import com.voidtouch.launcher.ui.ReadLaterScreen
@@ -161,6 +167,9 @@ class MainActivity : ComponentActivity() {
     private var opens by mutableStateOf<Map<String, Int>>(emptyMap())
     private var later by mutableStateOf<List<LaterItem>>(emptyList())
     private var notes by mutableStateOf<List<Note>>(emptyList())
+    private var dockOn by mutableStateOf(true)
+    private var dockAwake by mutableStateOf(true)
+    private var lastTouchMs = System.currentTimeMillis()
     private var predictOn by mutableStateOf(true)
     private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
     private var contactsAccess by mutableStateOf(false)
@@ -304,6 +313,8 @@ class MainActivity : ComponentActivity() {
         opens = LaunchCounts.decode(settingsStore.loadLaunchCounts())
         later = settingsStore.loadReadLater()
         predictOn = settingsStore.loadPredictOn()
+        dockOn = settingsStore.loadDockOn()
+        dockAwake = settingsStore.loadDockAwake()
         notes = settingsStore.loadNotes()
         predictHistory = Predict.decode(settingsStore.loadPredictHistory())
         contactsAccess = ContactsReader.hasAccess(this)
@@ -364,6 +375,8 @@ class MainActivity : ComponentActivity() {
                 var showLater by remember { mutableStateOf(false) }
                 var showCapture by remember { mutableStateOf(false) }
                 var showUsage by remember { mutableStateOf(false) }
+                var showDock by remember { mutableStateOf(false) }
+                var dockDismissed by remember { mutableStateOf(false) }
                 var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
@@ -412,6 +425,7 @@ class MainActivity : ComponentActivity() {
                 // Um launcher não fecha com o botão voltar; aqui ele só sai das telas internas.
                 BackHandler {
                     when {
+                        showDock -> { showDock = false; dockDismissed = true }
                         changelog != null -> changelog = null
                         showTips -> showTips = false
                         showUsage -> showUsage = false
@@ -528,7 +542,36 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                // Modo carregando: com o celular carregando e a home parada, mostra o relógio de cabeceira.
+                val charging = stats?.charging == true
+                val onHomeNow = screen == "home"
+                LaunchedEffect(charging, onHomeNow, dockOn, dockDismissed) {
+                    if (!charging) dockDismissed = false
+                    showDock = false
+                    if (dockOn && charging && onHomeNow && !dockDismissed) {
+                        while (!Dock.shouldShow(true, true, true, false, System.currentTimeMillis() - lastTouchMs)) delay(1000)
+                        showDock = true
+                    }
+                }
+                DisposableEffect(showDock, dockAwake) {
+                    if (showDock && dockAwake) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    onDispose { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            // Só observa os toques (sem consumir) para saber há quanto tempo a home está parada.
+                            awaitPointerEventScope {
+                                while (true) {
+                                    awaitPointerEvent(PointerEventPass.Initial)
+                                    lastTouchMs = System.currentTimeMillis()
+                                }
+                            }
+                        }
+                        .safeDrawingPadding(),
+                ) {
                   AnimatedContent(
                     targetState = screen,
                     transitionSpec = {
@@ -628,6 +671,17 @@ class MainActivity : ComponentActivity() {
                                 focusAutoEnd = (focusAutoEnd + 1) % 24
                                 settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
                                 settingsStore.saveFocusAutoLast(null)
+                            },
+                            dockOn = dockOn,
+                            onDockToggle = {
+                                dockOn = !dockOn
+                                settingsStore.saveDockOn(dockOn)
+                                say(if (dockOn) "modo carregando ligado" else "modo carregando desligado")
+                            },
+                            dockAwake = dockAwake,
+                            onDockAwake = {
+                                dockAwake = !dockAwake
+                                settingsStore.saveDockAwake(dockAwake)
                             },
                             predictOn = predictOn,
                             onPredictToggle = {
@@ -857,6 +911,15 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                   }
+                    if (showDock) {
+                        DockScreen(
+                            nowMillis = nowMillis,
+                            clockStyle = clockStyle,
+                            stats = stats,
+                            media = NotificationHub.media,
+                            onExit = { showDock = false; dockDismissed = true },
+                        )
+                    }
                     BannerHost(
                         banner = banner,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp),

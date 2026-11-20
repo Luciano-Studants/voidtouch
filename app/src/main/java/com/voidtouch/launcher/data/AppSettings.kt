@@ -150,6 +150,18 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_NOTES, Notes.encode(list)).apply()
     }
 
+    fun loadDockOn(): Boolean = prefs.getBoolean(KEY_DOCK_ON, true)
+
+    fun saveDockOn(on: Boolean) {
+        prefs.edit().putBoolean(KEY_DOCK_ON, on).apply()
+    }
+
+    fun loadDockAwake(): Boolean = prefs.getBoolean(KEY_DOCK_AWAKE, true)
+
+    fun saveDockAwake(on: Boolean) {
+        prefs.edit().putBoolean(KEY_DOCK_AWAKE, on).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -192,6 +204,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_PREDICT_ON = "predict_on"
         const val KEY_PREDICT_HISTORY = "predict_history"
         const val KEY_NOTES = "notes"
+        const val KEY_DOCK_ON = "dock_on"
+        const val KEY_DOCK_AWAKE = "dock_awake"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"

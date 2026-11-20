@@ -66,6 +66,10 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
+    dockOn: Boolean,
+    onDockToggle: () -> Unit,
+    dockAwake: Boolean,
+    onDockAwake: () -> Unit,
     predictOn: Boolean,
     onPredictToggle: () -> Unit,
     onPredictClear: () -> Unit,
@@ -163,6 +167,16 @@ fun SettingsScreen(
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("modo carregando")
+        ValueRow(if (dockOn) "ligado" else "desligado", onDockToggle)
+        if (dockOn) ValueRow(if (dockAwake) "tela acesa enquanto aparece: sim" else "tela acesa enquanto aparece: não", onDockAwake)
+        Text(
+            "com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira com a bateria e a música. Um toque sai.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
         )
 
         Section("linha agora")
