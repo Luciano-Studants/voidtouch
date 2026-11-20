@@ -54,6 +54,7 @@ import com.voidtouch.launcher.data.ReadLater
 import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
+import com.voidtouch.launcher.data.OpenAnim
 import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.data.Notes
 import com.voidtouch.launcher.data.Predict
@@ -170,6 +171,10 @@ class MainActivity : ComponentActivity() {
     private var dockOn by mutableStateOf(true)
     private var dockAwake by mutableStateOf(true)
     private var lastTouchMs = System.currentTimeMillis()
+    private var lastTouchX = 0f
+    private var lastTouchY = 0f
+    private var openAnim by mutableStateOf(true)
+    private var openHaptic by mutableStateOf(true)
     private var predictOn by mutableStateOf(true)
     private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
     private var contactsAccess by mutableStateOf(false)
@@ -314,6 +319,8 @@ class MainActivity : ComponentActivity() {
         later = settingsStore.loadReadLater()
         predictOn = settingsStore.loadPredictOn()
         dockOn = settingsStore.loadDockOn()
+        openAnim = settingsStore.loadOpenAnim()
+        openHaptic = settingsStore.loadOpenHaptic()
         dockAwake = settingsStore.loadDockAwake()
         notes = settingsStore.loadNotes()
         predictHistory = Predict.decode(settingsStore.loadPredictHistory())
@@ -565,8 +572,9 @@ class MainActivity : ComponentActivity() {
                             // Só observa os toques (sem consumir) para saber há quanto tempo a home está parada.
                             awaitPointerEventScope {
                                 while (true) {
-                                    awaitPointerEvent(PointerEventPass.Initial)
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
                                     lastTouchMs = System.currentTimeMillis()
+                                    event.changes.firstOrNull()?.position?.let { lastTouchX = it.x; lastTouchY = it.y }
                                 }
                             }
                         }
@@ -671,6 +679,16 @@ class MainActivity : ComponentActivity() {
                                 focusAutoEnd = (focusAutoEnd + 1) % 24
                                 settingsStore.saveFocusAutoHours(focusAutoStart, focusAutoEnd)
                                 settingsStore.saveFocusAutoLast(null)
+                            },
+                            openAnim = openAnim,
+                            onOpenAnim = {
+                                openAnim = !openAnim
+                                settingsStore.saveOpenAnim(openAnim)
+                            },
+                            openHaptic = openHaptic,
+                            onOpenHaptic = {
+                                openHaptic = !openHaptic
+                                settingsStore.saveOpenHaptic(openHaptic)
                             },
                             dockOn = dockOn,
                             onDockToggle = {
@@ -1112,7 +1130,17 @@ class MainActivity : ComponentActivity() {
             settingsStore.savePredictHistory(Predict.encode(predictHistory))
         }
         settingsStore.saveLaunchCounts(LaunchCounts.encode(opens))
-        AppRepository.launch(this, app)
+        val decor = window.decorView
+        if (openHaptic) decor.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+        val origin = if (openAnim) {
+            OpenAnim.rect(
+                lastTouchX, lastTouchY, (56 * resources.displayMetrics.density).toInt(),
+                decor.width, decor.height, System.currentTimeMillis() - lastTouchMs,
+            )
+        } else {
+            null
+        }
+        AppRepository.launch(this, app, origin)
     }
 
     /** Executa um resultado da busca que não é app. */

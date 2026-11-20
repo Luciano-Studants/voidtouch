@@ -47,13 +47,21 @@ object AppRepository {
             .toList()
     }
 
-    /** Abre o app. Ignora silenciosamente se ele foi desinstalado nesse meio tempo. */
-    fun launch(context: Context, app: AppEntry) {
+    /**
+     * Abre o app. Ignora silenciosamente se ele foi desinstalado nesse meio tempo. Com [origin],
+     * a tela do app se abre a partir desse ponto, como nos launchers de ponta.
+     */
+    fun launch(context: Context, app: AppEntry, origin: OpenAnim.Rect? = null) {
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
             component = ComponentName(app.packageName, app.activityName)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         }
-        runCatching { context.startActivity(intent) }
+        val options = origin?.let { r ->
+            (context as? android.app.Activity)?.window?.decorView?.let { view ->
+                runCatching { android.app.ActivityOptions.makeClipRevealAnimation(view, r.x, r.y, r.w, r.h).toBundle() }.getOrNull()
+            }
+        }
+        runCatching { context.startActivity(intent, options) }
     }
 }

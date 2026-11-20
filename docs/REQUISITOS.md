@@ -51,6 +51,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Sessão de foco | Foco de 25, 50, 90 min ou sem fim, com contagem e resumo | 0.31 |
 | Relatório de uso | Tempo de tela de hoje e de 7 dias, por app e por dia | 0.32 |
 | Modo carregando | Relógio de cabeceira com bateria e música ao carregar | 0.33 |
+| Animação de abertura | App abre crescendo do ponto tocado; toque com mola e vibração leve | 0.34 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
@@ -69,8 +70,8 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | 7 | Sessão de foco | Foco com cronômetro (25, 50 min ou livre) e resumo ao final | v0.31 |
 | 8 | Relatório de uso | Tempo de tela por app, no dia e na semana | v0.32 |
 | 9 | Modo carregando | Relógio grande de cabeceira enquanto carrega com a home aberta | v0.33 |
-| 10 | Ações no favorito | Deslizar em um favorito abre uma segunda ação | a fazer |
-| 11 | Animação de abertura | Abrir o app a partir do ícone, com movimento de mola e vibração refinada | a fazer |
+| 10 | Ações no favorito | Deslizar em um favorito abre uma segunda ação | pulada pelo usuário |
+| 11 | Animação de abertura | Abrir o app a partir do ponto tocado, com movimento de mola e vibração leve | v0.34 |
 | 12 | Paralaxe do papel de parede | Giroscópio, só com a home visível | a fazer |
 | 13 | Reordenar favoritos | Arrastar para mudar a ordem | a fazer |
 | 14 | Cores do papel de parede | A interface adapta o tom (textos e detalhes) à paleta do papel de parede, mantendo o tema escuro e a leitura | a fazer |

@@ -4,7 +4,7 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma tarefa em segundo plano**: relógio, status e player só atualizam com a tela visível.
 
-> Versão atual: **0.33.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
+> Versão atual: **0.34.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
 
 ## O que ele faz
 
@@ -24,6 +24,8 @@ Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma
 **Modo foco**: esconde notificações e apps marcados, só dentro do VoidTouch. Segurando a linha "foco" na home dá para iniciar uma **sessão** de 25, 50 ou 90 minutos (ou sem fim), que desliga sozinha e mostra um resumo (tempo focado e notificações esperando). O **foco automático** liga e desliga sozinho em um horário (padrão 18h às 0h), nas viradas da janela, com a home aberta.
 
 **Cenas** (Ajustes > cenas): jeitos da home por momento (manhã, trabalho, noite...). Cada cena tem horário, liga o foco ou não, pode deixar a home calma e lembra os próprios favoritos. Troca sozinha pelo horário ou à mão.
+
+**Abrir apps**: o app se abre crescendo do ponto onde você tocou, com os itens afundando e voltando com um quique e uma vibração leve (dá para desligar em Ajustes).
 
 **Modo carregando**: com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira com data, bateria e música. Um toque sai.
 

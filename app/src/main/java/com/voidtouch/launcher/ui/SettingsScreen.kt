@@ -66,6 +66,10 @@ fun SettingsScreen(
     onFocusAutoToggle: () -> Unit,
     onFocusAutoStart: () -> Unit,
     onFocusAutoEnd: () -> Unit,
+    openAnim: Boolean,
+    onOpenAnim: () -> Unit,
+    openHaptic: Boolean,
+    onOpenHaptic: () -> Unit,
     dockOn: Boolean,
     onDockToggle: () -> Unit,
     dockAwake: Boolean,
@@ -167,6 +171,16 @@ fun SettingsScreen(
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
+        )
+
+        Section("abrir apps")
+        ValueRow(if (openAnim) "animação a partir do toque: ligada" else "animação a partir do toque: desligada", onOpenAnim)
+        ValueRow(if (openHaptic) "vibração leve ao abrir: ligada" else "vibração leve ao abrir: desligada", onOpenHaptic)
+        Text(
+            "o app se abre crescendo do ponto onde você tocou, e os itens da home e da lista afundam e voltam com um pequeno quique ao toque.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
         )
 
         Section("modo carregando")

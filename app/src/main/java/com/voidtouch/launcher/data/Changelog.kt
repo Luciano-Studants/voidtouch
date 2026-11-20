@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.34.0",
+            listOf(
+                "Animação de abertura: o app se abre crescendo do ponto onde você tocou, como nos launchers de ponta.",
+                "Os itens da home e da lista afundam ao toque e voltam com um pequeno quique (movimento de mola), e uma vibração leve confirma a abertura.",
+                "Em Ajustes > abrir apps dá para desligar a animação e a vibração separadamente.",
+            ),
+        ),
+        ReleaseNote(
             "0.33.0",
             listOf(
                 "Modo carregando: com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira, com data, bateria e a música que está tocando.",

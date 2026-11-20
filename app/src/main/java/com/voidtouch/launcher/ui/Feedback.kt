@@ -7,6 +7,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -105,7 +107,12 @@ fun LoadingLine(modifier: Modifier = Modifier, progress: Float? = null) {
 @Composable
 fun Modifier.pressFeedback(source: InteractionSource): Modifier {
     val pressed by source.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.93f else 1f, tween(90), label = "press")
+    // Mola: encolhe rápido ao tocar e volta com um pequeno quique, em vez de uma transição seca.
+    val scale by animateFloatAsState(
+        if (pressed) 0.93f else 1f,
+        spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "press",
+    )
     return graphicsLayer {
         scaleX = scale
         scaleY = scale

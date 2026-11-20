@@ -162,6 +162,18 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putBoolean(KEY_DOCK_AWAKE, on).apply()
     }
 
+    fun loadOpenAnim(): Boolean = prefs.getBoolean(KEY_OPEN_ANIM, true)
+
+    fun saveOpenAnim(on: Boolean) {
+        prefs.edit().putBoolean(KEY_OPEN_ANIM, on).apply()
+    }
+
+    fun loadOpenHaptic(): Boolean = prefs.getBoolean(KEY_OPEN_HAPTIC, true)
+
+    fun saveOpenHaptic(on: Boolean) {
+        prefs.edit().putBoolean(KEY_OPEN_HAPTIC, on).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -206,6 +218,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_NOTES = "notes"
         const val KEY_DOCK_ON = "dock_on"
         const val KEY_DOCK_AWAKE = "dock_awake"
+        const val KEY_OPEN_ANIM = "open_anim"
+        const val KEY_OPEN_HAPTIC = "open_haptic"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"
