@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.DeviceStats
+import com.voidtouch.launcher.data.FocusSession
 import com.voidtouch.launcher.data.NetworkKind
 import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.data.NoteGroups
@@ -180,97 +181,106 @@ private fun statusLines(context: Context, s: DeviceStats): List<String> = buildL
 }
 
 /**
- * Liga e desliga o modo foco com um toque. Ligado, a home fica mais calma: some o bloco de
- * notificações e status e somem os apps marcados como distração.
+ * Linha do modo foco. Toque liga e desliga; segurar (com o foco desligado) oferece uma sessão
+ * com hora para acabar: 25, 50, 90 minutos ou sem fim. Ligado, a home fica mais calma: some o
+ * bloco de notificações e status e somem os apps marcados como distração.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FocusLine(
     focusSinceMillis: Long,
+    focusUntilMillis: Long,
     nowMillis: Long,
     onClick: () -> Unit,
+    onStartSession: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val minute = nowMillis / 60_000L
     val focusOn = focusSinceMillis != 0L
-    val label = remember(minute, focusSinceMillis) { formatFocus(focusSinceMillis, nowMillis) }
+    val label = remember(minute, focusSinceMillis, focusUntilMillis) {
+        FocusSession.label(focusSinceMillis, focusUntilMillis, nowMillis)
+    }
     val haptic = LocalHapticFeedback.current
+    var choosing by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .clickable {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                onClick()
-            }
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+        modifier = modifier.padding(horizontal = 24.dp, vertical = 2.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .then(
-                    if (focusOn) {
-                        Modifier.background(VoidColors.Text, CircleShape)
-                    } else {
-                        Modifier.border(1.dp, VoidColors.TextDim, CircleShape)
-                    },
-                ),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = label,
-            style = VoidType.Caption,
-            color = if (focusOn) VoidColors.Text else VoidColors.TextDim,
-        )
-    }
-}
-
-/** "foco desligado" ou "foco ligado · 23 min" (e "1 h 05 min" depois da primeira hora). */
-private fun formatFocus(sinceMillis: Long, nowMillis: Long): String {
-    if (sinceMillis == 0L) return "foco desligado"
-    val minutes = ((nowMillis - sinceMillis) / 60_000L).coerceAtLeast(0L)
-    val elapsed = when {
-        minutes < 1L -> "agora"
-        minutes < 60L -> "$minutes min"
-        else -> String.format(PtBr, "%d h %02d min", minutes / 60L, minutes % 60L)
-    }
-    return "foco ligado · $elapsed"
-}
-
-/** Opções de uma notificação (segurar): responder sem abrir o app, guardar para depois ou dispensar. */
-@Composable
-private fun NotePanel(item: NoteItem, onReply: (String) -> Unit, onLater: () -> Unit, onDismiss: () -> Unit) {
-    var replying by remember { mutableStateOf(false) }
-    var text by remember { mutableStateOf("") }
-    Column(modifier = Modifier.padding(bottom = 6.dp)) {
-        Row {
-            if (item.replyInput != null) {
-                PanelButton("responder") { replying = !replying }
-                Spacer(Modifier.width(14.dp))
+        if (choosing && !focusOn) {
+            Text("foco por", style = VoidType.Caption, color = VoidColors.TextDim)
+            FocusSession.CHOICES.forEach { minutes ->
+                Text(
+                    text = FocusSession.choiceLabel(minutes),
+                    style = VoidType.Caption,
+                    color = VoidColors.Text,
+                    modifier = Modifier
+                        .clickable {
+                            choosing = false
+                            onStartSession(minutes)
+                        }
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                )
             }
-            PanelButton("ler depois", onLater)
-            Spacer(Modifier.width(14.dp))
-            PanelButton("dispensar", onDismiss)
-        }
-        if (replying) {
-            SearchField(
-                query = text,
-                onQueryChange = { text = it },
-                requestFocus = true,
-                onGo = { if (text.isNotBlank()) onReply(text.trim()) },
-                placeholder = "responder…",
+            Text(
+                text = "×",
+                style = VoidType.Caption,
+                color = VoidColors.TextDim,
+                modifier = Modifier.clickable { choosing = false }.padding(horizontal = 8.dp, vertical = 8.dp),
             )
-            if (text.isNotBlank()) PanelButton("enviar") { onReply(text.trim()) }
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onClick()
+                        },
+                        onLongClick = {
+                            if (!focusOn) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                choosing = true
+                            }
+                        },
+                    )
+                    .padding(vertical = 6.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .then(
+                            if (focusOn) {
+                                Modifier.background(VoidColors.Text, CircleShape)
+                            } else {
+                                Modifier.border(1.dp, VoidColors.TextDim, CircleShape)
+                            },
+                        ),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = label,
+                    style = VoidType.Caption,
+                    color = if (focusOn) VoidColors.Text else VoidColors.TextDim,
+                )
+            }
         }
     }
 }
 
+/** Resumo de uma sessão de foco que acabou. Toque dispensa. */
 @Composable
-private fun PanelButton(label: String, onClick: () -> Unit) {
+fun FocusSummaryLine(text: String, onDismiss: () -> Unit) {
     Text(
-        text = label,
+        text = "$text ×",
         style = VoidType.Caption,
         color = VoidColors.Text,
-        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 6.dp),
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onDismiss)
+            .padding(horizontal = 24.dp, vertical = 8.dp),
     )
 }
 

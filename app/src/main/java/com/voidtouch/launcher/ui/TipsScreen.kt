@@ -28,7 +28,7 @@ private val Tips = listOf(
     "favoritos" to "toque abre; segure para tirar da home. Apps e pastas se fixam pelo menu da lista",
     "notificações" to "toque abre o app; segure para responder sem abrir, guardar em \"ler depois\" ou dispensar",
     "anotação rápida" to "defina um gesto para \"anotação rápida\" (ou busque \"anotar\"): a primeira anotação vira a tarefa do foco na home; toque nela para marcar como feita",
-    "foco" to "toque na linha \"foco\" para esconder os apps que distraem",
+    "foco" to "toque na linha \"foco\" para esconder os apps que distraem; segure para uma sessão de 25, 50 ou 90 minutos",
     "status do celular" to "toque no bloco de status para ver a saúde do aparelho e otimizar",
 )
 

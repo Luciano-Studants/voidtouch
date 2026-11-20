@@ -94,6 +94,10 @@ fun HomeContent(
     onMemoryClick: () -> Unit,
     onMemoryHide: () -> Unit,
     focusSinceMillis: Long,
+    focusUntilMillis: Long,
+    onStartFocus: (Int) -> Unit,
+    focusSummary: String?,
+    onDismissFocusSummary: () -> Unit,
     favorites: List<Favorite>,
     onLaunch: (AppEntry) -> Unit,
     onUnpin: (Favorite) -> Unit,
@@ -200,10 +204,13 @@ fun HomeContent(
                         onStatusClick = onOpenHealth,
                     )
                 }
+                if (focusSummary != null && !night) FocusSummaryLine(focusSummary, onDismissFocusSummary)
                 FocusLine(
                     focusSinceMillis = focusSinceMillis,
+                    focusUntilMillis = focusUntilMillis,
                     nowMillis = nowMillis,
                     onClick = onToggleFocus,
+                    onStartSession = onStartFocus,
                 )
                 // "Agora": apps prováveis para este horário; some na home calma.
                 if (!night && suggestions.isNotEmpty()) NowLine(suggestions, onLaunch)

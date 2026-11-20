@@ -48,6 +48,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Notificações ativas | Segurar: responder sem abrir, ler depois, dispensar; agrupadas por conversa | 0.28 |
 | Linha "agora" | Até 3 apps prováveis neste horário, pelo histórico local | 0.29 |
 | Captura rápida | Anotações e tarefa do foco na home | 0.30 |
+| Sessão de foco | Foco de 25, 50, 90 min ou sem fim, com contagem e resumo | 0.31 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
@@ -63,7 +64,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | 4 | Responder pela home | Responder notificações de mensagem sem abrir o app; agrupar por conversa; ler depois | v0.28 |
 | 5 | Linha "agora" preditiva | Três apps prováveis para a hora, pelo histórico local de aberturas | v0.29 |
 | 6 | Captura rápida | Gesto abre campo de nota; vira "a tarefa do foco" | v0.30 |
-| 7 | Sessão de foco | Foco com cronômetro (25, 50 min ou livre) e resumo ao final | a fazer |
+| 7 | Sessão de foco | Foco com cronômetro (25, 50 min ou livre) e resumo ao final | v0.31 |
 | 8 | Relatório de uso | Tempo de tela por app, no dia e na semana | a fazer |
 | 9 | Modo carregando | Relógio grande de cabeceira enquanto carrega com a home aberta | a fazer |
 | 10 | Ações no favorito | Deslizar em um favorito abre uma segunda ação | a fazer |

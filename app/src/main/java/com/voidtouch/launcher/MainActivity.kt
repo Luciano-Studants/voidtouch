@@ -41,6 +41,7 @@ import com.voidtouch.launcher.data.Backup
 import com.voidtouch.launcher.data.FocusAction
 import com.voidtouch.launcher.data.HomeRules
 import com.voidtouch.launcher.data.FocusSchedule
+import com.voidtouch.launcher.data.FocusSession
 import com.voidtouch.launcher.data.ContactsReader
 import com.voidtouch.launcher.data.Hit
 import com.voidtouch.launcher.data.LaterItem
@@ -125,6 +126,8 @@ class MainActivity : ComponentActivity() {
 
     /** Horário em que o modo foco foi ligado; zero significa desligado. */
     private var focusSince by mutableLongStateOf(0L)
+    private var focusUntil by mutableLongStateOf(0L)
+    private var focusSummary by mutableStateOf<String?>(null)
 
     private var backdrop by mutableStateOf(Backdrop.Void)
 
@@ -287,6 +290,7 @@ class MainActivity : ComponentActivity() {
         focusStore = FocusStore(prefs)
         focusApps = focusStore.loadApps()
         focusSince = focusStore.loadSince()
+        focusUntil = focusStore.loadUntil()
         settingsStore = SettingsStore(prefs)
         folderStore = FolderStore(prefs)
         folders = folderStore.load()
@@ -450,6 +454,15 @@ class MainActivity : ComponentActivity() {
                 // A foto "neste dia" é escolhida uma vez por bloco de 3 horas, fora da thread principal.
                 // Modo noite: dentro da janela de horário a home fica escura e calma.
                 val hour = Instant.ofEpochMilli(nowMillis).atZone(ZoneId.systemDefault()).hour
+                // Sessão de foco com hora para acabar: espera até o fim e encerra. Reinicia a cada volta ao
+                // app (refreshKey), então uma sessão que venceu com a tela apagada acaba assim que você volta.
+                LaunchedEffect(focusUntil, focusSince, refreshKey) {
+                    if (focusUntil > 0L && focusSince != 0L) {
+                        delay(FocusSession.remainingMs(focusUntil, System.currentTimeMillis()))
+                        finishFocus()
+                        say("sessão de foco terminou")
+                    }
+                }
                 // Linha "agora": apps prováveis neste horário, sem repetir os favoritos nem os escondidos pelo foco.
                 val suggestions = remember(apps, predictHistory, predictOn, hour, pinnedKeys, focusApps, focusOn) {
                     if (!predictOn) {
@@ -799,6 +812,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             focusSinceMillis = focusSince,
+                            focusUntilMillis = focusUntil,
+                            onStartFocus = { startFocus(it) },
+                            focusSummary = focusSummary,
+                            onDismissFocusSummary = { focusSummary = null },
                             favorites = favorites,
                             onLaunch = { launchApp(it) },
                             onUnpin = { fav ->
@@ -940,7 +957,7 @@ class MainActivity : ComponentActivity() {
     private fun toggleFocus() {
         when (HomeRules.toggleFocus(focusSince, focusApps)) {
             HomeRules.FocusToggle.TurnedOff -> {
-                focusSince = 0L
+                finishFocus()
                 say("foco desligado")
             }
             HomeRules.FocusToggle.NeedsApps -> {
@@ -949,10 +966,45 @@ class MainActivity : ComponentActivity() {
             }
             HomeRules.FocusToggle.TurnedOn -> {
                 focusSince = System.currentTimeMillis()
+                focusUntil = 0L
+                focusSummary = null
                 say("foco ligado · ${focusApps.size} app(s) escondido(s)")
             }
         }
         focusStore.saveSince(focusSince)
+        focusStore.saveUntil(focusUntil)
+    }
+
+    /** Liga uma sessão de foco; [minutes] zero é sem fim. */
+    private fun startFocus(minutes: Int) {
+        if (focusApps.isEmpty()) {
+            say("marque os apps do foco: lista completa > apps do foco")
+            return
+        }
+        val now = System.currentTimeMillis()
+        focusSince = now
+        focusUntil = if (minutes > 0) now + minutes * 60_000L else 0L
+        focusSummary = null
+        focusStore.saveSince(focusSince)
+        focusStore.saveUntil(focusUntil)
+        say(if (minutes > 0) "foco por $minutes min · ${focusApps.size} app(s) escondido(s)" else "foco ligado · ${focusApps.size} app(s) escondido(s)")
+    }
+
+    /**
+     * Encerra o foco (à mão, pelo horário, por cena ou ao acabar a sessão) e prepara o resumo:
+     * quanto durou e quantas notificações dos apps escondidos estão esperando na bandeja.
+     */
+    private fun finishFocus() {
+        if (focusSince == 0L) return
+        val since = focusSince
+        val waiting = NotificationHub.items.count { n ->
+            n.postedAt >= since && focusApps.any { it.substringBefore('/') == n.packageName }
+        }
+        focusSummary = FocusSession.summary(System.currentTimeMillis() - since, waiting)
+        focusSince = 0L
+        focusUntil = 0L
+        focusStore.saveSince(0L)
+        focusStore.saveUntil(0L)
     }
 
     /** Liga ou desliga o foco nas viradas da janela programada; sem apps marcados, só avisa. */
@@ -970,8 +1022,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             FocusAction.TurnOff -> if (focusSince != 0L) {
-                focusSince = 0L
-                focusStore.saveSince(0L)
+                finishFocus()
                 say("foco desligado automaticamente")
             }
             FocusAction.None -> Unit
@@ -1032,10 +1083,7 @@ class MainActivity : ComponentActivity() {
         }
         sceneActive = id
         settingsStore.saveSceneActive(id)
-        if (leaving?.focus == true && focusSince != 0L) {
-            focusSince = 0L
-            focusStore.saveSince(0L)
-        }
+        if (leaving?.focus == true && focusSince != 0L) finishFocus()
         if (entering?.focus == true) {
             if (focusApps.isEmpty()) {
                 say("cena ${entering.name}: marque os apps do foco para ele ligar")

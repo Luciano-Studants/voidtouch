@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.31.0",
+            listOf(
+                "Sessão de foco: segure a linha \"foco\" na home e escolha 25, 50 ou 90 minutos (ou sem fim). A linha mostra quanto falta e o foco desliga sozinho no fim.",
+                "Ao terminar qualquer foco, aparece um resumo: quanto tempo você focou e quantas notificações dos apps escondidos estão esperando. Toque no resumo para dispensar.",
+                "Tocar na linha continua ligando e desligando o foco como antes.",
+            ),
+        ),
+        ReleaseNote(
             "0.30.0",
             listOf(
                 "Captura rápida: nova ação \"anotação rápida\" para qualquer gesto (ou busque \"anotar\"). A tela abre já com o teclado: escreva, confirme e a ideia fica guardada.",

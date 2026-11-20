@@ -25,6 +25,7 @@ data class NoteItem(
     /** Resposta direta, quando a notificação aceita (mensagens). */
     val replyIntent: PendingIntent? = null,
     val replyInput: android.app.RemoteInput? = null,
+    val postedAt: Long = 0L,
 )
 
 /** Uma atividade ao vivo (chamada, cronômetro, download...) para a ilha da home. */
@@ -166,6 +167,7 @@ class VoidNotificationService : NotificationListenerService() {
                     sbn.key, sbn.packageName, labelOf(sbn.packageName), title, text, sbn.notification.contentIntent,
                     replyIntent = replyAction?.actionIntent.takeIf { replyInput != null },
                     replyInput = replyInput,
+                    postedAt = sbn.postTime,
                 )
             }
             .take(20)

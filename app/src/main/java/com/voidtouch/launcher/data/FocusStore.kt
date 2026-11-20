@@ -21,7 +21,16 @@ class FocusStore(private val prefs: SharedPreferences) {
         prefs.edit().putLong(KEY_SINCE, sinceMillis).apply()
     }
 
+    /** Hora em que a sessão termina sozinha; zero = sem fim. */
+    fun loadUntil(): Long = prefs.getLong(KEY_UNTIL, 0L)
+
+    fun saveUntil(untilMillis: Long) {
+        prefs.edit().putLong(KEY_UNTIL, untilMillis).apply()
+    }
+
     private companion object {
+        const val KEY_UNTIL = "focus_until"
+
         const val KEY_APPS = "focus_apps"
         const val KEY_SINCE = "focus_since"
     }
