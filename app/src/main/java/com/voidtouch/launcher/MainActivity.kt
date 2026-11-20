@@ -55,6 +55,8 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.ui.FavoritesOrderScreen
+import com.voidtouch.launcher.ui.OrderRow
 import com.voidtouch.launcher.data.Parallax
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.asImageBitmap
@@ -391,6 +393,7 @@ class MainActivity : ComponentActivity() {
                 var showLater by remember { mutableStateOf(false) }
                 var showCapture by remember { mutableStateOf(false) }
                 var showUsage by remember { mutableStateOf(false) }
+                var showOrder by remember { mutableStateOf(false) }
                 var showDock by remember { mutableStateOf(false) }
                 var dockDismissed by remember { mutableStateOf(false) }
                 var showTips by remember { mutableStateOf(firstUse) }
@@ -419,6 +422,7 @@ class MainActivity : ComponentActivity() {
                     showLater = false
                     showCapture = false
                     showUsage = false
+                    showOrder = false
                     showTips = false
                 }
                 // Mede quanto a lista de apps leva para aparecer (até o primeiro quadro desenhado).
@@ -444,6 +448,7 @@ class MainActivity : ComponentActivity() {
                         showDock -> { showDock = false; dockDismissed = true }
                         changelog != null -> changelog = null
                         showTips -> showTips = false
+                        showOrder -> showOrder = false
                         showUsage -> showUsage = false
                         showCapture -> showCapture = false
                         showLater -> showLater = false
@@ -537,6 +542,7 @@ class MainActivity : ComponentActivity() {
                 val screen = when {
                     showTips -> "tips"
                     changelog != null -> "changelog"
+                    showOrder -> "order"
                     showUsage -> "usage"
                     showCapture -> "capture"
                     showLater -> "later"
@@ -638,6 +644,20 @@ class MainActivity : ComponentActivity() {
                             onClearDone = { saveNotes(Notes.clearDone(notes)) },
                             onClose = { showCapture = false },
                         )
+                    } else if (current == "order") {
+                        FavoritesOrderScreen(
+                            rows = pinnedKeys.mapNotNull { key ->
+                                val fid = com.voidtouch.launcher.data.FavoriteKeys.folderId(key)
+                                val label = if (fid != null) folders.firstOrNull { it.id == fid }?.name
+                                else apps.firstOrNull { it.key == key }?.label
+                                label?.let { OrderRow(key, it) }
+                            },
+                            onMove = { key, delta ->
+                                pinnedKeys = HomeRules.move(pinnedKeys, key, delta)
+                                favoritesStore.save(pinnedKeys)
+                            },
+                            onClose = { showOrder = false },
+                        )
                     } else if (current == "later") {
                         ReadLaterScreen(
                             items = later,
@@ -685,6 +705,7 @@ class MainActivity : ComponentActivity() {
                             onOpenOptimize = { showSettings = false; showOptimize = true },
                             onOpenPermissions = { showSettings = false; showPermissions = true },
                             onOpenUsage = { showSettings = false; showUsage = true },
+                            onOpenFavoritesOrder = { showSettings = false; showOrder = true },
                             focusAutoOn = focusAutoOn,
                             focusAutoStart = focusAutoStart,
                             focusAutoEnd = focusAutoEnd,

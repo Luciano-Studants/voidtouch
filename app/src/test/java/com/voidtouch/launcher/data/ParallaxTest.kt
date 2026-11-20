@@ -16,3 +16,12 @@ class ParallaxTest {
         assertEquals(1f, Parallax.smooth(0.5f, 1f, 5f), 0.0001f)
     }
 }
+
+class FavoritesMoveTest {
+    private val l = listOf("a", "b", "c")
+    @Test fun sobe() = assertEquals(listOf("b", "a", "c"), HomeRules.move(l, "b", -1))
+    @Test fun desce() = assertEquals(listOf("a", "c", "b"), HomeRules.move(l, "b", 1))
+    @Test fun nao_passa_do_topo() = assertEquals(l, HomeRules.move(l, "a", -1))
+    @Test fun nao_passa_do_fim() = assertEquals(l, HomeRules.move(l, "c", 1))
+    @Test fun chave_ausente() = assertEquals(l, HomeRules.move(l, "x", 1))
+}

@@ -99,6 +99,7 @@ fun SettingsScreen(
     onOpenOptimize: () -> Unit,
     onOpenPermissions: () -> Unit,
     onOpenUsage: () -> Unit,
+    onOpenFavoritesOrder: () -> Unit,
     memoryMode: MemoryMode,
     hiddenPhotos: Int,
     onMemoryMode: () -> Unit,
@@ -174,6 +175,9 @@ fun SettingsScreen(
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
         )
+
+        Section("favoritos")
+        ValueRow("ordem dos favoritos", onOpenFavoritesOrder)
 
         Section("papel de parede")
         ValueRow(if (parallax) "paralaxe: ligada" else "paralaxe: desligada", onParallax)

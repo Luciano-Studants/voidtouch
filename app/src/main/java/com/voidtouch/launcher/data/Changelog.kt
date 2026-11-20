@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.36.0",
+            listOf(
+                "Reordenar favoritos: em Ajustes > favoritos > ordem dos favoritos, setas ↑ ↓ mudam a posição de cada app ou pasta da home.",
+                "A mudança vale na hora e entra no backup.",
+            ),
+        ),
+        ReleaseNote(
             "0.35.0",
             listOf(
                 "Paralaxe: com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular.",

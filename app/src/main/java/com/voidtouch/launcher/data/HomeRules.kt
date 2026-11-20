@@ -14,6 +14,18 @@ object HomeRules {
         else -> (current + key) to PinResult.Added
     }
 
+    /** Move um favorito [delta] posições (-1 sobe, +1 desce), sem sair dos limites. */
+    fun move(current: List<String>, key: String, delta: Int): List<String> {
+        val from = current.indexOf(key)
+        if (from < 0) return current
+        val to = (from + delta).coerceIn(0, current.lastIndex)
+        if (to == from) return current
+        val list = current.toMutableList()
+        list.removeAt(from)
+        list.add(to, key)
+        return list
+    }
+
     /** Favoritos visíveis: apps e pastas que existem e, com o foco ligado, não estão escondidos. */
     fun favorites(
         apps: List<AppEntry>,
