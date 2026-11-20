@@ -31,7 +31,7 @@ object Backup {
         return JSONObject().put("app", "voidtouch").put("format", FORMAT).put("exportedAt", System.currentTimeMillis()).put("data", data).toString(2)
     }
 
-    private const val MAX_BYTES = 1_000_000
+    const val MAX_BYTES = 1_000_000
     private const val MAX_ENTRIES = 500
     private const val MAX_SET = 2000
     private const val MAX_TEXT = 200_000

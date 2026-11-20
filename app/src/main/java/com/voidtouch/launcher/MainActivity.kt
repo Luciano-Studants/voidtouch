@@ -55,6 +55,9 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.data.WallpaperLoader
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 import com.voidtouch.launcher.data.ColorSets
 import com.voidtouch.launcher.ui.theme.VoidColors
 import com.voidtouch.launcher.ui.FavoritesOrderScreen
@@ -187,6 +190,9 @@ class MainActivity : ComponentActivity() {
     private var tiltX by mutableStateOf(0f)
     private var tiltY by mutableStateOf(0f)
     private var wallpaperBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
+    private var toneCache: Pair<Int, com.voidtouch.launcher.data.Tone?>? = null
+    private var wallGen = 0
+    private val ioScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
     private var openHaptic by mutableStateOf(true)
     private var predictOn by mutableStateOf(true)
     private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
@@ -221,7 +227,17 @@ class MainActivity : ComponentActivity() {
 
     private val backupRestore = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
-            val text = runCatching { contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }.getOrNull()
+            val text = runCatching { contentResolver.openInputStream(uri)?.use { input ->
+                // Lê no máximo um byte além do limite: arquivo enorme vira "grande demais" sem encher a memória.
+                val buf = ByteArray(Backup.MAX_BYTES + 1)
+                var n = 0
+                while (n < buf.size) {
+                    val r = input.read(buf, n, buf.size - n)
+                    if (r < 0) break
+                    n += r
+                }
+                String(buf, 0, n, Charsets.UTF_8)
+            } }.getOrNull()
             val problem = if (text == null) "não foi possível ler o arquivo" else Backup.import(getSharedPreferences(PREFS, MODE_PRIVATE), text)
             if (problem == null) {
                 // Recria a tela para reler tudo (favoritos, pastas, gestos...) já restaurado.
@@ -1013,6 +1029,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         runCatching { unregisterReceiver(packageReceiver) }
+        ioScope.cancel()
         super.onDestroy()
     }
 
@@ -1321,11 +1338,10 @@ class MainActivity : ComponentActivity() {
         override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
     }
 
-    /** Liga o acelerômetro só com a tela visível; fora dela nada fica registrado. */
+    /** Liga o acelerômetro só com a tela visível e com a paralaxe valendo; fora disso nada fica registrado. */
     private fun startTilt() {
         if (backdrop != Backdrop.Wallpaper || !parallax) return
         runCatching {
-            if (wallpaperBitmap == null) wallpaperBitmap = loadWallpaper()
             val sm = getSystemService(android.hardware.SensorManager::class.java)
             val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) ?: return
             sm.registerListener(tiltListener, sensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
@@ -1339,45 +1355,38 @@ class MainActivity : ComponentActivity() {
 
     private fun stopTilt() {
         runCatching { getSystemService(android.hardware.SensorManager::class.java).unregisterListener(tiltListener) }
+        wallGen++ // cancela uma leitura do papel de parede ainda em andamento
         wallpaperBitmap = null
     }
 
-    /** Papel de parede reduzido à tela, para não pesar na memória (2 GB). */
-    private fun loadWallpaper(): android.graphics.Bitmap? = runCatching {
-        val d = android.app.WallpaperManager.getInstance(this).drawable ?: return null
-        val m = resources.displayMetrics
-        val w = m.widthPixels; val h = m.heightPixels
-        val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.RGB_565)
-        val c = android.graphics.Canvas(bmp)
-        val scale = maxOf(w.toFloat() / d.intrinsicWidth, h.toFloat() / d.intrinsicHeight)
-        val dw = (d.intrinsicWidth * scale).toInt(); val dh = (d.intrinsicHeight * scale).toInt()
-        d.setBounds((w - dw) / 2, (h - dh) / 2, (w + dw) / 2, (h + dh) / 2)
-        d.draw(c)
-        bmp
-    }.getOrNull()
+    private fun applyPalette(tone: com.voidtouch.launcher.data.Tone?) {
+        VoidColors.apply(ColorSets.palette(ColorSets.fromKey(colorSet), tone, backdrop == Backdrop.Wallpaper))
+        applyBackdrop()
+    }
 
-    /** Calcula o tom do papel de parede numa miniatura de 32x32 (nada fica guardado em memória). */
+    /**
+     * Papel de parede para a paralaxe e o tom das cores. A leitura roda em segundo plano (a imagem é
+     * decodificada já reduzida) e o tom fica em cache até o papel de parede mudar.
+     */
     private fun refreshTone() {
-        val set = ColorSets.fromKey(colorSet)
-        var wall: com.voidtouch.launcher.data.Tone? = null
-        if (set.auto && backdrop == Backdrop.Wallpaper) {
-            runCatching {
-                val d = android.app.WallpaperManager.getInstance(this).drawable
-                if (d != null) {
-                    val n = 32
-                    val bmp = android.graphics.Bitmap.createBitmap(n, n, android.graphics.Bitmap.Config.ARGB_8888)
-                    d.setBounds(0, 0, n, n)
-                    d.draw(android.graphics.Canvas(bmp))
-                    val px = IntArray(n * n)
-                    bmp.getPixels(px, 0, n, 0, 0, n, n)
-                    bmp.recycle()
-                    wall = com.voidtouch.launcher.data.WallTone.fromPixels(px)
-                }
+        val onWallpaper = backdrop == Backdrop.Wallpaper
+        val needBitmap = onWallpaper && parallax && screenActive
+        val needTone = onWallpaper && ColorSets.fromKey(colorSet).auto
+        val id = WallpaperLoader.id(this)
+        val cached = toneCache?.takeIf { it.first == id }
+        applyPalette(cached?.second)
+        if (!needBitmap && (!needTone || cached != null)) return
+        val gen = ++wallGen
+        val m = resources.displayMetrics
+        ioScope.launch {
+            val loaded = WallpaperLoader.load(this@MainActivity, m.widthPixels, m.heightPixels)
+            withContext(Dispatchers.Main) {
+                if (gen != wallGen) return@withContext
+                toneCache = id to loaded?.tone
+                if (needBitmap) wallpaperBitmap = loaded?.bitmap
+                applyPalette(loaded?.tone)
             }
         }
-        val palette = ColorSets.palette(set, wall, backdrop == Backdrop.Wallpaper)
-        VoidColors.apply(palette)
-        applyBackdrop()
     }
 
     private fun applyBackdrop() {

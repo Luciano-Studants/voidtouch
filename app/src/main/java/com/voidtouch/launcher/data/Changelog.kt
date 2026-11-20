@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.38.1",
+            listOf(
+                "Polimento: o papel de parede agora é lido em segundo plano e já reduzido ao tamanho da tela, sem travar a home nem pesar na memória.",
+                "O tom das cores fica guardado até o papel de parede mudar, então não é recalculado a cada volta para a home.",
+                "Restaurar backup passa a recusar arquivos enormes sem encher a memória.",
+            ),
+        ),
+        ReleaseNote(
             "0.38.0",
             listOf(
                 "Conjuntos de cores: em Ajustes > papel de parede você troca o tom da interface entre automático (segue o papel de parede), neutro, âmbar, verde-musgo, azul-gelo, violeta e rosa.",
