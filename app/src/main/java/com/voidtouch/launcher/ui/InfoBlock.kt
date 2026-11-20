@@ -334,3 +334,41 @@ fun TaskLine(note: Note, onDone: (Note) -> Unit, onOpen: () -> Unit) {
         )
     }
 }
+
+/** Opções de uma notificação (segurar): responder sem abrir o app, guardar para depois ou dispensar. */
+@Composable
+private fun NotePanel(item: NoteItem, onReply: (String) -> Unit, onLater: () -> Unit, onDismiss: () -> Unit) {
+    var replying by remember { mutableStateOf(false) }
+    var text by remember { mutableStateOf("") }
+    Column(modifier = Modifier.padding(bottom = 6.dp)) {
+        Row {
+            if (item.replyInput != null) {
+                PanelButton("responder") { replying = !replying }
+                Spacer(Modifier.width(14.dp))
+            }
+            PanelButton("ler depois", onLater)
+            Spacer(Modifier.width(14.dp))
+            PanelButton("dispensar", onDismiss)
+        }
+        if (replying) {
+            SearchField(
+                query = text,
+                onQueryChange = { text = it },
+                requestFocus = true,
+                onGo = { if (text.isNotBlank()) onReply(text.trim()) },
+                placeholder = "responder…",
+            )
+            if (text.isNotBlank()) PanelButton("enviar") { onReply(text.trim()) }
+        }
+    }
+}
+
+@Composable
+private fun PanelButton(label: String, onClick: () -> Unit) {
+    Text(
+        text = label,
+        style = VoidType.Caption,
+        color = VoidColors.Text,
+        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 6.dp),
+    )
+}
