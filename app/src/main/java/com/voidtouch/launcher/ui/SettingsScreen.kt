@@ -88,6 +88,7 @@ fun SettingsScreen(
     openTimeMs: Long,
     onOpenOptimize: () -> Unit,
     onOpenPermissions: () -> Unit,
+    onOpenUsage: () -> Unit,
     memoryMode: MemoryMode,
     hiddenPhotos: Int,
     onMemoryMode: () -> Unit,
@@ -238,6 +239,7 @@ fun SettingsScreen(
 
         Section("celular")
         ValueRow("otimizar", onOpenOptimize)
+        ValueRow("relatório de uso", onOpenUsage)
         ValueRow("permissões", onOpenPermissions)
 
         Section("notificações e música")

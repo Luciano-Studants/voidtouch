@@ -89,6 +89,7 @@ import kotlinx.coroutines.delay
 import com.voidtouch.launcher.ui.OptimizeScreen
 import com.voidtouch.launcher.ui.CaptureScreen
 import com.voidtouch.launcher.ui.PermissionsScreen
+import com.voidtouch.launcher.ui.UsageScreen
 import com.voidtouch.launcher.ui.ReadLaterScreen
 import com.voidtouch.launcher.ui.ChangelogScreen
 import com.voidtouch.launcher.data.Changelog
@@ -362,6 +363,7 @@ class MainActivity : ComponentActivity() {
                 var showPermissions by remember { mutableStateOf(false) }
                 var showLater by remember { mutableStateOf(false) }
                 var showCapture by remember { mutableStateOf(false) }
+                var showUsage by remember { mutableStateOf(false) }
                 var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
@@ -387,6 +389,7 @@ class MainActivity : ComponentActivity() {
                     showPermissions = false
                     showLater = false
                     showCapture = false
+                    showUsage = false
                     showTips = false
                 }
                 // Mede quanto a lista de apps leva para aparecer (até o primeiro quadro desenhado).
@@ -411,6 +414,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         changelog != null -> changelog = null
                         showTips -> showTips = false
+                        showUsage -> showUsage = false
                         showCapture -> showCapture = false
                         showLater -> showLater = false
                         showPermissions -> showPermissions = false
@@ -436,6 +440,7 @@ class MainActivity : ComponentActivity() {
                         action == QuickAction.Drawer -> { focusSearch = false; showAllApps = true }
                         action == QuickAction.Focus -> toggleFocus()
                         action == QuickAction.Capture -> showCapture = true
+                        action == QuickAction.Usage -> showUsage = true
                         action == QuickAction.Optimize -> showOptimize = true
                         action == QuickAction.Health -> showHealth = true
                         action == QuickAction.Settings -> showSettings = true
@@ -502,6 +507,7 @@ class MainActivity : ComponentActivity() {
                 val screen = when {
                     showTips -> "tips"
                     changelog != null -> "changelog"
+                    showUsage -> "usage"
                     showCapture -> "capture"
                     showLater -> "later"
                     showPermissions -> "permissions"
@@ -541,6 +547,8 @@ class MainActivity : ComponentActivity() {
                         TipsScreen(onClose = { showTips = false })
                     } else if (current == "changelog") {
                         ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
+                    } else if (current == "usage") {
+                        UsageScreen(refreshKey = refreshKey, onClose = { showUsage = false })
                     } else if (current == "capture") {
                         CaptureScreen(
                             notes = notes,
@@ -600,6 +608,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onOpenOptimize = { showSettings = false; showOptimize = true },
                             onOpenPermissions = { showSettings = false; showPermissions = true },
+                            onOpenUsage = { showSettings = false; showUsage = true },
                             focusAutoOn = focusAutoOn,
                             focusAutoStart = focusAutoStart,
                             focusAutoEnd = focusAutoEnd,
@@ -748,6 +757,7 @@ class MainActivity : ComponentActivity() {
                                         QuickAction.Drawer -> Unit
                                         QuickAction.Focus -> toggleFocus()
                                         QuickAction.Capture -> { showAllApps = false; showCapture = true }
+                                        QuickAction.Usage -> { showAllApps = false; showUsage = true }
                                         QuickAction.Optimize -> { showAllApps = false; showOptimize = true }
                                         QuickAction.Health -> { showAllApps = false; showHealth = true }
                                         QuickAction.Settings -> { showAllApps = false; showSettings = true }

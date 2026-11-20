@@ -10,6 +10,7 @@ enum class QuickAction(val id: String, val label: String) {
     Capture("capture", "anotação rápida"),
     Optimize("optimize", "otimizar o celular"),
     Health("health", "saúde do aparelho"),
+    Usage("usage", "relatório de uso"),
     Settings("settings", "ajustes");
 
     companion object {

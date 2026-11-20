@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.32.0",
+            listOf(
+                "Relatório de uso: veja o tempo de tela de hoje e dos últimos 7 dias, com os apps mais usados em barras e o total de cada dia da semana.",
+                "Abra em Ajustes > relatório de uso, por um gesto (ação \"relatório de uso\") ou buscando \"uso\".",
+                "Usa o acesso ao uso do Android, lê só com a tela aberta e não conta o tempo na tela inicial. Nada sai do aparelho.",
+            ),
+        ),
+        ReleaseNote(
             "0.31.0",
             listOf(
                 "Sessão de foco: segure a linha \"foco\" na home e escolha 25, 50 ou 90 minutos (ou sem fim). A linha mostra quanto falta e o foco desliga sozinho no fim.",

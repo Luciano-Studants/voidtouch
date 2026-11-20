@@ -4,7 +4,7 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma tarefa em segundo plano**: relógio, status e player só atualizam com a tela visível.
 
-> Versão atual: **0.31.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
+> Versão atual: **0.32.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
 
 ## O que ele faz
 
@@ -29,7 +29,7 @@ Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma
 
 **Memórias do dia**: de vez em quando uma foto da galeria (qualquer uma, menos capturas de tela) aparece ao lado da hora. Toque abre na galeria; o X esconde para sempre.
 
-**Celular**: tela Saúde (RAM, armazenamento, bateria, apps mais pesados e **desempenho** medido sob demanda), tela Otimizar (limpeza de cache guiada, apps parados, atalho para os Cuidados com o dispositivo da Samsung) e painel de **permissões** com o estado de cada uma.
+**Celular**: tela Saúde (RAM, armazenamento, bateria, apps mais pesados e **desempenho** medido sob demanda), tela Otimizar (limpeza de cache guiada, apps parados, atalho para os Cuidados com o dispositivo da Samsung) **relatório de uso** (tempo de tela de hoje e dos últimos 7 dias, por app e por dia) e painel de **permissões** com o estado de cada uma.
 
 **Ajustes**: fundo (preto, cinza ou papel de parede), formato da hora (20H00 ou 20:00), gestos, foco automático, modo noite, memórias, backup e sobre (novidades, dicas de uso, atualização e tempo de abertura).
 

@@ -34,6 +34,7 @@ object UniversalSearch {
         Entry(Hit.Action(QuickAction.NotificationPanel), listOf("painel", "notificacoes")),
         Entry(Hit.Action(QuickAction.Focus), listOf("foco", "concentrar")),
         Entry(Hit.Action(QuickAction.Capture), listOf("anotar", "anotacao", "nota", "tarefa", "ideia", "lembrete")),
+        Entry(Hit.Action(QuickAction.Usage), listOf("uso", "tempo", "relatorio", "estatisticas")),
         Entry(Hit.Action(QuickAction.Optimize), listOf("otimizar", "cache", "limpar")),
         Entry(Hit.Action(QuickAction.Health), listOf("saude", "ram", "bateria", "armazenamento")),
         Entry(Hit.Action(QuickAction.Settings), listOf("ajustes", "configurar", "voidtouch")),
