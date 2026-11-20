@@ -104,6 +104,7 @@ fun SettingsScreen(
     onOpenOptimize: () -> Unit,
     onOpenPermissions: () -> Unit,
     onOpenUsage: () -> Unit,
+    onOpenHomeSettings: () -> Unit,
     onOpenFavoritesOrder: () -> Unit,
     memoryMode: MemoryMode,
     hiddenPhotos: Int,
@@ -321,6 +322,13 @@ fun SettingsScreen(
         ValueRow("otimizar", onOpenOptimize)
         ValueRow("relatório de uso", onOpenUsage)
         ValueRow("permissões", onOpenPermissions)
+        ValueRow("trocar tela inicial padrão", onOpenHomeSettings)
+        Text(
+            "se o VoidTouch travar várias vezes seguidas, ele abre um modo seguro sozinho. Aqui você também pode voltar para outra tela inicial a qualquer momento.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
 
         Section("notificações e música")
         ValueRow(if (notificationsEnabled) "acesso ligado" else "acesso desligado", onOpenNotificationAccess)

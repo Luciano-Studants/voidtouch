@@ -325,6 +325,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Travou várias vezes seguidas: abre a tela de emergência em vez da home normal.
+        if (CrashGuard.inSafeMode(this)) {
+            startActivity(Intent(this, SafeModeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION))
+            finish()
+            return
+        }
         val bars = SystemBarStyle.dark(Color.TRANSPARENT)
         enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
 
@@ -429,6 +435,12 @@ class MainActivity : ComponentActivity() {
                     openTimeMs = ms
                     Perf.stats.record(Perf.OPEN, ms)
                     getSharedPreferences(PREFS, MODE_PRIVATE).edit().putLong(KEY_OPEN_MS, ms).apply()
+                }
+
+                // Ficou de pé por 30 segundos: a versão atual é considerada saudável e a contagem de travamentos zera.
+                LaunchedEffect(Unit) {
+                    delay(30_000)
+                    CrashGuard.markHealthy(this@MainActivity)
                 }
 
                 // Apertar Home com o launcher aberto sempre volta para a home.
@@ -725,6 +737,7 @@ class MainActivity : ComponentActivity() {
                             onOpenOptimize = { showSettings = false; showOptimize = true },
                             onOpenPermissions = { showSettings = false; showPermissions = true },
                             onOpenUsage = { showSettings = false; showUsage = true },
+                            onOpenHomeSettings = ::openHomeSettings,
                             onOpenFavoritesOrder = { showSettings = false; showOrder = true },
                             focusAutoOn = focusAutoOn,
                             focusAutoStart = focusAutoStart,
@@ -1319,6 +1332,17 @@ class MainActivity : ComponentActivity() {
             manager.setTorchMode(id, !torchOn)
             say(if (torchOn) "lanterna desligada" else "lanterna ligada")
         }.onFailure { say("não foi possível usar a lanterna") }
+    }
+
+    /** Abre onde se troca a tela inicial padrão; tenta caminhos mais genéricos se o aparelho não tiver o primeiro. */
+    private fun openHomeSettings() {
+        val options = listOf(
+            Intent(android.provider.Settings.ACTION_HOME_SETTINGS),
+            Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS),
+            Intent(android.provider.Settings.ACTION_SETTINGS),
+        )
+        for (i in options) if (runCatching { startActivity(i) }.isSuccess) return
+        say("não foi possível abrir as configurações")
     }
 
     /** Abre o painel de notificações do sistema (método interno do Android; pode não existir em todo aparelho). */

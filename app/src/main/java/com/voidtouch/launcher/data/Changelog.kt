@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.39.0",
+            listOf(
+                "Proteção contra travamentos: se o VoidTouch fechar sozinho 3 vezes seguidas (2 logo depois de uma atualização), ele abre um modo seguro em vez da home normal.",
+                "O modo seguro tem a lista de todos os apps, atalho para trocar a tela inicial padrão do Android, cópia do erro e um botão para tentar a home de novo com os recursos novos desligados.",
+                "Em Ajustes > celular há agora \"trocar tela inicial padrão\", para voltar a outra tela inicial a qualquer momento.",
+            ),
+        ),
+        ReleaseNote(
             "0.38.1",
             listOf(
                 "Polimento: o papel de parede agora é lido em segundo plano e já reduzido ao tamanho da tela, sem travar a home nem pesar na memória.",
