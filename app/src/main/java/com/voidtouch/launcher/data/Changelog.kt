@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.32.1",
+            listOf(
+                "Correção: em Ajustes, deslizar para baixo não fecha mais a tela e a lista rola normalmente. Para sair, use \"fechar\" ou o voltar.",
+            ),
+        ),
+        ReleaseNote(
             "0.32.0",
             listOf(
                 "Relatório de uso: veja o tempo de tela de hoje e dos últimos 7 dias, com os apps mais usados em barras e o total de cada dia da semana.",

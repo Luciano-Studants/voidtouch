@@ -46,7 +46,7 @@ import com.voidtouch.launcher.ui.theme.VoidType
 
 /**
  * Ajustes: fundo, formato da hora e o app de cada deslize horizontal da home.
- * Tudo se escolhe com um toque; deslizar para baixo ou voltar fecha.
+ * Tudo se escolhe com um toque; "fechar" ou voltar sai. Deslizar para baixo só rola a lista.
  */
 @Composable
 fun SettingsScreen(
@@ -118,7 +118,6 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .onVerticalSwipe(up = false, threshold = 96.dp, onSwipe = onClose)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 28.dp),
     ) {
