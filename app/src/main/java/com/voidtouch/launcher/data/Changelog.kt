@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.30.0",
+            listOf(
+                "Captura rápida: nova ação \"anotação rápida\" para qualquer gesto (ou busque \"anotar\"). A tela abre já com o teclado: escreva, confirme e a ideia fica guardada.",
+                "A primeira anotação pendente vira a tarefa do foco: aparece na home com ●. Toque nela para marcar como feita; segure para abrir as anotações. A próxima pendente assume sozinha.",
+                "Na tela de anotações: toque no texto marca ou desmarca, \"foco\" escolhe outra tarefa, × apaga e \"limpar\" remove as feitas. Até 50 anotações, guardadas no aparelho e incluídas no backup.",
+            ),
+        ),
+        ReleaseNote(
             "0.29.0",
             listOf(
                 "Linha \"agora\": abaixo do foco, a home mostra até 3 apps que você costuma abrir nesse horário. Um toque abre.",

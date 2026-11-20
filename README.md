@@ -4,7 +4,7 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma tarefa em segundo plano**: relógio, status e player só atualizam com a tela visível.
 
-> Versão atual: **0.29.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
+> Versão atual: **0.30.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
 
 ## O que ele faz
 
@@ -13,6 +13,7 @@ Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma
 - **Ilha dinâmica**: pílula no topo com o que está acontecendo agora (chamada, navegação, cronômetro ou timer, downloads com progresso). Toque expande; tocar numa linha abre o app. Precisa do acesso às notificações.
 - Notificações recentes, com o texto e agrupadas por conversa: toque abre; segurar mostra **responder sem abrir o app** (quando o app permite), **ler depois** e dispensar. O "ler depois" guarda até 30 itens só no aparelho, fora do backup e bloco de status do aparelho.
 - **Linha "agora"**: até 3 apps que você costuma abrir neste horário, só pelo histórico no aparelho (fora do backup; dá para desligar e apagar em Ajustes).
+- **Captura rápida**: ação "anotação rápida" (para qualquer gesto, ou busque "anotar"). A primeira anotação vira a **tarefa do foco**, mostrada na home; toque marca como feita.
 - Até 10 favoritos, entre apps e pastas. Segure um favorito para soltá-lo.
 - Engrenagem no canto superior direito abre os Ajustes.
 

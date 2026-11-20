@@ -47,6 +47,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Ilha dinâmica | Pílula na home com chamada, navegação, cronômetro e progresso | 0.27 |
 | Notificações ativas | Segurar: responder sem abrir, ler depois, dispensar; agrupadas por conversa | 0.28 |
 | Linha "agora" | Até 3 apps prováveis neste horário, pelo histórico local | 0.29 |
+| Captura rápida | Anotações e tarefa do foco na home | 0.30 |
 | Backup | Exportar e restaurar com validação completa | 0.15, 0.20 |
 | Atualização | Dentro do app, com conferência de tamanho, pacote, versão e assinatura | 0.8.1, 0.21 |
 | Dicas e novidades | Tela de dicas, novidades após cada atualização, histórico em Ajustes | 0.9, 0.15 |
@@ -61,7 +62,7 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | 3 | Ilha dinâmica interna | Pílula no topo com atividades ao vivo (chamada, navegação, cronômetro, downloads) | v0.27 |
 | 4 | Responder pela home | Responder notificações de mensagem sem abrir o app; agrupar por conversa; ler depois | v0.28 |
 | 5 | Linha "agora" preditiva | Três apps prováveis para a hora, pelo histórico local de aberturas | v0.29 |
-| 6 | Captura rápida | Gesto abre campo de nota; vira "a tarefa do foco" | a fazer |
+| 6 | Captura rápida | Gesto abre campo de nota; vira "a tarefa do foco" | v0.30 |
 | 7 | Sessão de foco | Foco com cronômetro (25, 50 min ou livre) e resumo ao final | a fazer |
 | 8 | Relatório de uso | Tempo de tela por app, no dia e na semana | a fazer |
 | 9 | Modo carregando | Relógio grande de cabeceira enquanto carrega com a home aberta | a fazer |
@@ -69,6 +70,8 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | 11 | Animação de abertura | Abrir o app a partir do ícone, com movimento de mola e vibração refinada | a fazer |
 | 12 | Paralaxe do papel de parede | Giroscópio, só com a home visível | a fazer |
 | 13 | Reordenar favoritos | Arrastar para mudar a ordem | a fazer |
+| 14 | Cores do papel de parede | A interface adapta o tom (textos e detalhes) à paleta do papel de parede, mantendo o tema escuro e a leitura | a fazer |
+| 15 | Conjuntos de cores | Trocar o conjunto de cores do sistema por paletas prontas (e a automática do item 14), com prévia | a fazer |
 
 Descartado pelo usuário: gestos por desenho. Evitar: widgets completos do Android, blur e sombras pesadas.
 

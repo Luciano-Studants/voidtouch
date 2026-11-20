@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.NetworkKind
+import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.data.NoteGroups
 import com.voidtouch.launcher.notify.NoteItem
 import androidx.compose.ui.text.style.TextOverflow
@@ -292,5 +293,34 @@ fun NowLine(apps: List<AppEntry>, onLaunch: (AppEntry) -> Unit) {
                 modifier = Modifier.weight(1f, fill = false).clickable { onLaunch(app) }.padding(vertical = 6.dp),
             )
         }
+    }
+}
+
+/** A tarefa do foco na home. Toque marca como feita; segurar abre as anotações. Só o texto responde. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun TaskLine(note: Note, onDone: (Note) -> Unit, onOpen: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = "● ${note.text}",
+            style = VoidType.Small,
+            color = VoidColors.Text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .combinedClickable(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onDone(note)
+                    },
+                    onLongClick = onOpen,
+                )
+                .padding(vertical = 6.dp),
+        )
     }
 }

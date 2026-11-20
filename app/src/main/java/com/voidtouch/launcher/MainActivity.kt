@@ -48,6 +48,8 @@ import com.voidtouch.launcher.data.LaunchCounts
 import com.voidtouch.launcher.data.ReadLater
 import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.NightMode
+import com.voidtouch.launcher.data.Note
+import com.voidtouch.launcher.data.Notes
 import com.voidtouch.launcher.data.Predict
 import com.voidtouch.launcher.data.Scene
 import com.voidtouch.launcher.data.Scenes
@@ -84,6 +86,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.voidtouch.launcher.ui.OptimizeScreen
+import com.voidtouch.launcher.ui.CaptureScreen
 import com.voidtouch.launcher.ui.PermissionsScreen
 import com.voidtouch.launcher.ui.ReadLaterScreen
 import com.voidtouch.launcher.ui.ChangelogScreen
@@ -153,6 +156,7 @@ class MainActivity : ComponentActivity() {
 
     private var opens by mutableStateOf<Map<String, Int>>(emptyMap())
     private var later by mutableStateOf<List<LaterItem>>(emptyList())
+    private var notes by mutableStateOf<List<Note>>(emptyList())
     private var predictOn by mutableStateOf(true)
     private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
     private var contactsAccess by mutableStateOf(false)
@@ -295,6 +299,7 @@ class MainActivity : ComponentActivity() {
         opens = LaunchCounts.decode(settingsStore.loadLaunchCounts())
         later = settingsStore.loadReadLater()
         predictOn = settingsStore.loadPredictOn()
+        notes = settingsStore.loadNotes()
         predictHistory = Predict.decode(settingsStore.loadPredictHistory())
         contactsAccess = ContactsReader.hasAccess(this)
         sceneActive = settingsStore.loadSceneActive()?.takeIf { id -> scenes.any { it.id == id } }
@@ -352,6 +357,7 @@ class MainActivity : ComponentActivity() {
                 var showOptimize by remember { mutableStateOf(false) }
                 var showPermissions by remember { mutableStateOf(false) }
                 var showLater by remember { mutableStateOf(false) }
+                var showCapture by remember { mutableStateOf(false) }
                 var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
@@ -376,6 +382,7 @@ class MainActivity : ComponentActivity() {
                     showOptimize = false
                     showPermissions = false
                     showLater = false
+                    showCapture = false
                     showTips = false
                 }
                 // Mede quanto a lista de apps leva para aparecer (até o primeiro quadro desenhado).
@@ -400,6 +407,7 @@ class MainActivity : ComponentActivity() {
                     when {
                         changelog != null -> changelog = null
                         showTips -> showTips = false
+                        showCapture -> showCapture = false
                         showLater -> showLater = false
                         showPermissions -> showPermissions = false
                         showOptimize -> showOptimize = false
@@ -423,6 +431,7 @@ class MainActivity : ComponentActivity() {
                         action == QuickAction.Search -> { focusSearch = true; showAllApps = true }
                         action == QuickAction.Drawer -> { focusSearch = false; showAllApps = true }
                         action == QuickAction.Focus -> toggleFocus()
+                        action == QuickAction.Capture -> showCapture = true
                         action == QuickAction.Optimize -> showOptimize = true
                         action == QuickAction.Health -> showHealth = true
                         action == QuickAction.Settings -> showSettings = true
@@ -480,6 +489,7 @@ class MainActivity : ComponentActivity() {
                 val screen = when {
                     showTips -> "tips"
                     changelog != null -> "changelog"
+                    showCapture -> "capture"
                     showLater -> "later"
                     showPermissions -> "permissions"
                     showOptimize -> "optimize"
@@ -518,6 +528,19 @@ class MainActivity : ComponentActivity() {
                         TipsScreen(onClose = { showTips = false })
                     } else if (current == "changelog") {
                         ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
+                    } else if (current == "capture") {
+                        CaptureScreen(
+                            notes = notes,
+                            onAdd = { text ->
+                                saveNotes(Notes.add(notes, "n" + System.currentTimeMillis(), text, System.currentTimeMillis()))
+                                say("anotado")
+                            },
+                            onToggleDone = { saveNotes(Notes.toggleDone(notes, it.id)) },
+                            onSetFocus = { saveNotes(Notes.setFocus(notes, it.id)); say("tarefa do foco") },
+                            onRemove = { saveNotes(Notes.remove(notes, it.id)) },
+                            onClearDone = { saveNotes(Notes.clearDone(notes)) },
+                            onClose = { showCapture = false },
+                        )
                     } else if (current == "later") {
                         ReadLaterScreen(
                             items = later,
@@ -711,6 +734,7 @@ class MainActivity : ComponentActivity() {
                                         QuickAction.Search -> focusSearch = true
                                         QuickAction.Drawer -> Unit
                                         QuickAction.Focus -> toggleFocus()
+                                        QuickAction.Capture -> { showAllApps = false; showCapture = true }
                                         QuickAction.Optimize -> { showAllApps = false; showOptimize = true }
                                         QuickAction.Health -> { showAllApps = false; showHealth = true }
                                         QuickAction.Settings -> { showAllApps = false; showSettings = true }
@@ -727,6 +751,9 @@ class MainActivity : ComponentActivity() {
                             clockStyle = clockStyle,
                             notifications = notifications,
                             suggestions = suggestions,
+                            focusNote = Notes.focusNote(notes),
+                            onNoteDone = { saveNotes(Notes.toggleDone(notes, it.id)); say("feito: ${it.text}") },
+                            onOpenCapture = { showCapture = true },
                             live = NotificationHub.live.filter { it.kind == LiveKind.Call || !HomeRules.notificationHidden(it.packageName, focusApps, focusOn) },
                             onLiveOpen = { runCatching { it.intent?.send() } },
                             notificationsEnabled = notifAccess,
@@ -979,6 +1006,11 @@ class MainActivity : ComponentActivity() {
             is Hit.Contact -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
                 .onFailure { say("não foi possível abrir o contato") }
         }
+    }
+
+    private fun saveNotes(list: List<Note>) {
+        notes = list
+        settingsStore.saveNotes(list)
     }
 
     private fun saveScenes(list: List<Scene>) {

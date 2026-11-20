@@ -55,6 +55,7 @@ import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.IconLoader
 import com.voidtouch.launcher.data.IconResult
 import com.voidtouch.launcher.data.MemoryShown
+import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.notify.LiveItem
 import com.voidtouch.launcher.notify.NoteItem
 import com.voidtouch.launcher.ui.theme.VoidColors
@@ -109,6 +110,9 @@ fun HomeContent(
     night: Boolean,
     live: List<LiveItem>,
     suggestions: List<AppEntry>,
+    focusNote: Note?,
+    onNoteDone: (Note) -> Unit,
+    onOpenCapture: () -> Unit,
     onLiveOpen: (LiveItem) -> Unit,
 ) {
     val focusOn = focusSinceMillis != 0L
@@ -203,6 +207,8 @@ fun HomeContent(
                 )
                 // "Agora": apps prováveis para este horário; some na home calma.
                 if (!night && suggestions.isNotEmpty()) NowLine(suggestions, onLaunch)
+                // Tarefa do foco: toque marca como feita; segurar abre as anotações.
+                if (!night && focusNote != null) TaskLine(focusNote, onNoteDone, onOpenCapture)
 
                 // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
                 // (de 32 a 44 dp) para os 10 caberem sem rolar.

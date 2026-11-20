@@ -144,6 +144,12 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_PREDICT_HISTORY, json).apply()
     }
 
+    fun loadNotes(): List<Note> = Notes.decode(prefs.getString(KEY_NOTES, "").orEmpty())
+
+    fun saveNotes(list: List<Note>) {
+        prefs.edit().putString(KEY_NOTES, Notes.encode(list)).apply()
+    }
+
     fun loadMemoryMode(): MemoryMode = MemoryMode.fromKey(prefs.getString(KEY_MEMORY_MODE, null))
 
     fun saveMemoryMode(mode: MemoryMode) {
@@ -185,6 +191,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_READ_LATER = "read_later"
         const val KEY_PREDICT_ON = "predict_on"
         const val KEY_PREDICT_HISTORY = "predict_history"
+        const val KEY_NOTES = "notes"
         const val KEY_MEMORY_MODE = "memory_mode"
         const val KEY_HIDDEN_PHOTOS = "hidden_photos"
         const val KEY_SWIPE_LEFT = "swipe_left_app"
