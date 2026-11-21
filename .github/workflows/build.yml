@@ -41,6 +41,29 @@ jobs:
         continue-on-error: true
         run: ./gradlew lintRelease --stacktrace
 
+      - name: Resumo do lint no log
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob, collections
+          import xml.etree.ElementTree as ET
+          files = glob.glob("app/build/reports/lint-results-release.xml")
+          if not files:
+              print("LINT: sem relatório")
+          else:
+              root = ET.parse(files[0]).getroot()
+              issues = root.findall("issue")
+              count = collections.Counter((i.get("severity"), i.get("id")) for i in issues)
+              print("LINT TOTAL:", len(issues))
+              for (sev, iid), n in sorted(count.items(), key=lambda x: (x[0][0], -x[1])):
+                  print(f"LINT {n:3d} {sev} {iid}")
+              for i in issues:
+                  if i.get("severity") in ("Error", "Fatal", "Warning"):
+                      loc = i.find("location")
+                      where = (loc.get("file").split("launcher/")[-1] + ":" + str(loc.get("line"))) if loc is not None else "?"
+                      print("LINTDETAIL", i.get("severity"), i.get("id"), where, "|", i.get("message")[:150])
+          PY
+
       - name: Relatório do lint
         if: always()
         uses: actions/upload-artifact@v4
