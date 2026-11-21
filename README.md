@@ -4,7 +4,7 @@ Launcher Android minimalista, escuro e leve, feito sob medida para o Samsung Gal
 
 Preto/cinza/branco, sem cor de destaque, ícones vetoriais próprios e **nenhuma tarefa em segundo plano**: relógio, status e player só atualizam com a tela visível.
 
-> Versão atual: **0.45.2**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
+> Versão atual: **0.46.0**. A documentação completa de tudo o que o app faz está em [docs/REQUISITOS.md](docs/REQUISITOS.md); o histórico por versão fica no app, em Ajustes > sobre > novidades.
 
 ## O que ele faz
 

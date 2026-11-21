@@ -244,7 +244,7 @@ fun AppList(
                         style = VoidType.App,
                         color = VoidColors.Text,
                         modifier = Modifier
-                            .clickable { openFolderId = null }
+                            .clickable(role = androidx.compose.ui.semantics.Role.Button) { openFolderId = null }
                             .padding(end = 12.dp, top = 8.dp, bottom = 8.dp),
                     )
                 }
@@ -268,7 +268,7 @@ fun AppList(
                     style = VoidType.Caption,
                     color = VoidColors.Text,
                     modifier = Modifier
-                        .clickable {
+                        .clickable(role = androidx.compose.ui.semantics.Role.Button) {
                             focusManager.clearFocus()
                             onMarkingChange(!markingFocusApps)
                         }
@@ -589,7 +589,7 @@ private fun SheetRow(text: String, onClick: () -> Unit) {
         color = VoidColors.Text,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(vertical = 14.dp),
     )
 }
@@ -636,6 +636,7 @@ private fun FolderCell(
             .fillMaxWidth()
             .pressFeedback(source)
             .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                 interactionSource = source,
                 indication = null,
                 onClick = onClick,
@@ -691,6 +692,7 @@ private fun AppCell(
             .fillMaxWidth()
             .pressFeedback(source)
             .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                 interactionSource = source,
                 indication = null,
                 onClick = onClick,
@@ -864,7 +866,7 @@ private fun HitRow(hit: Hit, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Text(

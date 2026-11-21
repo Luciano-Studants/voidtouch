@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -83,7 +84,7 @@ fun CaptureScreen(
                     "limpar",
                     style = VoidType.Caption,
                     color = VoidColors.Text,
-                    modifier = Modifier.clickable(onClick = onClearDone).padding(vertical = 6.dp),
+                    modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClearDone).heightIn(min = 44.dp).padding(vertical = 6.dp),
                 )
             }
             done.forEach { NoteRow(it, onToggleDone, onSetFocus, onRemove) }
@@ -109,14 +110,14 @@ private fun NoteRow(note: Note, onToggleDone: (Note) -> Unit, onSetFocus: (Note)
             color = if (note.done) VoidColors.TextDim else VoidColors.Text,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).clickable { onToggleDone(note) }.padding(vertical = 10.dp),
+            modifier = Modifier.weight(1f).clickable(role = androidx.compose.ui.semantics.Role.Button) { onToggleDone(note) }.padding(vertical = 10.dp),
         )
         if (!note.done && !note.focus) {
             Text(
                 "foco",
                 style = VoidType.Caption,
                 color = VoidColors.Text,
-                modifier = Modifier.clickable { onSetFocus(note) }.padding(horizontal = 8.dp, vertical = 10.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { onSetFocus(note) }.padding(horizontal = 8.dp, vertical = 10.dp),
             )
         }
         Spacer(Modifier.width(4.dp))
@@ -124,7 +125,7 @@ private fun NoteRow(note: Note, onToggleDone: (Note) -> Unit, onSetFocus: (Note)
             "×",
             style = VoidType.App,
             color = VoidColors.TextDim,
-            modifier = Modifier.clickable { onRemove(note) }.padding(horizontal = 8.dp, vertical = 6.dp),
+            modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { onRemove(note) }.padding(horizontal = 8.dp, vertical = 6.dp),
         )
     }
 }

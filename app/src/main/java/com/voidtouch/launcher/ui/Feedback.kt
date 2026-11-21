@@ -128,7 +128,7 @@ fun GearButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(44.dp)
             .clip(CircleShape)
-            .clickable(onClick = onClick),
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
     ) {
         Canvas(modifier = Modifier.size(24.dp)) {
             val c = center

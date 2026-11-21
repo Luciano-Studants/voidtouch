@@ -1228,7 +1228,7 @@ class MainActivity : ComponentActivity() {
         settingsStore.saveLaunchCounts(LaunchCounts.encode(opens))
         val decor = window.decorView
         if (openHaptic) decor.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
-        val origin = if (openAnim) {
+        val origin = if (openAnim && com.voidtouch.launcher.data.Motion.enabled(this)) {
             OpenAnim.rect(
                 lastTouchX, lastTouchY, (56 * resources.displayMetrics.density).toInt(),
                 decor.width, decor.height, System.currentTimeMillis() - lastTouchMs,

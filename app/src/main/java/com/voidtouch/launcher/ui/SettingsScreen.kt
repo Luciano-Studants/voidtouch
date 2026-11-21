@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -149,7 +150,7 @@ fun SettingsScreen(
                 "fechar",
                 style = VoidType.Caption,
                 color = VoidColors.Text,
-                modifier = Modifier.clickable(onClick = onClose).padding(vertical = 8.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClose).heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
         }
 
@@ -201,7 +202,7 @@ fun SettingsScreen(
             val pal = ColorSets.palette(set, WallTone.fromPixels(IntArray(0)) ?: Tone(30f, 0.8f), true)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { onColorSet(set.key) }.padding(vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button) { onColorSet(set.key) }.padding(vertical = 12.dp),
             ) {
                 Text(
                     set.name,
@@ -416,7 +417,7 @@ private fun UpdateRow(versionName: String) {
         color = VoidColors.Text,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = !busy) {
+            .clickable(enabled = !busy, role = androidx.compose.ui.semantics.Role.Button) {
                 val info = found
                 if (info != null) {
                     download(info)
@@ -459,7 +460,7 @@ private fun <T> Options(items: List<T>, selected: T, label: (T) -> String, onSel
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onSelect(item) }
+                .clickable(role = androidx.compose.ui.semantics.Role.Button) { onSelect(item) }
                 .padding(vertical = 12.dp),
         ) {
             Text(
@@ -475,7 +476,7 @@ private fun <T> Options(items: List<T>, selected: T, label: (T) -> String, onSel
 private fun ValueRow(value: String, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(vertical = 12.dp),
     ) {
         Text(value, style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.width(12.dp))
@@ -517,7 +518,7 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (String?) -> 
                     "nenhum",
                     style = VoidType.App,
                     color = VoidColors.TextDim,
-                    modifier = Modifier.fillMaxWidth().clickable { onPick(null) }.padding(horizontal = 24.dp, vertical = 14.dp),
+                    modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button) { onPick(null) }.padding(horizontal = 24.dp, vertical = 14.dp),
                 )
             }
             items(actions, key = { "action:${it.id}" }) { action ->
@@ -525,7 +526,7 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (String?) -> 
                     "◆ ${action.label}",
                     style = VoidType.App,
                     color = VoidColors.Text,
-                    modifier = Modifier.fillMaxWidth().clickable { onPick(GestureTarget.encode(action)) }.padding(horizontal = 24.dp, vertical = 14.dp),
+                    modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button) { onPick(GestureTarget.encode(action)) }.padding(horizontal = 24.dp, vertical = 14.dp),
                 )
             }
             items(results, key = { it.key }) { app ->
@@ -535,7 +536,7 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (String?) -> 
                     color = VoidColors.Text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth().clickable { onPick(app.key) }.padding(horizontal = 24.dp, vertical = 14.dp),
+                    modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button) { onPick(app.key) }.padding(horizontal = 24.dp, vertical = 14.dp),
                 )
             }
         }
@@ -555,7 +556,7 @@ private fun VersionLine(versionName: String) {
         "VoidTouch $versionName",
         style = VoidType.App,
         color = VoidColors.TextDim,
-        modifier = Modifier.combinedClickable(onClick = {}, onLongClick = { test = !test }),
+        modifier = Modifier.combinedClickable(role = androidx.compose.ui.semantics.Role.Button, onClick = {}, onLongClick = { test = !test }),
     )
     val last = remember(test) { com.voidtouch.launcher.CrashGuard.lastError(context)?.lineSequence()?.firstOrNull() }
     if (last != null) {

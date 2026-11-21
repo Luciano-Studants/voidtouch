@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -78,7 +79,7 @@ fun InfoBlock(
                     text = "ativar acesso ›",
                     style = VoidType.Small,
                     color = VoidColors.Text,
-                    modifier = Modifier.clickable(onClick = onEnableNotifications).padding(top = 3.dp, bottom = 3.dp),
+                    modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnableNotifications).padding(top = 3.dp, bottom = 3.dp),
                 )
             } else if (notifications.isEmpty()) {
                 Text("nenhuma", style = VoidType.Small, color = VoidColors.TextDim, modifier = Modifier.padding(top = 3.dp))
@@ -90,6 +91,7 @@ fun InfoBlock(
                     Column(
                         modifier = Modifier
                             .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                                 onClick = { onNotificationClick(n) },
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -140,13 +142,13 @@ fun InfoBlock(
                     text = "ler depois ($laterCount) ›",
                     style = VoidType.Caption,
                     color = VoidColors.Text,
-                    modifier = Modifier.clickable(onClick = onOpenLater).padding(top = 6.dp, bottom = 2.dp),
+                    modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpenLater).padding(top = 6.dp, bottom = 2.dp),
                 )
             }
         }
         // Só o bloco de texto abre a saúde do aparelho; o espaço vazio em volta fica livre para os gestos.
         Box(modifier = Modifier.weight(1f)) {
-            Column(modifier = Modifier.clickable(onClick = onStatusClick)) {
+            Column(modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onStatusClick)) {
                 Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
                 lines.forEach { line ->
                     Text(
@@ -215,7 +217,7 @@ fun FocusLine(
                     style = VoidType.Caption,
                     color = VoidColors.Text,
                     modifier = Modifier
-                        .clickable {
+                        .clickable(role = androidx.compose.ui.semantics.Role.Button) {
                             choosing = false
                             onStartSession(minutes)
                         }
@@ -226,13 +228,14 @@ fun FocusLine(
                 text = "×",
                 style = VoidType.Caption,
                 color = VoidColors.TextDim,
-                modifier = Modifier.clickable { choosing = false }.padding(horizontal = 8.dp, vertical = 8.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { choosing = false }.padding(horizontal = 8.dp, vertical = 8.dp),
             )
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onClick()
@@ -279,7 +282,7 @@ fun FocusSummaryLine(text: String, onDismiss: () -> Unit) {
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onDismiss)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onDismiss)
             .padding(horizontal = 24.dp, vertical = 8.dp),
     )
 }
@@ -300,7 +303,7 @@ fun NowLine(apps: List<AppEntry>, onLaunch: (AppEntry) -> Unit) {
                 color = VoidColors.Text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false).clickable { onLaunch(app) }.padding(vertical = 6.dp),
+                modifier = Modifier.weight(1f, fill = false).clickable(role = androidx.compose.ui.semantics.Role.Button) { onLaunch(app) }.heightIn(min = 44.dp).padding(vertical = 6.dp),
             )
         }
     }
@@ -324,6 +327,7 @@ fun TaskLine(note: Note, onDone: (Note) -> Unit, onOpen: () -> Unit) {
             modifier = Modifier
                 .weight(1f, fill = false)
                 .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onDone(note)
@@ -369,6 +373,6 @@ private fun PanelButton(label: String, onClick: () -> Unit) {
         text = label,
         style = VoidType.Caption,
         color = VoidColors.Text,
-        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 6.dp),
+        modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).heightIn(min = 44.dp).padding(vertical = 6.dp),
     )
 }

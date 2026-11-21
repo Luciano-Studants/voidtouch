@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,7 +36,7 @@ fun ChangelogScreen(title: String, notes: List<ReleaseNote>, onClose: () -> Unit
                 "fechar",
                 style = VoidType.Caption,
                 color = VoidColors.Text,
-                modifier = Modifier.clickable(onClick = onClose).padding(vertical = 8.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClose).heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
         }
         notes.forEach { note ->

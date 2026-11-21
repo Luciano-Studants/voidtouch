@@ -116,7 +116,7 @@ fun PermissionsScreen(
         items.forEach { item ->
             Row(
                 verticalAlignment = Alignment.Top,
-                modifier = Modifier.fillMaxWidth().clickable(onClick = item.onClick).padding(vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = item.onClick).padding(vertical = 12.dp),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(item.name, style = VoidType.App, color = VoidColors.Text)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -69,14 +70,14 @@ fun ReadLaterScreen(
                         "abrir app",
                         style = VoidType.Caption,
                         color = VoidColors.Text,
-                        modifier = Modifier.clickable { onOpenApp(item) }.padding(vertical = 6.dp),
+                        modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { onOpenApp(item) }.heightIn(min = 44.dp).padding(vertical = 6.dp),
                     )
                     Spacer(Modifier.width(16.dp))
                     Text(
                         "remover",
                         style = VoidType.Caption,
                         color = VoidColors.Text,
-                        modifier = Modifier.clickable { onRemove(item) }.padding(vertical = 6.dp),
+                        modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { onRemove(item) }.heightIn(min = 44.dp).padding(vertical = 6.dp),
                     )
                 }
             }

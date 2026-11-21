@@ -59,7 +59,7 @@ fun LivePill(items: List<LiveItem>, active: Boolean, onOpen: (LiveItem) -> Unit)
             .clip(shape)
             .border(1.dp, VoidColors.TextDim.copy(alpha = 0.45f), shape)
             .animateContentSize()
-            .clickable { expanded = !expanded }
+            .clickable(role = androidx.compose.ui.semantics.Role.Button) { expanded = !expanded }
             .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         if (!expanded) {
@@ -76,7 +76,7 @@ fun LivePill(items: List<LiveItem>, active: Boolean, onOpen: (LiveItem) -> Unit)
 @Composable
 private fun LiveRow(item: LiveItem, now: Long, extra: Int, onClick: (() -> Unit)?) {
     val value = Live.valueText(item.chrono, item.whenMs, item.countDown, item.percent, now)
-    Column(modifier = Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)) {
+    Column(modifier = Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick) else Modifier)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "● ${item.appLabel} · ${item.title}",

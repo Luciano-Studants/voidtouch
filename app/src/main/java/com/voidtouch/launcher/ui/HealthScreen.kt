@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -217,7 +218,7 @@ private fun HeavyRow(item: AppSize, total: String, cache: String, onClick: () ->
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(vertical = 10.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -245,10 +246,10 @@ private fun TextPill(text: String, onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .height(48.dp)
+            .heightIn(min = 48.dp)
             .clip(CircleShape)
             .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape)
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 24.dp),
     ) {
         Text(text = text, style = VoidType.Caption, color = VoidColors.Text)

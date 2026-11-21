@@ -56,13 +56,13 @@ fun FavoritesOrderScreen(
                     "↑",
                     style = VoidType.App,
                     color = if (i > 0) VoidColors.Text else VoidColors.TextDim,
-                    modifier = Modifier.clickable(enabled = i > 0) { onMove(row.key, -1) }.padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier.clickable(enabled = i > 0, role = androidx.compose.ui.semantics.Role.Button) { onMove(row.key, -1) }.padding(horizontal = 16.dp, vertical = 10.dp),
                 )
                 Text(
                     "↓",
                     style = VoidType.App,
                     color = if (i < rows.lastIndex) VoidColors.Text else VoidColors.TextDim,
-                    modifier = Modifier.clickable(enabled = i < rows.lastIndex) { onMove(row.key, 1) }.padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
+                    modifier = Modifier.clickable(enabled = i < rows.lastIndex, role = androidx.compose.ui.semantics.Role.Button) { onMove(row.key, 1) }.padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
                 )
             }
         }

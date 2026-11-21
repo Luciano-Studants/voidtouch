@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -278,11 +279,11 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier = modifier
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .width(168.dp)
             .clip(CircleShape)
             .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape)
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 20.dp),
     ) {
         Text(text = "buscar app", style = VoidType.Caption, color = VoidColors.TextDim)
@@ -301,13 +302,14 @@ private fun FavoriteRow(
     val source = remember { MutableInteractionSource() }
     // A linha ocupa a largura toda, mas só o conteúdo (ícone e nome) responde ao toque: o espaço
     // vazio ao lado fica livre para o toque duplo e os deslizes da home.
-    Box(modifier = Modifier.fillMaxWidth().height(height).padding(start = 24.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().heightIn(min = height).padding(start = 24.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxHeight()
                 .pressFeedback(source)
                 .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                     interactionSource = source,
                     indication = null,
                     onClick = onOpen,
@@ -400,7 +402,7 @@ private fun DrawerButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(52.dp)
             .clip(CircleShape)
-            .clickable(onClick = onClick),
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(

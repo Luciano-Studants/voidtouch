@@ -146,6 +146,7 @@ fun HomeCarousel(
                 modifier = Modifier
                     .fillMaxSize()
                     .combinedClickable(
+                role = androidx.compose.ui.semantics.Role.Button,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {},
@@ -198,7 +199,7 @@ private fun MemoryCard(shown: MemoryShown, onClick: () -> Unit, onHide: () -> Un
             .size(width = 104.dp, height = 132.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(VoidColors.Graphite)
-            .clickable(onClick = onClick),
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
     ) {
         Image(
             bitmap = shown.bitmap,
@@ -225,7 +226,7 @@ private fun MemoryCard(shown: MemoryShown, onClick: () -> Unit, onHide: () -> Un
                 .size(30.dp)
                 .clip(CircleShape)
                 .background(Color.Black.copy(alpha = 0.55f))
-                .clickable(onClick = onHide),
+                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onHide),
         ) {
             Canvas(modifier = Modifier.size(10.dp)) {
                 val w = size.width
@@ -262,13 +263,13 @@ private fun AgendaPage(
                 text = "ativar agenda ›",
                 style = VoidType.App,
                 color = VoidColors.Text,
-                modifier = Modifier.clickable(onClick = onEnable).padding(12.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnable).padding(12.dp),
             )
         }
         agenda.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("nada nos próximos 7 dias", style = VoidType.App, color = VoidColors.TextDim)
         }
-        else -> Column(modifier = Modifier.fillMaxSize().clickable(onClick = onOpen), verticalArrangement = Arrangement.Center) {
+        else -> Column(modifier = Modifier.fillMaxSize().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen), verticalArrangement = Arrangement.Center) {
             Text("agenda", style = VoidType.Caption, color = VoidColors.TextDim)
             Spacer(Modifier.height(6.dp))
             val zone = ZoneId.systemDefault()
@@ -302,7 +303,7 @@ private fun MusicPage(enabled: Boolean, onEnable: () -> Unit, active: Boolean) {
                 text = "ativar acesso às notificações ›",
                 style = VoidType.App,
                 color = VoidColors.Text,
-                modifier = Modifier.clickable(onClick = onEnable).padding(12.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnable).padding(12.dp),
             )
         }
         media == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -441,7 +442,7 @@ private fun MediaButton(icon: MediaIcon, onClick: () -> Unit) {
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(14.dp),
     ) {
         val w = size.width

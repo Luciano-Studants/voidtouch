@@ -10,6 +10,16 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.46.0",
+            listOf(
+                "Acessibilidade: botões e linhas tocáveis agora são anunciados como botão pelo leitor de tela (TalkBack).",
+                "Alvos de toque pequenos ganharam altura mínima de 44 dp, sem mudar o visual das listas.",
+                "Com fonte grande no Android, a pílula de busca, as linhas dos favoritos e os botões crescem em vez de cortar o texto.",
+                "O contraste do texto passou a ser verificado por teste em todos os conjuntos de cores (mínimo AA, 4,5 para 1).",
+                "Com \"remover animações\" ligado no Android, a animação de abertura de apps é desligada.",
+            ),
+        ),
+        ReleaseNote(
             "0.45.2",
             listOf(
                 "Organização interna: a navegação entre telas (lista, Ajustes, Saúde, Otimizar e as outras) agora tem regras próprias e testadas, no lugar de dez marcadores soltos na tela principal. Nada muda no uso.",

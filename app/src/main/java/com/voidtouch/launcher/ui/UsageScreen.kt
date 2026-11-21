@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -74,7 +75,7 @@ fun UsageScreen(refreshKey: Int, onClose: () -> Unit) {
                 style = VoidType.App,
                 color = VoidColors.Text,
                 modifier = Modifier
-                    .clickable { runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+                    .clickable(role = androidx.compose.ui.semantics.Role.Button) { runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
                     .padding(vertical = 14.dp),
             )
             return@Column
@@ -85,14 +86,14 @@ fun UsageScreen(refreshKey: Int, onClose: () -> Unit) {
                 "hoje",
                 style = VoidType.App,
                 color = if (!week) VoidColors.Text else VoidColors.TextDim,
-                modifier = Modifier.clickable { week = false }.padding(vertical = 8.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { week = false }.heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
             Spacer(Modifier.width(20.dp))
             Text(
                 "7 dias",
                 style = VoidType.App,
                 color = if (week) VoidColors.Text else VoidColors.TextDim,
-                modifier = Modifier.clickable { week = true }.padding(vertical = 8.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { week = true }.heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
         }
 

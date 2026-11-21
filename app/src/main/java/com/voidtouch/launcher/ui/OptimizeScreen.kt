@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -96,7 +97,7 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
                 "fechar",
                 style = VoidType.Caption,
                 color = VoidColors.Text,
-                modifier = Modifier.clickable(onClick = onClose).padding(vertical = 8.dp),
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClose).heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
         }
         Text(
@@ -172,7 +173,7 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
                             style = VoidType.Caption,
                             color = VoidColors.TextDim,
                             modifier = Modifier
-                                .clickable { skipped = skipped + next.app.packageName }
+                                .clickable(role = androidx.compose.ui.semantics.Role.Button) { skipped = skipped + next.app.packageName }
                                 .padding(12.dp),
                         )
                     }
@@ -199,7 +200,7 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { Optimizer.openAppInfo(context, item.app.packageName) }
+                            .clickable(role = androidx.compose.ui.semantics.Role.Button) { Optimizer.openAppInfo(context, item.app.packageName) }
                             .padding(vertical = 12.dp),
                     ) {
                         Text(item.app.label, style = VoidType.App, color = VoidColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -218,7 +219,7 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { Optimizer.openAppInfo(context, item.app.packageName) }
+                                .clickable(role = androidx.compose.ui.semantics.Role.Button) { Optimizer.openAppInfo(context, item.app.packageName) }
                                 .padding(vertical = 12.dp),
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -275,7 +276,7 @@ private fun Hint(text: String) {
 
 @Composable
 private fun Shortcut(title: String, note: String, onClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(vertical = 12.dp)) {
         Text("$title ›", style = VoidType.App, color = VoidColors.Text)
         Text(note, style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp), color = VoidColors.TextDim)
     }
@@ -286,10 +287,10 @@ private fun Pill(text: String, onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .height(48.dp)
+            .heightIn(min = 48.dp)
             .clip(CircleShape)
             .border(1.dp, VoidColors.TextDim, CircleShape)
-            .clickable(onClick = onClick)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 24.dp),
     ) {
         Text(text, style = VoidType.Caption, color = VoidColors.Text)
