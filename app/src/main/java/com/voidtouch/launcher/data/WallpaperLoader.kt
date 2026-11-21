@@ -28,6 +28,18 @@ object WallpaperLoader {
         WallpaperManager.getInstance(context).getWallpaperId(WallpaperManager.FLAG_SYSTEM)
     }.getOrDefault(-1)
 
+    /**
+     * Tom do papel de parede pelas cores que o próprio Android já calcula (Android 8.1 ou mais novo).
+     * Não precisa de permissão nem lê a imagem, por isso funciona em todos os aparelhos.
+     */
+    fun colorsTone(context: Context): Tone? = runCatching {
+        if (android.os.Build.VERSION.SDK_INT < 27) return null
+        val c = WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM) ?: return null
+        val list = listOfNotNull(c.primaryColor, c.secondaryColor, c.tertiaryColor).map { it.toArgb() }
+        WallTone.fromPixels(list.toIntArray())
+    }.getOrNull()
+
+    @android.annotation.SuppressLint("MissingPermission") // sem a permissão o Android recusa e devolvemos nulo
     fun load(context: Context, width: Int, height: Int): LoadedWallpaper? = runCatching {
         val source = decodeSampled(context, width, height) ?: return null
         val screen = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
@@ -46,6 +58,7 @@ object WallpaperLoader {
         LoadedWallpaper(screen, WallTone.fromPixels(px))
     }.getOrNull()
 
+    @android.annotation.SuppressLint("MissingPermission")
     private fun decodeSampled(context: Context, width: Int, height: Int): Bitmap? {
         val wm = WallpaperManager.getInstance(context)
         val fromFile = runCatching {

@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import androidx.core.content.pm.PackageInfoCompat
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +60,9 @@ object Updater {
             } finally {
                 conn.disconnect()
             }
-        } catch (e: Exception) {
+        } catch (c: kotlin.coroutines.cancellation.CancellationException) {
+            throw c
+        } catch (e: Throwable) {
             UpdateCheck.Failed("sem conexão")
         }
     }
@@ -129,7 +133,10 @@ object Updater {
                 }
                 if (!part.renameTo(target)) return@withContext Download.Failed("não foi possível preparar o arquivo")
                 Download.Ready(target)
-            } catch (e: Exception) {
+            } catch (c: kotlin.coroutines.cancellation.CancellationException) {
+                part.delete()
+                throw c
+            } catch (e: Throwable) {
                 part.delete()
                 Download.Failed("falha no download, tente de novo")
             }
@@ -139,16 +146,23 @@ object Updater {
     @Suppress("DEPRECATION")
     private fun verify(context: Context, apk: File, info: UpdateInfo): String? {
         val pm = context.packageManager
-        val flags = PackageManager.GET_SIGNING_CERTIFICATES
+        val flags = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
         val archive = pm.getPackageArchiveInfo(apk.absolutePath, flags) ?: return "o arquivo baixado não é um app válido"
         if (archive.packageName != context.packageName) return "o arquivo baixado é de outro app"
         val installed = pm.getPackageInfo(context.packageName, flags)
-        if (archive.longVersionCode <= installed.longVersionCode) return "o arquivo baixado não é mais novo que o instalado"
+        if (PackageInfoCompat.getLongVersionCode(archive) <= PackageInfoCompat.getLongVersionCode(installed)) return "o arquivo baixado não é mais novo que o instalado"
         if (!UpdateCheckRules.versionMatches(archive.versionName, info.version)) return "a versão do arquivo não confere com a anunciada"
-        val newSigs = archive.signingInfo?.apkContentsSigners?.map { it.toByteArray().contentHashCode() }?.toSet().orEmpty()
-        val oldSigs = installed.signingInfo?.apkContentsSigners?.map { it.toByteArray().contentHashCode() }?.toSet().orEmpty()
+        val newSigs = signers(archive)
+        val oldSigs = signers(installed)
         if (newSigs.isEmpty() || newSigs != oldSigs) return "a assinatura do arquivo não confere com a do app instalado"
         return null
+    }
+
+    /** Hashes dos certificados de assinatura; no Android 8.x (antes da API 28) usa o campo antigo. */
+    @Suppress("DEPRECATION")
+    private fun signers(info: android.content.pm.PackageInfo): Set<Int> {
+        val list = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
+        return list?.map { it.toByteArray().contentHashCode() }?.toSet().orEmpty()
     }
 
     /** Verdadeiro se o sistema já deixa o VoidTouch instalar apps. */

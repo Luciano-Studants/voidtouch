@@ -193,6 +193,7 @@ class MainActivity : ComponentActivity() {
     private var wallpaperBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
     private var toneCache: Pair<Int, com.voidtouch.launcher.data.Tone?>? = null
     private var wallGen = 0
+    private var parallaxAvailable by mutableStateOf(true)
     private val ioScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
     private var openHaptic by mutableStateOf(true)
     private var predictOn by mutableStateOf(true)
@@ -769,6 +770,7 @@ class MainActivity : ComponentActivity() {
                                 refreshTone()
                             },
                             parallax = parallax,
+                            parallaxAvailable = parallaxAvailable,
                             onParallax = {
                                 parallax = !parallax
                                 settingsStore.saveParallax(parallax)
@@ -1407,12 +1409,17 @@ class MainActivity : ComponentActivity() {
         val gen = ++wallGen
         val m = resources.displayMetrics
         ioScope.launch {
-            val loaded = WallpaperLoader.load(this@MainActivity, m.widthPixels, m.heightPixels)
+            // O tom vem das cores do Android (sem permissão); a imagem só é lida se a paralaxe precisar dela.
+            val loaded = if (needBitmap) guarded("papel de parede", null) { WallpaperLoader.load(this@MainActivity, m.widthPixels, m.heightPixels) } else null
+            val tone = guarded("cores do papel de parede", null) { WallpaperLoader.colorsTone(this@MainActivity) } ?: loaded?.tone
             withContext(Dispatchers.Main) {
                 if (gen != wallGen) return@withContext
-                toneCache = id to loaded?.tone
-                if (needBitmap) wallpaperBitmap = loaded?.bitmap
-                applyPalette(loaded?.tone)
+                toneCache = id to tone
+                if (needBitmap) {
+                    wallpaperBitmap = loaded?.bitmap
+                    parallaxAvailable = loaded != null
+                }
+                applyPalette(tone)
             }
         }
     }

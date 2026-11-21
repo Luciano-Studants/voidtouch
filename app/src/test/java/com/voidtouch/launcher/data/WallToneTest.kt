@@ -39,3 +39,13 @@ class WallToneTest {
         }
     }
 }
+
+class WallToneColorsTest {
+    @Test fun cores_do_sistema_viram_tom() {
+        val t = WallTone.fromPixels(intArrayOf(0xFF2030CC.toInt(), 0xFF3040D0.toInt()))
+        assertNotNull(t)
+        assertEquals(236f, t!!.hue, 10f)
+    }
+    @Test fun so_cores_neutras_nao_dao_tom() =
+        assertNull(WallTone.fromPixels(intArrayOf(0xFF808080.toInt(), 0xFFFFFFFF.toInt())))
+}

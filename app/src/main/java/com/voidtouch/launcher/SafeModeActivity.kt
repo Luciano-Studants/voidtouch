@@ -54,7 +54,7 @@ class SafeModeActivity : ComponentActivity() {
                     getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("erro", text))
                     message = "erro copiado"
                 },
-                onRetry = {
+                onRetry = @android.annotation.SuppressLint("ApplySharedPref") {
                     // Desliga os recursos mais arriscados antes de tentar de novo, para não repetir o mesmo caminho.
                     val prefs = getSharedPreferences("voidtouch", Context.MODE_PRIVATE).edit()
                     CrashRules.RISKY_BOOLEANS.forEach { (k, v) -> prefs.putBoolean(k, v) }

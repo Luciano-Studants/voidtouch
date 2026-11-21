@@ -10,6 +10,15 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.42.0",
+            listOf(
+                "Compatibilidade com Android 8.0 e 8.1: a conferência da atualização e a contagem de travamentos usavam recursos do Android 9 e podiam falhar nesses aparelhos.",
+                "As cores do papel de parede agora vêm das cores que o próprio Android calcula, sem precisar ler a imagem nem de permissão, então funcionam em qualquer aparelho.",
+                "A paralaxe avisa \"indisponível neste aparelho\" quando o Android não deixa apps lerem a imagem do papel de parede (comum no Android 13 ou mais novo), em vez de falhar em silêncio.",
+                "Nada do app vai para o backup na nuvem do Google: o backup é só o arquivo que você salva em Ajustes.",
+            ),
+        ),
+        ReleaseNote(
             "0.41.0",
             listOf(
                 "Atualizador mais seguro: só aceita download por https, de servidores do GitHub e do repositório do VoidTouch, mesmo depois de redirecionamentos.",

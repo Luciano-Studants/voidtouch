@@ -27,14 +27,14 @@ object CrashGuard {
         }
     }
 
-    @Suppress("DEPRECATION")
     private fun versionCode(context: Context): Long = runCatching {
-        context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
+        androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(context.packageManager.getPackageInfo(context.packageName, 0))
     }.getOrDefault(0L)
 
     /** Verdadeiro até a versão instalada provar que roda bem por um tempo (veja [markHealthy]). */
     fun afterUpdate(context: Context): Boolean = prefs(context).getLong(KEY_OK_CODE, 0L) != versionCode(context)
 
+    @android.annotation.SuppressLint("ApplySharedPref") // síncrono de propósito: o app está caindo
     private fun record(context: Context, error: Throwable) {
         val p = prefs(context)
         val now = System.currentTimeMillis()
@@ -60,6 +60,7 @@ object CrashGuard {
     }
 
     /** Sai do modo seguro. Quem chama decide se desliga os recursos arriscados antes. */
+    @android.annotation.SuppressLint("ApplySharedPref")
     fun leaveSafeMode(context: Context) {
         prefs(context).edit().putBoolean(KEY_SAFE, false).putString(KEY_TIMES, "").commit()
     }

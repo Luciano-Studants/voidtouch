@@ -12,8 +12,8 @@ android {
         applicationId = "com.voidtouch.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 48
-        versionName = "0.41.0"
+        versionCode = 49
+        versionName = "0.42.0"
     }
 
     // Chave fixa (vinda dos secrets do GitHub) para uma versão nova instalar por cima da anterior.
@@ -44,6 +44,8 @@ android {
 
     lint {
         // Informa sem bloquear o build; o relatório sai como artefato da CI.
+        // O verificador de produceState reclama de usos corretos (atribuição dentro de withContext); fica como aviso.
+        warning += "ProduceStateDoesNotAssignValue"
         abortOnError = false
         checkReleaseBuilds = false
         htmlReport = true

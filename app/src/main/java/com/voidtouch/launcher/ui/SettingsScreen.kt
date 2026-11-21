@@ -72,6 +72,7 @@ fun SettingsScreen(
     colorSet: String,
     onColorSet: (String) -> Unit,
     parallax: Boolean,
+    parallaxAvailable: Boolean,
     onParallax: () -> Unit,
     openAnim: Boolean,
     onOpenAnim: () -> Unit,
@@ -219,9 +220,9 @@ fun SettingsScreen(
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
         )
-        ValueRow(if (parallax) "paralaxe: ligada" else "paralaxe: desligada", onParallax)
+        ValueRow(if (!parallax) "paralaxe: desligada" else if (parallaxAvailable) "paralaxe: ligada" else "paralaxe: indisponível neste aparelho", onParallax)
         Text(
-            "com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular. Só funciona com a home visível e usa o acelerômetro apenas nesse momento.",
+            "com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular. Só funciona com a home visível e usa o acelerômetro apenas nesse momento. Em alguns aparelhos o Android não deixa apps lerem a imagem do papel de parede; aí a paralaxe fica indisponível, mas as cores continuam funcionando.",
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 10.dp),
