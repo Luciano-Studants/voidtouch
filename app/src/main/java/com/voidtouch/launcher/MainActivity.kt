@@ -55,6 +55,7 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.data.guarded
 import com.voidtouch.launcher.data.WallpaperLoader
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
@@ -394,7 +395,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             VoidTouchTheme {
                 val apps by produceState(emptyList<AppEntry>(), appsKey) {
-                    value = withContext(Dispatchers.Default) { AppRepository.loadApps(applicationContext) }
+                    value = withContext(Dispatchers.Default) { guarded("lista de apps", emptyList()) { AppRepository.loadApps(applicationContext) } }
                 }
                 // Com a lista pronta, prepara os ícones em segundo plano (baixa prioridade) para a grade rolar lisa.
                 LaunchedEffect(apps) {
@@ -402,7 +403,7 @@ class MainActivity : ComponentActivity() {
                         if (!Perf.stats.has(Perf.READY)) Perf.stats.record(Perf.READY, SystemClock.elapsedRealtime() - createdAt)
                         delay(600)
                         withContext(Dispatchers.Default) {
-                            apps.forEach { IconLoader.load(applicationContext, it) }
+                            apps.forEach { guarded("ícone", Unit) { IconLoader.load(applicationContext, it) } }
                         }
                     }
                 }
@@ -550,7 +551,7 @@ class MainActivity : ComponentActivity() {
 
                 // Próximos compromissos, relidos a cada 5 minutos com a tela visível.
                 val agenda by produceState(emptyList<AgendaItem>(), calendarAccess, nowMillis / 300_000L) {
-                    value = withContext(Dispatchers.IO) { Agenda.read(applicationContext, nowMillis) }
+                    value = withContext(Dispatchers.IO) { guarded("agenda", emptyList()) { Agenda.read(applicationContext, nowMillis) } }
                 }
 
                 // Foco automático: só age quando a janela de horário vira (entrou ou saiu).
@@ -565,8 +566,10 @@ class MainActivity : ComponentActivity() {
 
                 val memory by produceState<MemoryShown?>(null, memoryMode, photoAccess, hiddenPhotos, nowMillis / 10_800_000L) {
                     value = withContext(Dispatchers.IO) {
-                        MemoryReader.pick(applicationContext, nowMillis, memoryMode, hiddenPhotos)?.let { m ->
-                            MemoryReader.thumbnail(applicationContext, m)?.let { MemoryShown(m, it) }
+                        guarded("memórias", null) {
+                            MemoryReader.pick(applicationContext, nowMillis, memoryMode, hiddenPhotos)?.let { m ->
+                                MemoryReader.thumbnail(applicationContext, m)?.let { MemoryShown(m, it) }
+                            }
                         }
                     }
                 }
@@ -707,10 +710,10 @@ class MainActivity : ComponentActivity() {
                             refreshKey = refreshKey,
                             notificationAccess = notifAccess,
                             onOpenNotificationAccess = ::openNotificationAccess,
-                            onRequestPhotos = { photoPermission.launch(MemoryReader.permissionsToRequest()) },
+                            onRequestPhotos = { runCatching { photoPermission.launch(MemoryReader.permissionsToRequest()) } },
                             contactsAccess = contactsAccess,
-                            onRequestContacts = { contactsPermission.launch(android.Manifest.permission.READ_CONTACTS) },
-                            onRequestCalendar = { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) },
+                            onRequestContacts = { runCatching { contactsPermission.launch(android.Manifest.permission.READ_CONTACTS) } },
+                            onRequestCalendar = { runCatching { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) } },
                             onOpenAppInfo = ::openAppInfo,
                             onClose = { showPermissions = false },
                         )
@@ -839,8 +842,8 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveNightHours(nightStart, nightEnd)
                             },
                             onOpenTips = { showSettings = false; showTips = true },
-                            onBackupSave = { backupSave.launch("voidtouch-backup.json") },
-                            onBackupRestore = { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) },
+                            onBackupSave = { runCatching { backupSave.launch("voidtouch-backup.json") }.onFailure { say("este aparelho não tem seletor de arquivos") } },
+                            onBackupRestore = { runCatching { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) }.onFailure { say("este aparelho não tem seletor de arquivos") } },
                             openTimeMs = openTimeMs,
                             onOpenChangelog = {
                                 changelogTitle = "novidades"
@@ -965,7 +968,7 @@ class MainActivity : ComponentActivity() {
                             active = screenActive,
                             agenda = agenda,
                             agendaEnabled = calendarAccess,
-                            onEnableAgenda = { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) },
+                            onEnableAgenda = { runCatching { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) } },
                             onAgendaClick = { openCalendar(nowMillis) },
                             memory = if (night) null else memory,
                             night = night,
@@ -1061,7 +1064,7 @@ class MainActivity : ComponentActivity() {
             addAction(Intent.ACTION_TIME_CHANGED)
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
         }
-        ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        runCatching { ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) }
         runCatching { getSystemService(CameraManager::class.java).registerTorchCallback(torchCallback, null) }
         startTilt()
         refreshTone()
@@ -1070,7 +1073,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         screenActive = false
-        unregisterReceiver(timeReceiver)
+        runCatching { unregisterReceiver(timeReceiver) }
         stopTilt()
         runCatching { getSystemService(CameraManager::class.java).unregisterTorchCallback(torchCallback) }
     }
@@ -1245,9 +1248,10 @@ class MainActivity : ComponentActivity() {
         when (hit) {
             is Hit.Answer -> {
                 val text = hit.title.substringAfter("= ", hit.title)
-                (getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
-                    .setPrimaryClip(android.content.ClipData.newPlainText("resultado", text))
-                say("copiado: $text")
+                runCatching {
+                    (getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                        .setPrimaryClip(android.content.ClipData.newPlainText("resultado", text))
+                }.onSuccess { say("copiado: $text") }.onFailure { say("não foi possível copiar") }
             }
             is Hit.Action -> runAction(hit.action)
             is Hit.Setting -> runCatching { startActivity(Intent(hit.intentAction).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }

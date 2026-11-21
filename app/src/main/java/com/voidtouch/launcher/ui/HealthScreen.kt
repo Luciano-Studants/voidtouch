@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.AppSize
 import com.voidtouch.launcher.data.HealthReader
+import com.voidtouch.launcher.data.ErrorLog
 import com.voidtouch.launcher.data.HealthSnapshot
 import com.voidtouch.launcher.data.HeavyApps
 import com.voidtouch.launcher.data.HeavyAppsReader
@@ -117,6 +118,16 @@ fun HealthScreen(
 
         Spacer(Modifier.height(28.dp))
         PerfSection(refreshKey = refreshKey, nowMillis = nowMillis)
+
+        Spacer(Modifier.height(28.dp))
+        val handled = ErrorLog.recent()
+        Text(text = "erros tratados", style = VoidType.App, color = VoidColors.Text)
+        Spacer(Modifier.height(4.dp))
+        Hint(
+            if (handled.isEmpty()) "nenhum nesta sessão. Quando algo falha sem fechar o app, aparece aqui."
+            else "o app se recuperou sozinho destes (os mais novos primeiro):",
+        )
+        handled.forEach { line -> Hint(line) }
 
         Spacer(Modifier.height(28.dp))
         TextPill(text = "abrir armazenamento do sistema", onClick = { openStorageSettings(context) })

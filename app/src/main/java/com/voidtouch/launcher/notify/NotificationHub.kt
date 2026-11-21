@@ -119,7 +119,8 @@ class VoidNotificationService : NotificationListenerService() {
             val component = ComponentName(this, VoidNotificationService::class.java)
             manager.addOnActiveSessionsChangedListener(sessionListener, component)
             updateSessions(manager.getActiveSessions(component))
-        } catch (_: SecurityException) {
+        } catch (t: Throwable) {
+            com.voidtouch.launcher.data.ErrorLog.note("sessões de mídia", t)
         }
     }
 
@@ -146,7 +147,16 @@ class VoidNotificationService : NotificationListenerService() {
         NotificationHub.media = null
     }
 
+    /** Um erro ao ler as notificações nunca pode derrubar o app (o serviço roda no mesmo processo da home). */
     private fun refresh() {
+        try {
+            doRefresh()
+        } catch (t: Throwable) {
+            com.voidtouch.launcher.data.ErrorLog.note("notificações", t)
+        }
+    }
+
+    private fun doRefresh() {
         val active = try {
             activeNotifications
         } catch (_: Exception) {

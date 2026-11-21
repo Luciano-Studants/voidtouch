@@ -10,6 +10,15 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.40.0",
+            listOf(
+                "Defesa contra erros: a lista de apps, os ícones, a agenda e as memórias agora se recuperam sozinhos se o sistema falhar na leitura, em vez de fechar o app.",
+                "O serviço de notificações ficou blindado: uma notificação estranha de outro app não derruba mais a home.",
+                "Aparelhos sem seletor de arquivos, instalador ou tela de permissão não travam mais: o app avisa na tela.",
+                "Em Saúde do aparelho há uma seção \"erros tratados\" com o que o app resolveu sozinho nesta sessão.",
+            ),
+        ),
+        ReleaseNote(
             "0.39.0",
             listOf(
                 "Proteção contra travamentos: se o VoidTouch fechar sozinho 3 vezes seguidas (2 logo depois de uma atualização), ele abre um modo seguro em vez da home normal.",

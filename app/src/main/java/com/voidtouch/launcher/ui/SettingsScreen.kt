@@ -391,7 +391,7 @@ private fun UpdateRow(versionName: String) {
                 is Updater.Download.Failed -> status = "${result.reason}; nada foi instalado. Toque para tentar de novo"
                 is Updater.Download.Ready -> {
                     status = "arquivo conferido: confirme a instalação"
-                    Updater.install(context, result.file)
+                    if (!Updater.install(context, result.file)) status = "não foi possível abrir o instalador do Android"
                 }
             }
         }

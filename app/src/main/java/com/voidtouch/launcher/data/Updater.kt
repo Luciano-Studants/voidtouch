@@ -142,22 +142,24 @@ object Updater {
     fun canInstall(context: Context): Boolean = context.packageManager.canRequestPackageInstalls()
 
     /** Abre a tela do Android onde se libera "instalar apps desconhecidos" para o VoidTouch. */
-    fun openInstallPermission(context: Context) {
+    fun openInstallPermission(context: Context): Boolean = runCatching {
         context.startActivity(
             Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
-    }
+        true
+    }.getOrDefault(false)
 
     /** Abre o instalador do Android com o APK baixado. */
-    fun install(context: Context, apk: File) {
+    fun install(context: Context, apk: File): Boolean = runCatching {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", apk)
         context.startActivity(
             Intent(Intent.ACTION_VIEW)
                 .setDataAndType(uri, "application/vnd.android.package-archive")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK),
         )
-    }
+        true
+    }.getOrDefault(false)
 
     private fun open(url: String): HttpURLConnection =
         (URL(url).openConnection() as HttpURLConnection).apply {
