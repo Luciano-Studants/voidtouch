@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.43.0",
+            listOf(
+                "Imagem de fundo própria: em Ajustes > papel de parede, escolha uma foto para ser o fundo do VoidTouch. Funciona em qualquer Android, sem depender do papel de parede do sistema.",
+                "A imagem é reduzida ao tamanho da tela e fica só neste aparelho. A paralaxe e as cores automáticas passam a usar essa imagem.",
+                "O fundo agora cobre a tela inteira, inclusive atrás da barra de status e da barra de navegação.",
+            ),
+        ),
+        ReleaseNote(
             "0.42.0",
             listOf(
                 "Compatibilidade com Android 8.0 e 8.1: a conferência da atualização e a contagem de travamentos usavam recursos do Android 9 e podiam falhar nesses aparelhos.",

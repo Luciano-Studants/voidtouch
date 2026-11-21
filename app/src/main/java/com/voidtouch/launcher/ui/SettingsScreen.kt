@@ -73,6 +73,9 @@ fun SettingsScreen(
     onColorSet: (String) -> Unit,
     parallax: Boolean,
     parallaxAvailable: Boolean,
+    ownImage: Boolean,
+    onPickImage: () -> Unit,
+    onRemoveImage: () -> Unit,
     onParallax: () -> Unit,
     openAnim: Boolean,
     onOpenAnim: () -> Unit,
@@ -216,6 +219,14 @@ fun SettingsScreen(
         }
         Text(
             "o automático segue o papel de parede e só vale com o fundo em papel de parede. A luminosidade é fixa, então a leitura é a mesma em todos.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
+        )
+        ValueRow(if (ownImage) "imagem de fundo própria: trocar" else "escolher imagem de fundo própria", onPickImage)
+        if (ownImage) ValueRow("remover imagem de fundo própria", onRemoveImage)
+        Text(
+            "a imagem escolhida fica só neste aparelho, reduzida ao tamanho da tela. Funciona em qualquer Android e permite a paralaxe mesmo quando o sistema não deixa ler o papel de parede.",
             style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
             color = VoidColors.TextDim,
             modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),

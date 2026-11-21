@@ -55,6 +55,7 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.data.OwnWallpaper
 import com.voidtouch.launcher.data.guarded
 import com.voidtouch.launcher.data.WallpaperLoader
 import kotlinx.coroutines.launch
@@ -193,6 +194,7 @@ class MainActivity : ComponentActivity() {
     private var wallpaperBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
     private var toneCache: Pair<Int, com.voidtouch.launcher.data.Tone?>? = null
     private var wallGen = 0
+    private var ownImage by mutableStateOf(false)
     private var parallaxAvailable by mutableStateOf(true)
     private val ioScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
     private var openHaptic by mutableStateOf(true)
@@ -224,6 +226,29 @@ class MainActivity : ComponentActivity() {
                 } != null
             }.getOrDefault(false)
             say(if (ok) "backup salvo" else "não foi possível salvar o backup")
+        }
+    }
+
+    /** Imagem própria de fundo: copiada em tamanho de tela para o armazenamento privado do app. */
+    private val ownImagePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val m = resources.displayMetrics
+            ioScope.launch {
+                val ok = guarded("imagem própria", false) { OwnWallpaper.import(this@MainActivity, uri, m.widthPixels, m.heightPixels) }
+                withContext(Dispatchers.Main) {
+                    if (ok) {
+                        ownImage = true
+                        backdrop = Backdrop.Wallpaper
+                        settingsStore.saveBackdrop(backdrop)
+                        toneCache = null
+                        refreshTilt()
+                        refreshTone()
+                        say("imagem de fundo definida")
+                    } else {
+                        say("não foi possível usar essa imagem")
+                    }
+                }
+            }
         }
     }
 
@@ -359,6 +384,7 @@ class MainActivity : ComponentActivity() {
         openAnim = settingsStore.loadOpenAnim()
         parallax = settingsStore.loadParallax()
         colorSet = settingsStore.loadColorSet()
+        ownImage = OwnWallpaper.exists(this)
         openHaptic = settingsStore.loadOpenHaptic()
         dockAwake = settingsStore.loadDockAwake()
         notes = settingsStore.loadNotes()
@@ -616,6 +642,26 @@ class MainActivity : ComponentActivity() {
                     onDispose { window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
                 }
 
+                Box(Modifier.fillMaxSize()) {
+                val wp = wallpaperBitmap
+                // A imagem de fundo cobre a tela inteira (inclusive atrás das barras do sistema).
+                if (backdrop == Backdrop.Wallpaper && wp != null) {
+                    val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { Parallax.MAX_DP.dp.toPx() }
+                    androidx.compose.foundation.Image(
+                        bitmap = wp.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                if (parallax) {
+                                    scaleX = Parallax.OVERSCAN; scaleY = Parallax.OVERSCAN
+                                    translationX = -tiltX * maxPx; translationY = tiltY * maxPx
+                                }
+                            },
+                    )
+                    Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(VoidColors.Veil)))
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -631,22 +677,6 @@ class MainActivity : ComponentActivity() {
                         }
                         .safeDrawingPadding(),
                 ) {
-                  val wp = wallpaperBitmap
-                  if (backdrop == Backdrop.Wallpaper && parallax && wp != null) {
-                      val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { Parallax.MAX_DP.dp.toPx() }
-                      androidx.compose.foundation.Image(
-                          bitmap = wp.asImageBitmap(),
-                          contentDescription = null,
-                          contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                          modifier = Modifier
-                              .fillMaxSize()
-                              .graphicsLayer {
-                                  scaleX = Parallax.OVERSCAN; scaleY = Parallax.OVERSCAN
-                                  translationX = -tiltX * maxPx; translationY = tiltY * maxPx
-                              },
-                      )
-                      Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(VoidColors.Veil)))
-                  }
                   AnimatedContent(
                     targetState = screen,
                     transitionSpec = {
@@ -771,6 +801,17 @@ class MainActivity : ComponentActivity() {
                             },
                             parallax = parallax,
                             parallaxAvailable = parallaxAvailable,
+                            ownImage = ownImage,
+                            onPickImage = { runCatching { ownImagePicker.launch(arrayOf("image/*")) }.onFailure { say("este aparelho não tem seletor de arquivos") } },
+                            onRemoveImage = {
+                                OwnWallpaper.remove(this@MainActivity)
+                                ownImage = false
+                                toneCache = null
+                                wallpaperBitmap = null
+                                refreshTilt()
+                                refreshTone()
+                                say("imagem de fundo removida")
+                            },
                             onParallax = {
                                 parallax = !parallax
                                 settingsStore.saveParallax(parallax)
@@ -1040,6 +1081,7 @@ class MainActivity : ComponentActivity() {
                         banner = banner,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp),
                     )
+                }
                 }
             }
         }
@@ -1383,8 +1425,14 @@ class MainActivity : ComponentActivity() {
         if (screenActive) startTilt()
     }
 
-    private fun stopTilt() {
+    private fun unregisterTilt() {
         runCatching { getSystemService(android.hardware.SensorManager::class.java).unregisterListener(tiltListener) }
+        tiltX = 0f
+        tiltY = 0f
+    }
+
+    private fun stopTilt() {
+        unregisterTilt()
         wallGen++ // cancela uma leitura do papel de parede ainda em andamento
         wallpaperBitmap = null
     }
@@ -1400,24 +1448,32 @@ class MainActivity : ComponentActivity() {
      */
     private fun refreshTone() {
         val onWallpaper = backdrop == Backdrop.Wallpaper
-        val needBitmap = onWallpaper && parallax && screenActive
+        val own = OwnWallpaper.exists(this)
+        val needBitmap = onWallpaper && screenActive && (own || parallax)
         val needTone = onWallpaper && ColorSets.fromKey(colorSet).auto
-        val id = WallpaperLoader.id(this)
+        val id = if (own) -OwnWallpaper.stamp(this) - 2 else WallpaperLoader.id(this)
         val cached = toneCache?.takeIf { it.first == id }
         applyPalette(cached?.second)
         if (!needBitmap && (!needTone || cached != null)) return
         val gen = ++wallGen
         val m = resources.displayMetrics
         ioScope.launch {
-            // O tom vem das cores do Android (sem permissão); a imagem só é lida se a paralaxe precisar dela.
-            val loaded = if (needBitmap) guarded("papel de parede", null) { WallpaperLoader.load(this@MainActivity, m.widthPixels, m.heightPixels) } else null
-            val tone = guarded("cores do papel de parede", null) { WallpaperLoader.colorsTone(this@MainActivity) } ?: loaded?.tone
+            // Imagem própria: lida do arquivo do app. Papel de parede do sistema: o tom vem das cores do Android
+            // (sem permissão) e a imagem só é lida se a paralaxe precisar dela.
+            val loaded = when {
+                !needBitmap -> null
+                own -> guarded("imagem própria", null) { OwnWallpaper.load(this@MainActivity, m.widthPixels, m.heightPixels) }
+                else -> guarded("papel de parede", null) { WallpaperLoader.load(this@MainActivity, m.widthPixels, m.heightPixels) }
+            }
+            val tone = if (own) loaded?.tone ?: cached?.second
+            else guarded("cores do papel de parede", null) { WallpaperLoader.colorsTone(this@MainActivity) } ?: loaded?.tone
             withContext(Dispatchers.Main) {
                 if (gen != wallGen) return@withContext
                 toneCache = id to tone
                 if (needBitmap) {
                     wallpaperBitmap = loaded?.bitmap
                     parallaxAvailable = loaded != null
+                    if (loaded == null) unregisterTilt()
                 }
                 applyPalette(tone)
             }

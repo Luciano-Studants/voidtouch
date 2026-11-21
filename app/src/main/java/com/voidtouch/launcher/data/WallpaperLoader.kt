@@ -39,23 +39,33 @@ object WallpaperLoader {
         WallTone.fromPixels(list.toIntArray())
     }.getOrNull()
 
-    @android.annotation.SuppressLint("MissingPermission") // sem a permissão o Android recusa e devolvemos nulo
-    fun load(context: Context, width: Int, height: Int): LoadedWallpaper? = runCatching {
-        val source = decodeSampled(context, width, height) ?: return null
+    /** Retângulo de destino [esquerda, topo, direita, base] que cobre a tela inteira, centralizado (como "centralizar e cortar"). */
+    fun coverRect(srcW: Int, srcH: Int, width: Int, height: Int): FloatArray {
+        if (srcW <= 0 || srcH <= 0) return floatArrayOf(0f, 0f, width.toFloat(), height.toFloat())
+        val scale = maxOf(width.toFloat() / srcW, height.toFloat() / srcH)
+        val dw = srcW * scale
+        val dh = srcH * scale
+        return floatArrayOf((width - dw) / 2f, (height - dh) / 2f, (width + dw) / 2f, (height + dh) / 2f)
+    }
+
+    /** Ajusta qualquer imagem ao tamanho da tela e tira o tom dominante dela. Libera [source]. */
+    fun fromBitmap(source: Bitmap, width: Int, height: Int): LoadedWallpaper {
         val screen = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        val scale = maxOf(width.toFloat() / source.width, height.toFloat() / source.height)
-        val dw = source.width * scale
-        val dh = source.height * scale
-        val canvas = Canvas(screen)
-        val dst = android.graphics.RectF((width - dw) / 2f, (height - dh) / 2f, (width + dw) / 2f, (height + dh) / 2f)
-        canvas.drawBitmap(source, null, dst, Paint(Paint.FILTER_BITMAP_FLAG))
+        val r = coverRect(source.width, source.height, width, height)
+        Canvas(screen).drawBitmap(source, null, android.graphics.RectF(r[0], r[1], r[2], r[3]), Paint(Paint.FILTER_BITMAP_FLAG))
         source.recycle()
         val n = 32
         val thumb = Bitmap.createScaledBitmap(screen, n, n, true)
         val px = IntArray(n * n)
         thumb.getPixels(px, 0, n, 0, 0, n, n)
         if (thumb !== screen) thumb.recycle()
-        LoadedWallpaper(screen, WallTone.fromPixels(px))
+        return LoadedWallpaper(screen, WallTone.fromPixels(px))
+    }
+
+    @android.annotation.SuppressLint("MissingPermission") // sem a permissão o Android recusa e devolvemos nulo
+    fun load(context: Context, width: Int, height: Int): LoadedWallpaper? = runCatching {
+        val source = decodeSampled(context, width, height) ?: return null
+        fromBitmap(source, width, height)
     }.getOrNull()
 
     @android.annotation.SuppressLint("MissingPermission")
