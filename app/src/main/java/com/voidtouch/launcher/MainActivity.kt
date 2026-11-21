@@ -160,7 +160,6 @@ class MainActivity : ComponentActivity() {
     /** Muda quando um app é instalado, removido ou atualizado: só então a lista de apps é relida. */
     private var appsKey by mutableIntStateOf(0)
 
-    private var torchOn = false
 
     private var calendarAccess by mutableStateOf(false)
 
@@ -284,11 +283,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val torchCallback = object : CameraManager.TorchCallback() {
-        override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
-            torchOn = enabled
-        }
-    }
+    private val system by lazy { SystemActions(this, ::say) }
 
     private lateinit var settingsStore: SettingsStore
 
@@ -1075,7 +1070,7 @@ class MainActivity : ComponentActivity() {
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
         }
         runCatching { ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) }
-        runCatching { getSystemService(CameraManager::class.java).registerTorchCallback(torchCallback, null) }
+        system.startTorchWatch()
         background.onStart()
     }
 
@@ -1084,7 +1079,7 @@ class MainActivity : ComponentActivity() {
         screenActive = false
         runCatching { unregisterReceiver(timeReceiver) }
         background.onStop()
-        runCatching { getSystemService(CameraManager::class.java).unregisterTorchCallback(torchCallback) }
+        system.stopTorchWatch()
     }
 
     override fun onResume() {
@@ -1100,15 +1095,9 @@ class MainActivity : ComponentActivity() {
         stats = DeviceStatsReader.read(applicationContext)
     }
 
-    private fun openNotificationAccess() {
-        runCatching { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
-    }
+    private fun openNotificationAccess() = system.openNotificationAccess()
 
-    private fun openAppInfo() {
-        runCatching {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
-        }
-    }
+    private fun openAppInfo() = system.openAppInfo()
 
     private fun updateFolders(list: List<Folder>) {
         folders = list
@@ -1121,17 +1110,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openPackageInfo(pkg: String) {
-        runCatching {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null)))
-        }
-    }
+    private fun openPackageInfo(pkg: String) = system.openPackageInfo(pkg)
 
-    private fun uninstall(app: AppEntry) {
-        runCatching {
-            startActivity(Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null)))
-        }.onFailure { say("não foi possível desinstalar ${app.label}") }
-    }
+    private fun uninstall(app: AppEntry) = system.uninstall(app)
 
     private fun openNotification(item: NoteItem) {
         runCatching { item.intent?.send() }
@@ -1253,22 +1234,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Executa um resultado da busca que não é app. */
-    private fun openHit(hit: Hit, runAction: (QuickAction) -> Unit) {
-        when (hit) {
-            is Hit.Answer -> {
-                val text = hit.title.substringAfter("= ", hit.title)
-                runCatching {
-                    (getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
-                        .setPrimaryClip(android.content.ClipData.newPlainText("resultado", text))
-                }.onSuccess { say("copiado: $text") }.onFailure { say("não foi possível copiar") }
-            }
-            is Hit.Action -> runAction(hit.action)
-            is Hit.Setting -> runCatching { startActivity(Intent(hit.intentAction).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                .onFailure { say("não foi possível abrir ${hit.title}") }
-            is Hit.Contact -> runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(hit.uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                .onFailure { say("não foi possível abrir o contato") }
-        }
-    }
+    private fun openHit(hit: Hit, runAction: (QuickAction) -> Unit) = system.openHit(hit, runAction)
 
     private fun saveNotes(list: List<Note>) {
         notes = list
@@ -1333,38 +1299,12 @@ class MainActivity : ComponentActivity() {
         launchApp(app)
     }
 
-    /** Liga ou desliga a lanterna (não precisa de permissão). */
-    private fun toggleTorch() {
-        runCatching {
-            val manager = getSystemService(CameraManager::class.java)
-            val id = manager.cameraIdList.firstOrNull { cam ->
-                val c = manager.getCameraCharacteristics(cam)
-                c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true &&
-                    c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
-            } ?: return say("este aparelho não tem lanterna")
-            manager.setTorchMode(id, !torchOn)
-            say(if (torchOn) "lanterna desligada" else "lanterna ligada")
-        }.onFailure { say("não foi possível usar a lanterna") }
-    }
+    private fun toggleTorch() = system.toggleTorch()
 
-    /** Abre onde se troca a tela inicial padrão; tenta caminhos mais genéricos se o aparelho não tiver o primeiro. */
-    private fun openHomeSettings() {
-        val options = listOf(
-            Intent(android.provider.Settings.ACTION_HOME_SETTINGS),
-            Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS),
-            Intent(android.provider.Settings.ACTION_SETTINGS),
-        )
-        for (i in options) if (runCatching { startActivity(i) }.isSuccess) return
-        say("não foi possível abrir as configurações")
-    }
+    /** Abre onde se troca a tela inicial padrão. */
+    private fun openHomeSettings() = system.openHomeSettings()
 
-    /** Abre o painel de notificações do sistema (método interno do Android; pode não existir em todo aparelho). */
-    private fun expandNotificationPanel() {
-        runCatching {
-            val service = getSystemService("statusbar")
-            Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
-        }.onFailure { say("este aparelho não permite abrir o painel por aqui") }
-    }
+    private fun expandNotificationPanel() = system.expandNotificationPanel()
 
     private fun applyBackdrop() {
         val argb = if (backdrop == Backdrop.Wallpaper) VoidColors.Veil else backdrop.argb

@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.46.5",
+            listOf(
+                "Organização interna: as ações que só falam com o sistema (lanterna, desinstalar, abrir configurações, painel de notificações, resultados da busca) saíram da tela principal para um arquivo próprio.",
+                "Nada muda no uso; serve para o app ficar mais fácil de manter e de adaptar a outros aparelhos.",
+            ),
+        ),
+        ReleaseNote(
             "0.46.4",
             listOf(
                 "Compatibilidade com outras marcas: em aparelhos que não são Samsung (como Motorola), a tela otimizar não fala mais em \"Samsung\" e leva ao armazenamento e à bateria do próprio sistema.",
