@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.46.4",
+            listOf(
+                "Compatibilidade com outras marcas: em aparelhos que não são Samsung (como Motorola), a tela otimizar não fala mais em \"Samsung\" e leva ao armazenamento e à bateria do próprio sistema.",
+                "Nova documentação docs/COMPATIBILIDADE.md com a apuração das versões do Android 8 ao 17 e do Motorola Edge 70 Fusion.",
+            ),
+        ),
+        ReleaseNote(
             "0.46.3",
             listOf(
                 "Correção: com a fonte do Android muito grande, os textos da home se sobrepunham e quebravam no meio das palavras. O aumento da fonte agora tem um limite (115%), então a home continua legível.",

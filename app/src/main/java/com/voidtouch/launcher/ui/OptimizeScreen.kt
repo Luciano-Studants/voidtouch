@@ -183,15 +183,28 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
                 Spacer(Modifier.height(20.dp))
                 Text("todos de uma vez", style = VoidType.Caption, color = VoidColors.TextDim)
                 Spacer(Modifier.height(8.dp))
-                Pill(if (waitingSystem) "aguardando o sistema…" else "abrir a limpeza da Samsung") {
+                val hasCare = remember { Optimizer.hasDeviceCare(context) }
+                Pill(
+                    if (waitingSystem) "aguardando o sistema…"
+                    else if (hasCare) "abrir a limpeza da Samsung"
+                    else "abrir o armazenamento do sistema",
+                ) {
                     if (waitingSystem) return@Pill
                     before = d.cacheTotalBytes
                     waitingSystem = true
-                    onMessage("abrindo Cuidados com o dispositivo")
-                    Optimizer.openDeviceCare(context)
+                    if (hasCare) {
+                        onMessage("abrindo Cuidados com o dispositivo")
+                        Optimizer.openDeviceCare(context)
+                    } else {
+                        onMessage("abrindo o armazenamento")
+                        Optimizer.openStorage(context)
+                    }
                 }
                 Spacer(Modifier.height(6.dp))
-                Hint("em Cuidados com o dispositivo > Armazenamento, use o botão de limpar. Ao voltar, o VoidTouch confere quanto foi liberado.")
+                Hint(
+                    if (hasCare) "em Cuidados com o dispositivo > Armazenamento, use o botão de limpar. Ao voltar, o VoidTouch confere quanto foi liberado."
+                    else "no armazenamento do sistema, procure \"dados em cache\" ou \"liberar espaço\" (o nome muda por marca). Ao voltar, o VoidTouch confere quanto foi liberado.",
+                )
                 Spacer(Modifier.height(18.dp))
                 Text("maiores caches", style = VoidType.Caption, color = VoidColors.TextDim)
                 Spacer(Modifier.height(4.dp))
@@ -238,7 +251,11 @@ fun OptimizeScreen(apps: List<AppEntry>, refreshKey: Int, onMessage: (String) ->
         }
 
         Section("o que mais pesa no processamento")
-        Shortcut("cuidados com o dispositivo", "otimização automática da Samsung") { Optimizer.openDeviceCare(context) }
+        val careAvailable = remember { Optimizer.hasDeviceCare(context) }
+        Shortcut(
+            if (careAvailable) "cuidados com o dispositivo" else "uso da bateria",
+            if (careAvailable) "otimização automática da Samsung" else "veja o que mais gasta bateria e processamento",
+        ) { Optimizer.openDeviceCare(context) }
         Shortcut("bateria: apps em segundo plano", "restrinja os que acordam o celular à toa") { Optimizer.openBatteryOptimization(context) }
         Shortcut(
             "animações mais rápidas",

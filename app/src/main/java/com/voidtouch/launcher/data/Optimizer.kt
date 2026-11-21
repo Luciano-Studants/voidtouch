@@ -89,13 +89,19 @@ object Optimizer {
     fun openDeveloperOptions(context: Context) =
         open(context, Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
 
+    private fun deviceCareIntent() = Intent().setClassName(
+        "com.samsung.android.lool",
+        "com.samsung.android.sm.ui.cstyleboard.SmartManagerDashBoardActivity",
+    )
+
+    /** Verdadeiro só em aparelhos Samsung com "Cuidados com o dispositivo" (One UI). */
+    fun hasDeviceCare(context: Context): Boolean = runCatching {
+        deviceCareIntent().resolveActivity(context.packageManager) != null
+    }.getOrDefault(false)
+
     /** Cuidados com o dispositivo da Samsung (One UI), se existir; senão a tela de bateria do sistema. */
     fun openDeviceCare(context: Context) {
-        val care = Intent().setClassName(
-            "com.samsung.android.lool",
-            "com.samsung.android.sm.ui.cstyleboard.SmartManagerDashBoardActivity",
-        )
-        if (!open(context, care)) open(context, Intent(Intent.ACTION_POWER_USAGE_SUMMARY))
+        if (!open(context, deviceCareIntent())) open(context, Intent(Intent.ACTION_POWER_USAGE_SUMMARY))
     }
 
     private fun open(context: Context, intent: Intent): Boolean = runCatching {
