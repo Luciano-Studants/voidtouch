@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.45.0",
+            listOf(
+                "Bibliotecas atualizadas (Compose e Activity) para a versão estável de janeiro de 2025, com correções de desempenho e de compatibilidade.",
+            ),
+        ),
+        ReleaseNote(
             "0.44.0",
             listOf(
                 "Teste do modo seguro: em Ajustes > sobre, segure o texto da versão para mostrar \"simular travamento\". Cada toque fecha o app de verdade, para você ver a proteção agir antes de depender dela.",
