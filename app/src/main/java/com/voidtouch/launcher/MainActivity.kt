@@ -55,9 +55,7 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
-import com.voidtouch.launcher.data.OwnWallpaper
 import com.voidtouch.launcher.data.guarded
-import com.voidtouch.launcher.data.WallpaperLoader
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
 import com.voidtouch.launcher.data.ColorSets
@@ -189,14 +187,17 @@ class MainActivity : ComponentActivity() {
     private var openAnim by mutableStateOf(true)
     private var parallax by mutableStateOf(true)
     private var colorSet by mutableStateOf(ColorSets.DEFAULT)
-    private var tiltX by mutableStateOf(0f)
-    private var tiltY by mutableStateOf(0f)
-    private var wallpaperBitmap by mutableStateOf<android.graphics.Bitmap?>(null)
-    private var toneCache: Pair<Int, com.voidtouch.launcher.data.Tone?>? = null
-    private var wallGen = 0
-    private var ownImage by mutableStateOf(false)
-    private var parallaxAvailable by mutableStateOf(true)
-    private val ioScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Default)
+    // Criado só no primeiro uso (depois do onCreate), quando o contexto do app já está pronto.
+    private val background by lazy {
+        BackgroundController(
+        context = this,
+        backdrop = { backdrop },
+        parallax = { parallax },
+        colorSet = { colorSet },
+        screenActive = { screenActive },
+        applyWindow = ::applyBackdrop,
+        )
+    }
     private var openHaptic by mutableStateOf(true)
     private var predictOn by mutableStateOf(true)
     private var predictHistory by mutableStateOf<Map<Int, Map<String, Int>>>(emptyMap())
@@ -232,21 +233,14 @@ class MainActivity : ComponentActivity() {
     /** Imagem própria de fundo: copiada em tamanho de tela para o armazenamento privado do app. */
     private val ownImagePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
-            val m = resources.displayMetrics
-            ioScope.launch {
-                val ok = guarded("imagem própria", false) { OwnWallpaper.import(this@MainActivity, uri, m.widthPixels, m.heightPixels) }
-                withContext(Dispatchers.Main) {
-                    if (ok) {
-                        ownImage = true
-                        backdrop = Backdrop.Wallpaper
-                        settingsStore.saveBackdrop(backdrop)
-                        toneCache = null
-                        refreshTilt()
-                        refreshTone()
-                        say("imagem de fundo definida")
-                    } else {
-                        say("não foi possível usar essa imagem")
-                    }
+            background.importOwn(uri) { ok ->
+                if (ok) {
+                    backdrop = Backdrop.Wallpaper
+                    settingsStore.saveBackdrop(backdrop)
+                    background.refresh()
+                    say("imagem de fundo definida")
+                } else {
+                    say("não foi possível usar essa imagem")
                 }
             }
         }
@@ -384,7 +378,6 @@ class MainActivity : ComponentActivity() {
         openAnim = settingsStore.loadOpenAnim()
         parallax = settingsStore.loadParallax()
         colorSet = settingsStore.loadColorSet()
-        ownImage = OwnWallpaper.exists(this)
         openHaptic = settingsStore.loadOpenHaptic()
         dockAwake = settingsStore.loadDockAwake()
         notes = settingsStore.loadNotes()
@@ -643,7 +636,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Box(Modifier.fillMaxSize()) {
-                val wp = wallpaperBitmap
+                val wp = background.bitmap
                 // A imagem de fundo cobre a tela inteira (inclusive atrás das barras do sistema).
                 if (backdrop == Backdrop.Wallpaper && wp != null) {
                     val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { Parallax.MAX_DP.dp.toPx() }
@@ -656,7 +649,7 @@ class MainActivity : ComponentActivity() {
                             .graphicsLayer {
                                 if (parallax) {
                                     scaleX = Parallax.OVERSCAN; scaleY = Parallax.OVERSCAN
-                                    translationX = -tiltX * maxPx; translationY = tiltY * maxPx
+                                    translationX = -background.tiltX * maxPx; translationY = background.tiltY * maxPx
                                 }
                             },
                     )
@@ -797,25 +790,20 @@ class MainActivity : ComponentActivity() {
                             onColorSet = {
                                 colorSet = it
                                 settingsStore.saveColorSet(it)
-                                refreshTone()
+                                background.refresh()
                             },
                             parallax = parallax,
-                            parallaxAvailable = parallaxAvailable,
-                            ownImage = ownImage,
+                            parallaxAvailable = background.parallaxAvailable,
+                            ownImage = background.ownImage,
                             onPickImage = { runCatching { ownImagePicker.launch(arrayOf("image/*")) }.onFailure { say("este aparelho não tem seletor de arquivos") } },
                             onRemoveImage = {
-                                OwnWallpaper.remove(this@MainActivity)
-                                ownImage = false
-                                toneCache = null
-                                wallpaperBitmap = null
-                                refreshTilt()
-                                refreshTone()
+                                background.removeOwn()
                                 say("imagem de fundo removida")
                             },
                             onParallax = {
                                 parallax = !parallax
                                 settingsStore.saveParallax(parallax)
-                                refreshTilt()
+                                background.refresh()
                             },
                             openAnim = openAnim,
                             onOpenAnim = {
@@ -896,8 +884,7 @@ class MainActivity : ComponentActivity() {
                                 backdrop = it
                                 settingsStore.saveBackdrop(it)
                                 applyBackdrop()
-                                refreshTilt()
-                                refreshTone()
+                                background.refresh()
                             },
                             onClockStyle = {
                                 clockStyle = it
@@ -1089,7 +1076,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         runCatching { unregisterReceiver(packageReceiver) }
-        ioScope.cancel()
+        background.onDestroy()
         super.onDestroy()
     }
 
@@ -1110,15 +1097,14 @@ class MainActivity : ComponentActivity() {
         }
         runCatching { ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) }
         runCatching { getSystemService(CameraManager::class.java).registerTorchCallback(torchCallback, null) }
-        startTilt()
-        refreshTone()
+        background.onStart()
     }
 
     override fun onStop() {
         super.onStop()
         screenActive = false
         runCatching { unregisterReceiver(timeReceiver) }
-        stopTilt()
+        background.onStop()
         runCatching { getSystemService(CameraManager::class.java).unregisterTorchCallback(torchCallback) }
     }
 
@@ -1399,85 +1385,6 @@ class MainActivity : ComponentActivity() {
             val service = getSystemService("statusbar")
             Class.forName("android.app.StatusBarManager").getMethod("expandNotificationsPanel").invoke(service)
         }.onFailure { say("este aparelho não permite abrir o painel por aqui") }
-    }
-
-    private val tiltListener = object : android.hardware.SensorEventListener {
-        override fun onSensorChanged(e: android.hardware.SensorEvent) {
-            // Em retrato: x positivo = inclinado para a esquerda; y positivo = topo para cima.
-            tiltX = Parallax.smooth(tiltX, Parallax.target(e.values[0]))
-            tiltY = Parallax.smooth(tiltY, Parallax.target(e.values[1] - 9.81f * 0.6f))
-        }
-        override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
-    }
-
-    /** Liga o acelerômetro só com a tela visível e com a paralaxe valendo; fora disso nada fica registrado. */
-    private fun startTilt() {
-        if (backdrop != Backdrop.Wallpaper || !parallax) return
-        runCatching {
-            val sm = getSystemService(android.hardware.SensorManager::class.java)
-            val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) ?: return
-            sm.registerListener(tiltListener, sensor, android.hardware.SensorManager.SENSOR_DELAY_UI)
-        }
-    }
-
-    private fun refreshTilt() {
-        stopTilt()
-        if (screenActive) startTilt()
-    }
-
-    private fun unregisterTilt() {
-        runCatching { getSystemService(android.hardware.SensorManager::class.java).unregisterListener(tiltListener) }
-        tiltX = 0f
-        tiltY = 0f
-    }
-
-    private fun stopTilt() {
-        unregisterTilt()
-        wallGen++ // cancela uma leitura do papel de parede ainda em andamento
-        wallpaperBitmap = null
-    }
-
-    private fun applyPalette(tone: com.voidtouch.launcher.data.Tone?) {
-        VoidColors.apply(ColorSets.palette(ColorSets.fromKey(colorSet), tone, backdrop == Backdrop.Wallpaper))
-        applyBackdrop()
-    }
-
-    /**
-     * Papel de parede para a paralaxe e o tom das cores. A leitura roda em segundo plano (a imagem é
-     * decodificada já reduzida) e o tom fica em cache até o papel de parede mudar.
-     */
-    private fun refreshTone() {
-        val onWallpaper = backdrop == Backdrop.Wallpaper
-        val own = OwnWallpaper.exists(this)
-        val needBitmap = onWallpaper && screenActive && (own || parallax)
-        val needTone = onWallpaper && ColorSets.fromKey(colorSet).auto
-        val id = if (own) -OwnWallpaper.stamp(this) - 2 else WallpaperLoader.id(this)
-        val cached = toneCache?.takeIf { it.first == id }
-        applyPalette(cached?.second)
-        if (!needBitmap && (!needTone || cached != null)) return
-        val gen = ++wallGen
-        val m = resources.displayMetrics
-        ioScope.launch {
-            // Imagem própria: lida do arquivo do app. Papel de parede do sistema: o tom vem das cores do Android
-            // (sem permissão) e a imagem só é lida se a paralaxe precisar dela.
-            val loaded = when {
-                !needBitmap -> null
-                own -> guarded("imagem própria", null) { OwnWallpaper.load(this@MainActivity, m.widthPixels, m.heightPixels) }
-                else -> guarded("papel de parede", null) { WallpaperLoader.load(this@MainActivity, m.widthPixels, m.heightPixels) }
-            }
-            val tone = if (own) loaded?.tone ?: cached?.second
-            else guarded("cores do papel de parede", null) { WallpaperLoader.colorsTone(this@MainActivity) } ?: loaded?.tone
-            withContext(Dispatchers.Main) {
-                if (gen != wallGen) return@withContext
-                toneCache = id to tone
-                if (needBitmap) {
-                    wallpaperBitmap = loaded?.bitmap
-                    parallaxAvailable = loaded != null
-                    if (loaded == null) unregisterTilt()
-                }
-                applyPalette(tone)
-            }
-        }
     }
 
     private fun applyBackdrop() {
