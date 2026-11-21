@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.45.2",
+            listOf(
+                "Organização interna: a navegação entre telas (lista, Ajustes, Saúde, Otimizar e as outras) agora tem regras próprias e testadas, no lugar de dez marcadores soltos na tela principal. Nada muda no uso.",
+            ),
+        ),
+        ReleaseNote(
             "0.45.1",
             listOf(
                 "Organização interna: tudo do fundo (imagem, paralaxe e cores) saiu da tela principal para uma peça própria, mais fácil de manter e de testar. Nada muda no uso.",

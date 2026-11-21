@@ -55,6 +55,7 @@ import com.voidtouch.launcher.data.LiveKind
 import com.voidtouch.launcher.data.Dock
 import com.voidtouch.launcher.data.NightMode
 import com.voidtouch.launcher.data.OpenAnim
+import com.voidtouch.launcher.data.Screen
 import com.voidtouch.launcher.data.guarded
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
@@ -427,23 +428,15 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                var showAllApps by remember { mutableStateOf(false) }
                 // Pasta que a lista já abre aberta (quando se toca numa pasta fixada na home).
                 var startFolder by remember { mutableStateOf<String?>(null) }
                 // Verdadeiro quando a lista foi aberta pela pílula de busca (já abre o teclado).
                 var focusSearch by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
-                var showHealth by remember { mutableStateOf(false) }
-                var showSettings by remember { mutableStateOf(false) }
-                var showOptimize by remember { mutableStateOf(false) }
-                var showPermissions by remember { mutableStateOf(false) }
-                var showLater by remember { mutableStateOf(false) }
-                var showCapture by remember { mutableStateOf(false) }
-                var showUsage by remember { mutableStateOf(false) }
-                var showOrder by remember { mutableStateOf(false) }
+                // Qual tela interna está aberta (só uma por vez); o relógio de cabeceira e as novidades têm estado próprio.
+                val nav = remember { Navigator(if (firstUse) Screen.Tips else Screen.Home) }
                 var showDock by remember { mutableStateOf(false) }
                 var dockDismissed by remember { mutableStateOf(false) }
-                var showTips by remember { mutableStateOf(firstUse) }
                 // Novidades: após atualizar só a versão nova; em Ajustes, o histórico todo.
                 var changelog by remember { mutableStateOf(initialNotes) }
                 var changelogTitle by remember { mutableStateOf("novidades da v$versionName") }
@@ -466,29 +459,20 @@ class MainActivity : ComponentActivity() {
 
                 // Apertar Home com o launcher aberto sempre volta para a home.
                 LaunchedEffect(homeSignal) {
-                    showAllApps = false
-                    showHealth = false
-                    showSettings = false
+                    nav.home()
                     changelog = null
-                    showOptimize = false
-                    showPermissions = false
-                    showLater = false
-                    showCapture = false
-                    showUsage = false
-                    showOrder = false
-                    showTips = false
                 }
                 // Mede quanto a lista de apps leva para aparecer (até o primeiro quadro desenhado).
-                LaunchedEffect(showAllApps) {
-                    if (showAllApps) {
+                LaunchedEffect(nav.isOpen(Screen.Drawer)) {
+                    if (nav.isOpen(Screen.Drawer)) {
                         val t0 = SystemClock.elapsedRealtime()
                         withFrameNanos { }
                         Perf.stats.record(Perf.DRAWER, SystemClock.elapsedRealtime() - t0)
                     }
                 }
                 // Ao sair da lista completa, a busca é limpa e a marcação termina.
-                LaunchedEffect(showAllApps) {
-                    if (!showAllApps) {
+                LaunchedEffect(nav.isOpen(Screen.Drawer)) {
+                    if (!nav.isOpen(Screen.Drawer)) {
                         startFolder = null
                         query = ""
                         focusSearch = false
@@ -500,17 +484,8 @@ class MainActivity : ComponentActivity() {
                     when {
                         showDock -> { showDock = false; dockDismissed = true }
                         changelog != null -> changelog = null
-                        showTips -> showTips = false
-                        showOrder -> showOrder = false
-                        showUsage -> showUsage = false
-                        showCapture -> showCapture = false
-                        showLater -> showLater = false
-                        showPermissions -> showPermissions = false
-                        showOptimize -> showOptimize = false
-                        showSettings -> showSettings = false
-                        showHealth -> showHealth = false
-                        showAllApps && markingFocusApps -> markingFocusApps = false
-                        showAllApps -> showAllApps = false
+                        nav.isOpen(Screen.Drawer) && markingFocusApps -> markingFocusApps = false
+                        nav.current != Screen.Home -> nav.home()
                     }
                 }
 
@@ -524,14 +499,14 @@ class MainActivity : ComponentActivity() {
                         target == null -> say("defina esse gesto em ajustes")
                         action == QuickAction.Torch -> toggleTorch()
                         action == QuickAction.NotificationPanel -> expandNotificationPanel()
-                        action == QuickAction.Search -> { focusSearch = true; showAllApps = true }
-                        action == QuickAction.Drawer -> { focusSearch = false; showAllApps = true }
+                        action == QuickAction.Search -> { focusSearch = true; nav.open(Screen.Drawer) }
+                        action == QuickAction.Drawer -> { focusSearch = false; nav.open(Screen.Drawer) }
                         action == QuickAction.Focus -> toggleFocus()
-                        action == QuickAction.Capture -> showCapture = true
-                        action == QuickAction.Usage -> showUsage = true
-                        action == QuickAction.Optimize -> showOptimize = true
-                        action == QuickAction.Health -> showHealth = true
-                        action == QuickAction.Settings -> showSettings = true
+                        action == QuickAction.Capture -> nav.open(Screen.Capture)
+                        action == QuickAction.Usage -> nav.open(Screen.Usage)
+                        action == QuickAction.Optimize -> nav.open(Screen.Optimize)
+                        action == QuickAction.Health -> nav.open(Screen.Health)
+                        action == QuickAction.Settings -> nav.open(Screen.Settings)
                         else -> launchByKey(apps, target, focusOn)
                     }
                 }
@@ -595,18 +570,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val screen = when {
-                    showTips -> "tips"
+                    nav.isOpen(Screen.Tips) -> Screen.Tips.key
                     changelog != null -> "changelog"
-                    showOrder -> "order"
-                    showUsage -> "usage"
-                    showCapture -> "capture"
-                    showLater -> "later"
-                    showPermissions -> "permissions"
-                    showOptimize -> "optimize"
-                    showSettings -> "settings"
-                    showHealth -> "health"
-                    showAllApps -> "drawer"
-                    else -> "home"
+                    else -> nav.current.key
                 }
                 // Guarda as novidades para o texto não sumir durante a animação de saída.
                 var lastNotes by remember { mutableStateOf(emptyList<ReleaseNote>()) }
@@ -685,11 +651,11 @@ class MainActivity : ComponentActivity() {
                     label = "screen",
                   ) { current ->
                     if (current == "tips") {
-                        TipsScreen(onClose = { showTips = false })
+                        TipsScreen(onClose = { nav.close(Screen.Tips) })
                     } else if (current == "changelog") {
                         ChangelogScreen(title = changelogTitle, notes = changelog ?: lastNotes, onClose = { changelog = null })
                     } else if (current == "usage") {
-                        UsageScreen(refreshKey = refreshKey, onClose = { showUsage = false })
+                        UsageScreen(refreshKey = refreshKey, onClose = { nav.close(Screen.Usage) })
                     } else if (current == "capture") {
                         CaptureScreen(
                             notes = notes,
@@ -701,7 +667,7 @@ class MainActivity : ComponentActivity() {
                             onSetFocus = { saveNotes(Notes.setFocus(notes, it.id)); say("tarefa do foco") },
                             onRemove = { saveNotes(Notes.remove(notes, it.id)) },
                             onClearDone = { saveNotes(Notes.clearDone(notes)) },
-                            onClose = { showCapture = false },
+                            onClose = { nav.close(Screen.Capture) },
                         )
                     } else if (current == "order") {
                         FavoritesOrderScreen(
@@ -715,7 +681,7 @@ class MainActivity : ComponentActivity() {
                                 pinnedKeys = HomeRules.move(pinnedKeys, key, delta)
                                 favoritesStore.save(pinnedKeys)
                             },
-                            onClose = { showOrder = false },
+                            onClose = { nav.close(Screen.Order) },
                         )
                     } else if (current == "later") {
                         ReadLaterScreen(
@@ -727,7 +693,7 @@ class MainActivity : ComponentActivity() {
                                 later = ReadLater.remove(later, item.id)
                                 settingsStore.saveReadLater(later)
                             },
-                            onClose = { showLater = false },
+                            onClose = { nav.close(Screen.Later) },
                         )
                     } else if (current == "permissions") {
                         PermissionsScreen(
@@ -739,10 +705,10 @@ class MainActivity : ComponentActivity() {
                             onRequestContacts = { runCatching { contactsPermission.launch(android.Manifest.permission.READ_CONTACTS) } },
                             onRequestCalendar = { runCatching { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) } },
                             onOpenAppInfo = ::openAppInfo,
-                            onClose = { showPermissions = false },
+                            onClose = { nav.close(Screen.Permissions) },
                         )
                     } else if (current == "optimize") {
-                        OptimizeScreen(apps = apps, refreshKey = refreshKey, onMessage = ::say, onClose = { showOptimize = false })
+                        OptimizeScreen(apps = apps, refreshKey = refreshKey, onMessage = ::say, onClose = { nav.close(Screen.Optimize) })
                     } else if (current == "settings") {
                         SettingsScreen(
                             apps = apps,
@@ -761,11 +727,11 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveHiddenPhotos(hiddenPhotos)
                                 say("fotos ocultas restauradas")
                             },
-                            onOpenOptimize = { showSettings = false; showOptimize = true },
-                            onOpenPermissions = { showSettings = false; showPermissions = true },
-                            onOpenUsage = { showSettings = false; showUsage = true },
+                            onOpenOptimize = { nav.close(Screen.Settings); nav.open(Screen.Optimize) },
+                            onOpenPermissions = { nav.close(Screen.Settings); nav.open(Screen.Permissions) },
+                            onOpenUsage = { nav.close(Screen.Settings); nav.open(Screen.Usage) },
                             onOpenHomeSettings = ::openHomeSettings,
-                            onOpenFavoritesOrder = { showSettings = false; showOrder = true },
+                            onOpenFavoritesOrder = { nav.close(Screen.Settings); nav.open(Screen.Order) },
                             focusAutoOn = focusAutoOn,
                             focusAutoStart = focusAutoStart,
                             focusAutoEnd = focusAutoEnd,
@@ -872,7 +838,7 @@ class MainActivity : ComponentActivity() {
                                 nightEnd = (nightEnd + 1) % 24
                                 settingsStore.saveNightHours(nightStart, nightEnd)
                             },
-                            onOpenTips = { showSettings = false; showTips = true },
+                            onOpenTips = { nav.close(Screen.Settings); nav.open(Screen.Tips) },
                             onBackupSave = { runCatching { backupSave.launch("voidtouch-backup.json") }.onFailure { say("este aparelho não tem seletor de arquivos") } },
                             onBackupRestore = { runCatching { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) }.onFailure { say("este aparelho não tem seletor de arquivos") } },
                             openTimeMs = openTimeMs,
@@ -894,14 +860,14 @@ class MainActivity : ComponentActivity() {
                                 gestures = gestures + (side to key)
                                 settingsStore.saveSwipeApp(side, key)
                             },
-                            onClose = { showSettings = false },
+                            onClose = { nav.close(Screen.Settings) },
                         )
                     } else if (current == "health") {
                         HealthScreen(
                             apps = apps,
                             nowMillis = nowMillis,
                             refreshKey = refreshKey,
-                            onClose = { showHealth = false },
+                            onClose = { nav.close(Screen.Health) },
                         )
                     } else if (current == "drawer") {
                         AppList(
@@ -954,16 +920,16 @@ class MainActivity : ComponentActivity() {
                                         QuickAction.Search -> focusSearch = true
                                         QuickAction.Drawer -> Unit
                                         QuickAction.Focus -> toggleFocus()
-                                        QuickAction.Capture -> { showAllApps = false; showCapture = true }
-                                        QuickAction.Usage -> { showAllApps = false; showUsage = true }
-                                        QuickAction.Optimize -> { showAllApps = false; showOptimize = true }
-                                        QuickAction.Health -> { showAllApps = false; showHealth = true }
-                                        QuickAction.Settings -> { showAllApps = false; showSettings = true }
+                                        QuickAction.Capture -> { nav.close(Screen.Drawer); nav.open(Screen.Capture) }
+                                        QuickAction.Usage -> { nav.close(Screen.Drawer); nav.open(Screen.Usage) }
+                                        QuickAction.Optimize -> { nav.close(Screen.Drawer); nav.open(Screen.Optimize) }
+                                        QuickAction.Health -> { nav.close(Screen.Drawer); nav.open(Screen.Health) }
+                                        QuickAction.Settings -> { nav.close(Screen.Drawer); nav.open(Screen.Settings) }
                                     }
                                 }
                             },
-                            onOpenSettings = { showSettings = true },
-                            onClose = { showAllApps = false },
+                            onOpenSettings = { nav.open(Screen.Settings) },
+                            onClose = { nav.close(Screen.Drawer) },
                         )
                     } else {
                         HomeContent(
@@ -974,7 +940,7 @@ class MainActivity : ComponentActivity() {
                             suggestions = suggestions,
                             focusNote = Notes.focusNote(notes),
                             onNoteDone = { saveNotes(Notes.toggleDone(notes, it.id)); say("feito: ${it.text}") },
-                            onOpenCapture = { showCapture = true },
+                            onOpenCapture = { nav.open(Screen.Capture) },
                             live = NotificationHub.live.filter { it.kind == LiveKind.Call || !HomeRules.notificationHidden(it.packageName, focusApps, focusOn) },
                             onLiveOpen = { runCatching { it.intent?.send() } },
                             notificationsEnabled = notifAccess,
@@ -993,7 +959,7 @@ class MainActivity : ComponentActivity() {
                                 say("guardado em ler depois")
                             },
                             laterCount = later.size,
-                            onOpenLater = { showLater = true },
+                            onOpenLater = { nav.open(Screen.Later) },
                             onEnableNotifications = ::openNotificationAccess,
                             active = screenActive,
                             agenda = agenda,
@@ -1035,19 +1001,19 @@ class MainActivity : ComponentActivity() {
                             onOpenFolder = { f ->
                                 focusSearch = false
                                 startFolder = f.id
-                                showAllApps = true
+                                nav.open(Screen.Drawer)
                             },
                             onOpenDrawer = {
                                 focusSearch = false
-                                showAllApps = true
+                                nav.open(Screen.Drawer)
                             },
                             onOpenSearch = {
                                 focusSearch = true
-                                showAllApps = true
+                                nav.open(Screen.Drawer)
                             },
-                            onOpenHealth = { showHealth = true },
+                            onOpenHealth = { nav.open(Screen.Health) },
                             onToggleFocus = ::toggleFocus,
-                            onOpenSettings = { showSettings = true },
+                            onOpenSettings = { nav.open(Screen.Settings) },
                             onSwipeLeft = { runGesture(SwipeSide.Left) },
                             onSwipeRight = { runGesture(SwipeSide.Right) },
                             onSwipeDown = { runGesture(SwipeSide.Down) },
