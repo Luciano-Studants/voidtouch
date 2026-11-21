@@ -12,8 +12,8 @@ data class AppEntry(
     val packageName: String,
     val activityName: String,
 ) {
-    /** Identificador estável do app, usado nos favoritos. */
-    val key: String get() = "$packageName/$activityName"
+    /** Identificador estável do app, usado nos favoritos. Calculado uma vez: a lista e a busca o leem milhares de vezes. */
+    val key: String = "$packageName/$activityName"
 
     /** Nome sem acento e em minúsculas, calculado uma vez para a busca ser instantânea. */
     val searchLabel: String = Search.normalize(label)

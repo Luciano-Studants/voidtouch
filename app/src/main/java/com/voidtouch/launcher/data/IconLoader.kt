@@ -37,6 +37,12 @@ object IconLoader {
 
     private val cache = ConcurrentHashMap<String, IconResult.Ready>()
 
+    /** Esquece os ícones de um app que foi atualizado ou removido (o ícone pode ter mudado). */
+    fun invalidate(packageName: String) {
+        val prefix = "$packageName/"
+        cache.keys.removeIf { it.startsWith(prefix) }
+    }
+
     fun peek(key: String): IconResult = cache[key] ?: IconResult.Loading
 
     fun load(context: Context, app: AppEntry): IconResult.Ready =

@@ -58,6 +58,8 @@ import com.voidtouch.launcher.data.OpenAnim
 import com.voidtouch.launcher.data.Screen
 import com.voidtouch.launcher.data.guarded
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.cancel
 import com.voidtouch.launcher.data.ColorSets
 import com.voidtouch.launcher.ui.theme.VoidColors
@@ -270,9 +272,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val reloadApps = Runnable { appsKey++ }
+
     private val packageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            appsKey++
+            intent?.data?.schemeSpecificPart?.let { IconLoader.invalidate(it) }
+            // Instalar ou atualizar vários apps de uma vez gera uma rajada de avisos: junta tudo numa só releitura.
+            mainHandler.removeCallbacks(reloadApps)
+            mainHandler.postDelayed(reloadApps, 800)
         }
     }
 
@@ -424,7 +432,11 @@ class MainActivity : ComponentActivity() {
                         if (!Perf.stats.has(Perf.READY)) Perf.stats.record(Perf.READY, SystemClock.elapsedRealtime() - createdAt)
                         delay(600)
                         withContext(Dispatchers.Default) {
-                            apps.forEach { guarded("ícone", Unit) { IconLoader.load(applicationContext, it) } }
+                            apps.forEach {
+                                // Se a lista mudou no meio, para aqui em vez de terminar um trabalho que já não vale.
+                                coroutineContext.ensureActive()
+                                guarded("ícone", Unit) { IconLoader.load(applicationContext, it) }
+                            }
                         }
                     }
                 }
@@ -1042,6 +1054,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         runCatching { unregisterReceiver(packageReceiver) }
+        mainHandler.removeCallbacks(reloadApps)
         background.onDestroy()
         super.onDestroy()
     }
