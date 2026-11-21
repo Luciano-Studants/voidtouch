@@ -773,7 +773,7 @@ class MainActivity : ComponentActivity() {
                             parallax = parallax,
                             parallaxAvailable = background.parallaxAvailable,
                             ownImage = background.ownImage,
-                            onPickImage = { runCatching { ownImagePicker.launch(arrayOf("image/*")) }.onFailure { say("este aparelho não tem seletor de arquivos") } },
+                            onPickImage = { runCatching { ownImagePicker.launch(arrayOf("image/*")) }.onFailure { say("este aparelho não tem um seletor de arquivos") } },
                             onRemoveImage = {
                                 background.removeOwn()
                                 say("imagem de fundo removida")
@@ -851,8 +851,8 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveNightHours(nightStart, nightEnd)
                             },
                             onOpenTips = { nav.close(Screen.Settings); nav.open(Screen.Tips) },
-                            onBackupSave = { runCatching { backupSave.launch("voidtouch-backup.json") }.onFailure { say("este aparelho não tem seletor de arquivos") } },
-                            onBackupRestore = { runCatching { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) }.onFailure { say("este aparelho não tem seletor de arquivos") } },
+                            onBackupSave = { runCatching { backupSave.launch("voidtouch-backup.json") }.onFailure { say("este aparelho não tem um seletor de arquivos") } },
+                            onBackupRestore = { runCatching { backupRestore.launch(arrayOf("application/json", "text/plain", "*/*")) }.onFailure { say("este aparelho não tem um seletor de arquivos") } },
                             openTimeMs = openTimeMs,
                             onOpenChangelog = {
                                 changelogTitle = "novidades"
@@ -994,7 +994,7 @@ class MainActivity : ComponentActivity() {
                                 memory?.let {
                                     hiddenPhotos = hiddenPhotos + it.memory.id
                                     settingsStore.saveHiddenPhotos(hiddenPhotos)
-                                    say("foto oculta: não aparece mais")
+                                    say("foto oculta: não aparece mais aqui")
                                 }
                             },
                             focusSinceMillis = focusSince,

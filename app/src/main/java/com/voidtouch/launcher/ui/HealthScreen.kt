@@ -109,7 +109,7 @@ fun HealthScreen(
             HeavyApps.NeedsPermission -> {
                 Hint(
                     "para medir o tamanho dos apps, o Android pede a permissão \"acesso ao uso\". " +
-                        "O VoidTouch só lê os tamanhos e não envia nada.",
+                        "o VoidTouch só lê os tamanhos e não envia nada.",
                 )
                 Spacer(Modifier.height(14.dp))
                 TextPill(text = "permitir acesso", onClick = { openUsageAccess(context) })

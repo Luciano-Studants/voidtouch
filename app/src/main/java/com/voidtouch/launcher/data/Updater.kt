@@ -39,7 +39,7 @@ object Updater {
                 when (conn.responseCode) {
                     404 -> return@withContext UpdateCheck.NoRelease
                     200 -> Unit
-                    else -> return@withContext UpdateCheck.Failed("erro ${conn.responseCode}")
+                    else -> return@withContext UpdateCheck.Failed("o servidor respondeu com erro ${conn.responseCode}")
                 }
                 val json = JSONObject(readLimited(conn.inputStream, UpdateCheckRules.MAX_JSON_BYTES))
                 val version = json.getString("tag_name").removePrefix("v")

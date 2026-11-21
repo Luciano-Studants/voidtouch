@@ -10,11 +10,18 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.46.2",
+            listOf(
+                "Revisão dos textos: mensagens de erro mais claras e no mesmo tom em todo o app (por exemplo, \"não foi possível verificar\" no lugar de \"não deu\").",
+                "Nada muda no uso.",
+            ),
+        ),
+        ReleaseNote(
             "0.46.1",
             listOf(
                 "Desempenho: ao instalar ou atualizar vários apps de uma vez (como numa atualização em massa da Play Store), a lista é relida uma vez só, em vez de uma vez por app.",
                 "O identificador de cada app passou a ser calculado uma vez, o que alivia a rolagem e a busca em celulares com muitos apps.",
-                "Ícones de apps atualizados ou removidos são descartados da memória, e o preparo dos ícones para quando a lista muda no meio.",
+                "Ícones de apps atualizados ou removidos são descartados da memória, e o preparo dos ícones é interrompido se a lista mudar no meio.",
             ),
         ),
         ReleaseNote(

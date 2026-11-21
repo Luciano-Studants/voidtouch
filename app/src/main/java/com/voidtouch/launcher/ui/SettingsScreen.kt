@@ -433,7 +433,7 @@ private fun UpdateRow(versionName: String) {
                             }
                             UpdateCheck.UpToDate -> status = "você já está na versão mais recente"
                             UpdateCheck.NoRelease -> status = "nenhuma versão publicada ainda"
-                            is UpdateCheck.Failed -> status = "não deu: ${r.reason}. toque para tentar"
+                            is UpdateCheck.Failed -> status = "não foi possível verificar: ${r.reason}. toque para tentar"
                         }
                         busy = false
                     }
