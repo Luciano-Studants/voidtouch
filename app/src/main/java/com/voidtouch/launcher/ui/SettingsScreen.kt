@@ -2,6 +2,7 @@ package com.voidtouch.launcher.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -363,7 +364,7 @@ fun SettingsScreen(
         )
 
         Section("sobre")
-        Text("VoidTouch $versionName", style = VoidType.App, color = VoidColors.TextDim)
+        VersionLine(versionName)
         ValueRow("novidades", onOpenChangelog)
         ValueRow("dicas de uso", onOpenTips)
         if (openTimeMs > 0L) {
@@ -538,5 +539,37 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (String?) -> 
                 )
             }
         }
+    }
+}
+
+/**
+ * Versão do app. Segurar o texto mostra o teste do modo seguro, escondido de propósito para ninguém
+ * tocar sem querer: cada toque derruba o app de verdade, para provar que a proteção funciona.
+ */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun VersionLine(versionName: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var test by remember { mutableStateOf(false) }
+    Text(
+        "VoidTouch $versionName",
+        style = VoidType.App,
+        color = VoidColors.TextDim,
+        modifier = Modifier.combinedClickable(onClick = {}, onLongClick = { test = !test }),
+    )
+    val last = remember(test) { com.voidtouch.launcher.CrashGuard.lastError(context)?.lineSequence()?.firstOrNull() }
+    if (last != null) {
+        Text("último travamento: $last", style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp), color = VoidColors.TextDim)
+    }
+    if (test) {
+        ValueRow("simular travamento (teste do modo seguro)") {
+            throw IllegalStateException("travamento simulado pelo usuário")
+        }
+        Text(
+            "cada toque fecha o VoidTouch de propósito. Depois de 2 toques logo após uma atualização (ou 3 em seguida), a tela inicial abre em modo seguro. Lá, \"tentar a home de novo\" volta ao normal.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }

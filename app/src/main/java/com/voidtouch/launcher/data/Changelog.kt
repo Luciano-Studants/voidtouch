@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.44.0",
+            listOf(
+                "Teste do modo seguro: em Ajustes > sobre, segure o texto da versão para mostrar \"simular travamento\". Cada toque fecha o app de verdade, para você ver a proteção agir antes de depender dela.",
+                "Ajustes mostra a primeira linha do último travamento registrado, quando houver.",
+            ),
+        ),
+        ReleaseNote(
             "0.43.0",
             listOf(
                 "Imagem de fundo própria: em Ajustes > papel de parede, escolha uma foto para ser o fundo do VoidTouch. Funciona em qualquer Android, sem depender do papel de parede do sistema.",
