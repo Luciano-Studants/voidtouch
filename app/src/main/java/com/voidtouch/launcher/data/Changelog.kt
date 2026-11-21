@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.41.0",
+            listOf(
+                "Atualizador mais seguro: só aceita download por https, de servidores do GitHub e do repositório do VoidTouch, mesmo depois de redirecionamentos.",
+                "A resposta da consulta e o APK têm tamanho máximo, então um arquivo gigante não enche o armazenamento nem a memória.",
+                "A verificação automática do código (lint) passa a rodar a cada versão e guarda um relatório para eu corrigir o que aparecer.",
+            ),
+        ),
+        ReleaseNote(
             "0.40.0",
             listOf(
                 "Defesa contra erros: a lista de apps, os ícones, a agenda e as memórias agora se recuperam sozinhos se o sistema falhar na leitura, em vez de fechar o app.",

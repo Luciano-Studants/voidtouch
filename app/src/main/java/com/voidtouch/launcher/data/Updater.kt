@@ -39,13 +39,16 @@ object Updater {
                     200 -> Unit
                     else -> return@withContext UpdateCheck.Failed("erro ${conn.responseCode}")
                 }
-                val json = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
+                val json = JSONObject(readLimited(conn.inputStream, UpdateCheckRules.MAX_JSON_BYTES))
                 val version = json.getString("tag_name").removePrefix("v")
                 val assets = json.getJSONArray("assets")
                 var url: String? = null
                 for (i in 0 until assets.length()) {
                     val a = assets.getJSONObject(i)
                     if (a.getString("name").endsWith(".apk")) url = a.getString("browser_download_url")
+                }
+                if (url != null && !UpdateCheckRules.urlAllowed(url)) {
+                    return@withContext UpdateCheck.Failed("endereço de download não confiável")
                 }
                 when {
                     url == null -> UpdateCheck.NoRelease
@@ -78,10 +81,16 @@ object Updater {
             try {
                 part.delete()
                 target.delete()
+                if (!UpdateCheckRules.urlAllowed(info.apkUrl)) return@withContext Download.Failed("endereço de download não confiável")
                 val conn = open(info.apkUrl)
                 try {
                     if (conn.responseCode != 200) return@withContext Download.Failed("o servidor respondeu ${conn.responseCode}")
+                    // Depois dos redirecionamentos, o arquivo ainda precisa vir de um servidor do GitHub.
+                    if (!UpdateCheckRules.urlAllowed(conn.url.toString(), checkPath = false)) {
+                        return@withContext Download.Failed("o download foi desviado para um servidor não confiável")
+                    }
                     val total = conn.contentLengthLong
+                    if (total > UpdateCheckRules.MAX_APK_BYTES) return@withContext Download.Failed("arquivo grande demais para ser o app")
                     var done = 0L
                     var last = -1
                     conn.inputStream.use { input ->
@@ -92,6 +101,10 @@ object Updater {
                                 if (n < 0) break
                                 out.write(buf, 0, n)
                                 done += n
+                                if (done > UpdateCheckRules.MAX_APK_BYTES) {
+                                    part.delete()
+                                    return@withContext Download.Failed("arquivo grande demais para ser o app")
+                                }
                                 if (total > 0) {
                                     val pct = (done * 100 / total).toInt()
                                     if (pct != last) {
@@ -161,6 +174,18 @@ object Updater {
         true
     }.getOrDefault(false)
 
+    private fun readLimited(input: java.io.InputStream, max: Int): String {
+        val buf = ByteArray(max + 1)
+        var n = 0
+        while (n < buf.size) {
+            val r = input.read(buf, n, buf.size - n)
+            if (r < 0) break
+            n += r
+        }
+        require(n <= max) { "resposta grande demais" }
+        return String(buf, 0, n, Charsets.UTF_8)
+    }
+
     private fun open(url: String): HttpURLConnection =
         (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000
@@ -172,6 +197,20 @@ object Updater {
 
 /** Regras puras da conferência do download, separadas para poderem ser testadas. */
 object UpdateCheckRules {
+    const val MAX_JSON_BYTES = 1_000_000
+    const val MAX_APK_BYTES = 80L * 1024 * 1024
+    private const val REPO_PATH = "/Luciano-Studants/voidtouch/"
+    private val HOSTS = setOf("github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com")
+
+    /** Só https e só servidores do GitHub; o endereço inicial ainda precisa ser deste repositório. */
+    fun urlAllowed(url: String, checkPath: Boolean = true): Boolean {
+        val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return false
+        if (uri.scheme != "https" || uri.userInfo != null) return false
+        val host = uri.host?.lowercase() ?: return false
+        if (host !in HOSTS) return false
+        return !checkPath || (host == "github.com" && uri.path.orEmpty().startsWith(REPO_PATH))
+    }
+
     /** O tamanho baixado precisa bater com o anunciado; sem tamanho anunciado, só exige algo baixado. */
     fun sizeOk(downloaded: Long, announced: Long): Boolean =
         downloaded > 0 && (announced <= 0 || downloaded == announced)

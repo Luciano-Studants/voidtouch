@@ -36,6 +36,19 @@ jobs:
       - name: Rodar testes
         run: ./gradlew testDebugUnitTest --stacktrace
 
+      # Análise estática (lint): por enquanto só informa, não bloqueia a versão. O relatório fica no artefato.
+      - name: Lint
+        continue-on-error: true
+        run: ./gradlew lintRelease --stacktrace
+
+      - name: Relatório do lint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-release.*
+          if-no-files-found: ignore
+
       - name: Compilar APK release (otimizado)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

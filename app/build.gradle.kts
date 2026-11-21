@@ -12,8 +12,8 @@ android {
         applicationId = "com.voidtouch.launcher"
         minSdk = 26
         targetSdk = 35
-        versionCode = 47
-        versionName = "0.40.0"
+        versionCode = 48
+        versionName = "0.41.0"
     }
 
     // Chave fixa (vinda dos secrets do GitHub) para uma versão nova instalar por cima da anterior.
@@ -40,6 +40,14 @@ android {
                 "proguard-rules.pro",
             )
         }
+    }
+
+    lint {
+        // Informa sem bloquear o build; o relatório sai como artefato da CI.
+        abortOnError = false
+        checkReleaseBuilds = false
+        htmlReport = true
+        xmlReport = true
     }
 
     compileOptions {
