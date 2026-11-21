@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.46.3",
+            listOf(
+                "Correção: com a fonte do Android muito grande, os textos da home se sobrepunham e quebravam no meio das palavras. O aumento da fonte agora tem um limite (115%), então a home continua legível.",
+                "A pílula \"buscar app\" não quebra mais em duas linhas.",
+            ),
+        ),
+        ReleaseNote(
             "0.46.2",
             listOf(
                 "Revisão dos textos: mensagens de erro mais claras e no mesmo tom em todo o app (por exemplo, \"não foi possível verificar\" no lugar de \"não deu\").",

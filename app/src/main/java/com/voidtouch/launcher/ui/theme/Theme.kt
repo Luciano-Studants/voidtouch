@@ -63,8 +63,12 @@ private val VoidScheme = darkColorScheme(
 
 @Composable
 fun VoidTouchTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = VoidScheme,
-        content = content,
-    )
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val capped = androidx.compose.ui.unit.Density(density.density, com.voidtouch.launcher.data.FontScale.cap(density.fontScale))
+    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides capped) {
+        MaterialTheme(
+            colorScheme = VoidScheme,
+            content = content,
+        )
+    }
 }

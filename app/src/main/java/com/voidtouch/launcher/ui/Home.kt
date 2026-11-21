@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -280,13 +281,13 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.CenterStart,
         modifier = modifier
             .heightIn(min = 52.dp)
-            .width(168.dp)
+            .widthIn(min = 168.dp)
             .clip(CircleShape)
             .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 20.dp),
     ) {
-        Text(text = "buscar app", style = VoidType.Caption, color = VoidColors.TextDim)
+        Text(text = "buscar app", style = VoidType.Caption, color = VoidColors.TextDim, maxLines = 1, softWrap = false)
     }
 }
 
