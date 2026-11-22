@@ -90,6 +90,7 @@ import com.voidtouch.launcher.data.Hit
 import com.voidtouch.launcher.data.UniversalSearch
 import com.voidtouch.launcher.data.Search
 import com.voidtouch.launcher.ui.theme.VoidColors
+import com.voidtouch.launcher.ui.theme.card
 import com.voidtouch.launcher.ui.theme.VoidType
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -634,6 +635,7 @@ private fun FolderCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
+            .then(if (VoidColors.isRotina) Modifier.padding(4.dp).card(16.dp) else Modifier)
             .pressFeedback(source)
             .combinedClickable(
                 role = androidx.compose.ui.semantics.Role.Button,
@@ -690,6 +692,7 @@ private fun AppCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxWidth()
+            .then(if (VoidColors.isRotina) Modifier.padding(4.dp).card(16.dp) else Modifier)
             .pressFeedback(source)
             .combinedClickable(
                 role = androidx.compose.ui.semantics.Role.Button,

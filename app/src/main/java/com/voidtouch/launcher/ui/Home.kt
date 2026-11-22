@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -209,18 +210,50 @@ fun HomeContent(
                         onStatusClick = onOpenHealth,
                     )
                 }
-                if (focusSummary != null && !night) FocusSummaryLine(focusSummary, onDismissFocusSummary)
-                FocusLine(
-                    focusSinceMillis = focusSinceMillis,
-                    focusUntilMillis = focusUntilMillis,
-                    nowMillis = nowMillis,
-                    onClick = onToggleFocus,
-                    onStartSession = onStartFocus,
-                )
-                // "Agora": apps prováveis para este horário; some na home calma.
-                if (!night && suggestions.isNotEmpty()) NowLine(suggestions, onLaunch)
+                val rotina = VoidColors.isRotina
+                // No design Rotina, cada linha vira um cartão com margem.
+                val rowCard = if (rotina) Modifier.fillMaxWidth().padding(horizontal = RotinaTokens.MARGIN_DP.dp, vertical = 4.dp).card() else Modifier
+                val showNow = !night && suggestions.isNotEmpty()
+                if (focusSummary != null && !night) {
+                    Box(rowCard) { FocusSummaryLine(focusSummary, onDismissFocusSummary) }
+                }
+                if (rotina) {
+                    // "foco" e "agora" lado a lado, em dois cartões.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .padding(horizontal = RotinaTokens.MARGIN_DP.dp, vertical = 4.dp),
+                    ) {
+                        FocusLine(
+                            focusSinceMillis = focusSinceMillis,
+                            focusUntilMillis = focusUntilMillis,
+                            nowMillis = nowMillis,
+                            onClick = onToggleFocus,
+                            onStartSession = onStartFocus,
+                            modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 52.dp).padding(end = if (showNow) 6.dp else 0.dp).card(),
+                        )
+                        if (showNow) {
+                            NowLine(
+                                suggestions,
+                                onLaunch,
+                                modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 52.dp).padding(start = 6.dp).card(),
+                            )
+                        }
+                    }
+                } else {
+                    FocusLine(
+                        focusSinceMillis = focusSinceMillis,
+                        focusUntilMillis = focusUntilMillis,
+                        nowMillis = nowMillis,
+                        onClick = onToggleFocus,
+                        onStartSession = onStartFocus,
+                    )
+                    // "Agora": apps prováveis para este horário; some na home calma.
+                    if (showNow) NowLine(suggestions, onLaunch)
+                }
                 // Tarefa do foco: toque marca como feita; segurar abre as anotações.
-                if (!night && focusNote != null) TaskLine(focusNote, onNoteDone, onOpenCapture)
+                if (!night && focusNote != null) Box(rowCard) { TaskLine(focusNote, onNoteDone, onOpenCapture) }
 
                 // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
                 // (de 32 a 44 dp) para os 10 caberem sem rolar.
@@ -228,9 +261,13 @@ fun HomeContent(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .then(if (VoidColors.isRotina) Modifier.padding(horizontal = RotinaTokens.MARGIN_DP.dp, vertical = 4.dp).card() else Modifier),
+                        .then(if (VoidColors.isRotina) Modifier.padding(horizontal = RotinaTokens.MARGIN_DP.dp - 3.dp) else Modifier),
                 ) {
-                    val rowHeight = (maxHeight / favorites.size.coerceAtLeast(1)).coerceIn(32.dp, 44.dp)
+                    val rowHeight = if (VoidColors.isRotina) {
+                        (maxHeight / ((favorites.size + 1) / 2).coerceAtLeast(1)).coerceIn(40.dp, 56.dp)
+                    } else {
+                        (maxHeight / favorites.size.coerceAtLeast(1)).coerceIn(32.dp, 44.dp)
+                    }
                     Column(modifier = Modifier.fillMaxSize().verticalScroll(favoritesScroll)) {
                         if (favorites.isEmpty()) {
                             Text(
@@ -244,10 +281,11 @@ fun HomeContent(
                                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                             )
                         } else {
-                            favorites.forEach { item ->
+                            val rowFor: @Composable (Favorite, Modifier) -> Unit = { item, m ->
                                 FavoriteRow(
                                     item = item,
                                     height = rowHeight,
+                                    modifier = m,
                                     onOpen = {
                                         when (item) {
                                             is Favorite.App -> onLaunch(item.app)
@@ -256,6 +294,17 @@ fun HomeContent(
                                     },
                                     onUnpin = { onUnpin(item) },
                                 )
+                            }
+                            if (VoidColors.isRotina) {
+                                // Design Rotina: favoritos em duas colunas de cartões.
+                                favorites.chunked(2).forEach { pair ->
+                                    Row(modifier = Modifier.fillMaxWidth()) {
+                                        pair.forEach { rowFor(it, Modifier.weight(1f)) }
+                                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                                    }
+                                }
+                            } else {
+                                favorites.forEach { rowFor(it, Modifier) }
                             }
                         }
                     }
@@ -307,12 +356,20 @@ private fun FavoriteRow(
     height: Dp,
     onOpen: () -> Unit,
     onUnpin: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    val rotina = VoidColors.isRotina
     val haptic = LocalHapticFeedback.current
     val source = remember { MutableInteractionSource() }
     // A linha ocupa a largura toda, mas só o conteúdo (ícone e nome) responde ao toque: o espaço
     // vazio ao lado fica livre para o toque duplo e os deslizes da home.
-    Box(modifier = Modifier.fillMaxWidth().heightIn(min = height).padding(start = if (VoidColors.isRotina) RotinaTokens.MARGIN_DP.dp else 24.dp)) {
+    Box(
+        contentAlignment = if (rotina) Alignment.CenterStart else Alignment.TopStart,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = height)
+            .then(if (rotina) Modifier.padding(3.dp).card(14.dp) else Modifier.padding(start = 24.dp)),
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -328,15 +385,15 @@ private fun FavoriteRow(
                         onUnpin()
                     },
                 )
-                .padding(end = 20.dp),
+                .padding(start = if (rotina) 12.dp else 0.dp, end = if (rotina) 8.dp else 20.dp),
         ) {
             when (item) {
                 is Favorite.App -> {
                     AppIcon(app = item.app, size = 24.dp)
-                    Spacer(Modifier.width(18.dp))
+                    Spacer(Modifier.width(if (rotina) 12.dp else 18.dp))
                     Text(
                         text = item.app.label,
-                        style = VoidType.App,
+                        style = if (rotina) VoidType.Small else VoidType.App,
                         color = VoidColors.Text,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -344,10 +401,10 @@ private fun FavoriteRow(
                 }
                 is Favorite.FolderItem -> {
                     FolderGlyph(width = 24.dp, height = 20.dp)
-                    Spacer(Modifier.width(18.dp))
+                    Spacer(Modifier.width(if (rotina) 12.dp else 18.dp))
                     Text(
                         text = item.folder.name,
-                        style = VoidType.App,
+                        style = if (rotina) VoidType.Small else VoidType.App,
                         color = VoidColors.Text,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +33,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.DeviceStats
 import com.voidtouch.launcher.data.FocusSession
@@ -159,11 +161,9 @@ fun InfoBlock(
             }
         }
         // Só o bloco de texto abre a saúde do aparelho; o espaço vazio em volta fica livre para os gestos.
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .then(if (rotina) Modifier.padding(start = 6.dp).fillMaxHeight().card().padding(14.dp) else Modifier),
-        ) {
+        if (rotina) {
+            StatGrid(stats, onStatusClick, Modifier.weight(1f).padding(start = 6.dp).fillMaxHeight())
+        } else Box(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onStatusClick)) {
                 Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
                 lines.forEach { line ->
@@ -176,6 +176,60 @@ fun InfoBlock(
                 }
             }
         }
+    }
+}
+
+
+/** Recuo lateral do texto das linhas da home: menor dentro dos cartões do design Rotina. */
+internal val LineInset: androidx.compose.ui.unit.Dp get() = if (VoidColors.isRotina) 14.dp else 24.dp
+
+private data class StatTileData(val label: String, val value: String)
+
+private fun statTiles(context: Context, s: DeviceStats): List<StatTileData> = buildList {
+    if (s.batteryPercent >= 0) add(StatTileData(if (s.charging) "carregando" else "bateria", "${s.batteryPercent}%"))
+    if (s.ramTotalMb > 0) add(StatTileData("ram livre", String.format(PtBr, "%.1f GB", s.ramFreeMb / 1024f)))
+    add(StatTileData("disco livre", Formatter.formatShortFileSize(context, s.storageFreeBytes.coerceAtLeast(0L))))
+    val net = when (s.network) {
+        NetworkKind.WiFi -> "wi-fi"
+        NetworkKind.Mobile -> "dados"
+        NetworkKind.Other -> "ativa"
+        NetworkKind.None -> "desligada"
+    }
+    add(StatTileData(s.temperatureC?.let { String.format(PtBr, "rede · %.0f °C", it) } ?: "rede", net))
+}
+
+/** Design Rotina: o status do celular em quatro cartões de número. Toque abre a saúde do aparelho. */
+@Composable
+private fun StatGrid(stats: DeviceStats?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val tiles = remember(stats) { stats?.let { statTiles(context, it) }.orEmpty() }
+    Column(
+        modifier = modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        tiles.chunked(2).forEach { pair ->
+            Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                pair.forEach { StatTile(it, Modifier.weight(1f).fillMaxHeight()) }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatTile(tile: StatTileData, modifier: Modifier = Modifier) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier.card(14.dp).padding(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+        Text(tile.label, style = VoidType.Caption.copy(fontSize = 11.sp), color = VoidColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            tile.value,
+            style = VoidType.Day.copy(fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = 0.sp),
+            color = VoidColors.Text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -223,7 +277,7 @@ fun FocusLine(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.padding(horizontal = 24.dp, vertical = 2.dp),
+        modifier = modifier.padding(horizontal = LineInset, vertical = 2.dp),
     ) {
         if (choosing && !focusOn) {
             Text("foco por", style = VoidType.Caption, color = VoidColors.TextDim)
@@ -299,16 +353,16 @@ fun FocusSummaryLine(text: String, onDismiss: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onDismiss)
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+            .padding(horizontal = LineInset, vertical = 8.dp),
     )
 }
 
 /** Os apps mais prováveis para este horário, em uma linha. Só o texto responde ao toque. */
 @Composable
-fun NowLine(apps: List<AppEntry>, onLaunch: (AppEntry) -> Unit) {
+fun NowLine(apps: List<AppEntry>, onLaunch: (AppEntry) -> Unit, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 2.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = LineInset, vertical = 2.dp),
     ) {
         Text("agora", style = VoidType.Caption, color = VoidColors.TextDim)
         apps.forEach { app ->
@@ -332,7 +386,7 @@ fun TaskLine(note: Note, onDone: (Note) -> Unit, onOpen: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = LineInset, vertical = 2.dp),
     ) {
         Text(
             text = "● ${note.text}",

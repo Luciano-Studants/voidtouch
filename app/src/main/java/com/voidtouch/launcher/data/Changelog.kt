@@ -10,6 +10,15 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.49.0",
+            listOf(
+                "Design rotina mais fiel ao Rotina Noturna: o status do celular virou quatro cartões de número (bateria, ram, disco e rede), \"foco\" e \"agora\" ficam lado a lado em cartões, e a tarefa do foco também é um cartão.",
+                "Os favoritos passaram a duas colunas de cartões, sem estourar a tela como na versão anterior.",
+                "Na lista completa de apps, cada app e cada pasta é um cartão arredondado.",
+                "O design void continua exatamente como era.",
+            ),
+        ),
+        ReleaseNote(
             "0.48.0",
             listOf(
                 "Novo design: \"rotina\", inspirado no app Rotina Noturna. Em Ajustes > design, troque entre \"void\" (o minimalista de sempre) e \"rotina\".",
