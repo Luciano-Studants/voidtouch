@@ -8,7 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.voidtouch.launcher.data.Design
 import com.voidtouch.launcher.data.HighVis
+import com.voidtouch.launcher.data.RotinaTokens
 import com.voidtouch.launcher.data.TonePalette
 import com.voidtouch.launcher.data.WallTone
 import androidx.compose.ui.graphics.Color
@@ -24,9 +26,40 @@ object VoidColors {
     /** Modo de alta visibilidade: sobrepõe as cores, o peso das letras e a espessura dos traços. */
     var highVis by mutableStateOf(false)
 
-    val Line: Color get() = if (highVis) Color(HighVis.LINE) else Color(palette.line)
-    val TextDim: Color get() = if (highVis) Color(HighVis.DIM) else Color(palette.dim)
-    val Text: Color get() = if (highVis) Color(HighVis.TEXT) else Color(palette.text)
+    /** Design escolhido (Void ou Rotina). */
+    var design by mutableStateOf(Design.Void)
+
+    val isRotina: Boolean get() = design == Design.Rotina
+
+    val Line: Color get() = when {
+        highVis -> Color(HighVis.LINE)
+        isRotina -> Color(RotinaTokens.LINE)
+        else -> Color(palette.line)
+    }
+    val TextDim: Color get() = when {
+        highVis -> Color(HighVis.DIM)
+        isRotina -> Color(RotinaTokens.MUTED)
+        else -> Color(palette.dim)
+    }
+    val Text: Color get() = when {
+        highVis -> Color(HighVis.TEXT)
+        isRotina -> Color(RotinaTokens.TEXT)
+        else -> Color(palette.text)
+    }
+
+    /** Fundo dos cartões: só existe no design Rotina. */
+    val Surface: Color get() = when {
+        !isRotina -> Color.Transparent
+        highVis -> Color(HighVis.BACKGROUND)
+        else -> Color(RotinaTokens.SURFACE)
+    }
+
+    /** Cor do item selecionado (pílula clara) e do texto sobre ela. */
+    val Selected: Color get() = if (isRotina) Color(RotinaTokens.SELECTED) else Text
+    val OnSelected: Color get() = Color(RotinaTokens.ON_SELECTED)
+
+    /** Fundo da tela no design Rotina (quando o fundo não é o papel de parede). */
+    val RotinaBackground: Int get() = if (highVis) HighVis.BACKGROUND else RotinaTokens.BACKGROUND
 
     /** Espessura dos contornos de botões e pílulas. */
     val Stroke: Dp get() = HighVis.strokeDp(highVis).dp

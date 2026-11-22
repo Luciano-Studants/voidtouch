@@ -13,14 +13,30 @@ val JetBrainsMono = FontFamily(Font(R.font.jetbrains_mono_light, FontWeight.Ligh
 /** Fonte quadrada e fina, usada só no relógio. */
 val Oxanium = FontFamily(Font(R.font.oxanium_extralight, FontWeight.ExtraLight))
 
+/** Fontes do design Rotina (as mesmas do app Rotina Noturna). */
+val Inter = FontFamily(
+    Font(R.font.inter_regular, FontWeight.Normal),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+)
+val SpaceGrotesk = FontFamily(Font(R.font.space_grotesk_medium, FontWeight.Medium))
+
 /** Letra manuscrita elegante, usada só no nome do mês. */
 val Allura = FontFamily(Font(R.font.allura_regular, FontWeight.Normal))
 
 /** Estilos de texto do app. A cor é aplicada em cada Text. */
 object VoidType {
     /** No modo de alta visibilidade as letras ficam em negrito. */
-    private fun hv(style: TextStyle): TextStyle =
-        if (VoidColors.highVis) style.copy(fontWeight = FontWeight.Bold) else style
+    private fun hv(style: TextStyle): TextStyle {
+        val base = if (VoidColors.isRotina) rotina(style) else style
+        return if (VoidColors.highVis) base.copy(fontWeight = FontWeight.Bold) else base
+    }
+
+    /** Design Rotina: Inter no texto e Space Grotesk no relógio e nos títulos grandes. */
+    private fun rotina(style: TextStyle): TextStyle = when (style.fontFamily) {
+        JetBrainsMono -> style.copy(fontFamily = Inter, fontWeight = FontWeight.Normal, letterSpacing = 0.sp)
+        Oxanium, Allura -> style.copy(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Medium)
+        else -> style
+    }
 
     /** Linhas do bloco de status e notificações: menores, para caber duas colunas. */
     val Small: TextStyle get() = hv(TextStyle(

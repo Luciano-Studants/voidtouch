@@ -52,6 +52,8 @@ Launcher Android minimalista, rápido e muito polido. O app precisa ser o mais l
 | Relatório de uso | Tempo de tela de hoje e de 7 dias, por app e por dia | 0.32 |
 | Modo carregando | Relógio de cabeceira com bateria e música ao carregar | 0.33 |
 | Animação de abertura | App abre crescendo do ponto tocado; toque com mola e vibração leve | 0.34 |
+| Alta visibilidade | Modo para sol forte: fundo preto, texto branco em negrito, contornos grossos, brilho no máximo; liga em Ajustes ou por gesto | 0.47 |
+| Design rotina | Segundo design com cartões, Inter e Space Grotesk, do app Rotina Noturna; troca em Ajustes > design | 0.48 |
 | Paralaxe do papel de parede | Fundo em papel de parede se move com a inclinação; sensor só com tela visível | 0.35 |
 | Reordenar favoritos | Tela em Ajustes com setas ↑ ↓ para mudar a ordem dos favoritos | 0.36 |
 | Cores do papel de parede | Texto, linhas e camada escura ganham o tom dominante da imagem (luminosidade fixa) | 0.37 |

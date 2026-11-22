@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.48.0",
+            listOf(
+                "Novo design: \"rotina\", inspirado no app Rotina Noturna. Em Ajustes > design, troque entre \"void\" (o minimalista de sempre) e \"rotina\".",
+                "No rotina: fundo quase preto, cartões arredondados com contorno fino (notificações, status e favoritos), fontes Inter e Space Grotesk, item selecionado em pílula clara. Continua sem cor de destaque.",
+                "O design vale junto com a alta visibilidade e com as cores do papel de parede quando o fundo é o papel de parede. O contraste das cores novas é verificado por teste.",
+            ),
+        ),
+        ReleaseNote(
             "0.47.0",
             listOf(
                 "Modo de alta visibilidade, para sol forte e lugares difíceis de ver. Ligue em Ajustes > alta visibilidade ou por um gesto da home (ação \"alta visibilidade\").",

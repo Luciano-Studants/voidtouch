@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,7 +40,9 @@ import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.data.NoteGroups
 import com.voidtouch.launcher.notify.NoteItem
 import androidx.compose.ui.text.style.TextOverflow
+import com.voidtouch.launcher.data.RotinaTokens
 import com.voidtouch.launcher.ui.theme.VoidColors
+import com.voidtouch.launcher.ui.theme.card
 import com.voidtouch.launcher.ui.theme.VoidType
 import java.util.Locale
 
@@ -66,12 +71,19 @@ fun InfoBlock(
     val context = LocalContext.current
     val lines = remember(stats) { stats?.let { statusLines(context, it) }.orEmpty() }
 
+    val rotina = VoidColors.isRotina
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 10.dp),
+            .then(if (rotina) Modifier.height(IntrinsicSize.Min) else Modifier)
+            .padding(horizontal = if (rotina) RotinaTokens.MARGIN_DP.dp else 24.dp, vertical = 10.dp),
     ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = if (rotina) 6.dp else 12.dp)
+                .then(if (rotina) Modifier.fillMaxHeight().card().padding(14.dp) else Modifier),
+        ) {
             Text(text = "notificações", style = VoidType.Caption, color = VoidColors.TextDim)
             val haptic = LocalHapticFeedback.current
             if (!notificationsEnabled) {
@@ -147,7 +159,11 @@ fun InfoBlock(
             }
         }
         // Só o bloco de texto abre a saúde do aparelho; o espaço vazio em volta fica livre para os gestos.
-        Box(modifier = Modifier.weight(1f)) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .then(if (rotina) Modifier.padding(start = 6.dp).fillMaxHeight().card().padding(14.dp) else Modifier),
+        ) {
             Column(modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onStatusClick)) {
                 Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
                 lines.forEach { line ->

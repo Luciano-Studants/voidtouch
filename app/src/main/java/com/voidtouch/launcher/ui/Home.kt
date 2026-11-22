@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -60,7 +61,9 @@ import com.voidtouch.launcher.data.MemoryShown
 import com.voidtouch.launcher.data.Note
 import com.voidtouch.launcher.notify.LiveItem
 import com.voidtouch.launcher.notify.NoteItem
+import com.voidtouch.launcher.data.RotinaTokens
 import com.voidtouch.launcher.ui.theme.VoidColors
+import com.voidtouch.launcher.ui.theme.card
 import com.voidtouch.launcher.ui.theme.VoidType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -221,7 +224,12 @@ fun HomeContent(
 
                 // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
                 // (de 32 a 44 dp) para os 10 caberem sem rolar.
-                BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .then(if (VoidColors.isRotina) Modifier.padding(horizontal = RotinaTokens.MARGIN_DP.dp, vertical = 4.dp).card() else Modifier),
+                ) {
                     val rowHeight = (maxHeight / favorites.size.coerceAtLeast(1)).coerceIn(32.dp, 44.dp)
                     Column(modifier = Modifier.fillMaxSize().verticalScroll(favoritesScroll)) {
                         if (favorites.isEmpty()) {
@@ -283,6 +291,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .heightIn(min = 52.dp)
             .widthIn(min = 168.dp)
             .clip(CircleShape)
+            .background(VoidColors.Surface)
             .border(width = VoidColors.Stroke, color = VoidColors.TextDim, shape = CircleShape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 20.dp),
@@ -303,7 +312,7 @@ private fun FavoriteRow(
     val source = remember { MutableInteractionSource() }
     // A linha ocupa a largura toda, mas só o conteúdo (ícone e nome) responde ao toque: o espaço
     // vazio ao lado fica livre para o toque duplo e os deslizes da home.
-    Box(modifier = Modifier.fillMaxWidth().heightIn(min = height).padding(start = 24.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().heightIn(min = height).padding(start = if (VoidColors.isRotina) RotinaTokens.MARGIN_DP.dp else 24.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -403,6 +412,7 @@ private fun DrawerButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(52.dp)
             .clip(CircleShape)
+            .background(VoidColors.Surface)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {

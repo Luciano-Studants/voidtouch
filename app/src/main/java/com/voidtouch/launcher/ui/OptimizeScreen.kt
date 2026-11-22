@@ -6,6 +6,7 @@ import android.provider.Settings
 import android.net.Uri
 import android.content.Intent
 import android.text.format.Formatter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -272,6 +273,7 @@ private fun ResultCard(text: String) {
         modifier = Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
+            .background(VoidColors.Surface, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
             .border(VoidColors.Stroke, VoidColors.TextDim, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
             .padding(16.dp),
     ) {

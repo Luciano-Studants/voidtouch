@@ -2,6 +2,8 @@ package com.voidtouch.launcher.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.voidtouch.launcher.data.AppEntry
 import com.voidtouch.launcher.data.ClockStyle
+import com.voidtouch.launcher.data.Design
 import com.voidtouch.launcher.data.MemoryMode
 import com.voidtouch.launcher.data.GestureTarget
 import com.voidtouch.launcher.data.QuickAction
@@ -73,6 +76,8 @@ fun SettingsScreen(
     onFocusAutoEnd: () -> Unit,
     colorSet: String,
     onColorSet: (String) -> Unit,
+    design: Design,
+    onDesign: (Design) -> Unit,
     highVis: Boolean,
     onHighVis: () -> Unit,
     parallax: Boolean,
@@ -155,6 +160,20 @@ fun SettingsScreen(
                 modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClose).heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
         }
+
+        Section("design")
+        Options(
+            items = Design.entries.toList(),
+            selected = design,
+            label = { it.label },
+            onSelect = onDesign,
+        )
+        Text(
+            design.note,
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
+        )
 
         Section("alta visibilidade")
         ValueRow(if (highVis) "alta visibilidade: ligada" else "alta visibilidade: desligada", onHighVis)
@@ -474,10 +493,19 @@ private fun <T> Options(items: List<T>, selected: T, label: (T) -> String, onSel
                 .clickable(role = androidx.compose.ui.semantics.Role.Button) { onSelect(item) }
                 .padding(vertical = 12.dp),
         ) {
+            val pill = VoidColors.isRotina && on
             Text(
                 text = (if (on) "● " else "○ ") + label(item),
                 style = VoidType.App,
-                color = if (on) VoidColors.Text else VoidColors.TextDim,
+                color = if (pill) VoidColors.OnSelected else if (on) VoidColors.Text else VoidColors.TextDim,
+                modifier = if (pill) {
+                    Modifier
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(VoidColors.Selected)
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                } else {
+                    Modifier
+                },
             )
         }
     }

@@ -47,7 +47,9 @@ import com.voidtouch.launcher.data.HomeRules
 import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.FocusSession
 import com.voidtouch.launcher.data.ContactsReader
+import com.voidtouch.launcher.data.Design
 import com.voidtouch.launcher.data.Hit
+import com.voidtouch.launcher.data.RotinaTokens
 import com.voidtouch.launcher.data.HighVis
 import com.voidtouch.launcher.data.LaterItem
 import com.voidtouch.launcher.data.LaunchCounts
@@ -188,6 +190,7 @@ class MainActivity : ComponentActivity() {
     private var lastTouchX = 0f
     private var lastTouchY = 0f
     private var openAnim by mutableStateOf(true)
+    private var design by mutableStateOf(Design.Void)
     private var highVis by mutableStateOf(false)
     private var parallax by mutableStateOf(true)
     private var colorSet by mutableStateOf(ColorSets.DEFAULT)
@@ -382,6 +385,8 @@ class MainActivity : ComponentActivity() {
         predictOn = settingsStore.loadPredictOn()
         dockOn = settingsStore.loadDockOn()
         openAnim = settingsStore.loadOpenAnim()
+        design = Design.fromKey(settingsStore.loadDesign())
+        VoidColors.design = design
         highVis = settingsStore.loadHighVis()
         VoidColors.highVis = highVis
         parallax = settingsStore.loadParallax()
@@ -770,6 +775,8 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveColorSet(it)
                                 background.refresh()
                             },
+                            design = design,
+                            onDesign = ::setDesign,
                             highVis = highVis,
                             onHighVis = ::toggleHighVis,
                             parallax = parallax,
@@ -1318,6 +1325,7 @@ class MainActivity : ComponentActivity() {
         val argb = when {
             highVis -> HighVis.BACKGROUND
             backdrop == Backdrop.Wallpaper -> VoidColors.Veil
+            VoidColors.isRotina -> RotinaTokens.BACKGROUND
             else -> backdrop.argb
         }
         window.setBackgroundDrawable(ColorDrawable(argb))
@@ -1325,6 +1333,13 @@ class MainActivity : ComponentActivity() {
         val attrs = window.attributes
         attrs.screenBrightness = if (highVis) 1f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
         window.attributes = attrs
+    }
+
+    private fun setDesign(next: Design) {
+        design = next
+        VoidColors.design = next
+        settingsStore.saveDesign(next.key)
+        applyBackdrop()
     }
 
     private fun toggleHighVis() {
