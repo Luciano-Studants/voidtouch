@@ -7,6 +7,7 @@ enum class QuickAction(val id: String, val label: String) {
     Search("search", "buscar app"),
     Drawer("drawer", "lista de apps"),
     Focus("focus", "ligar ou desligar o foco"),
+    HighVis("highvis", "alta visibilidade (sol forte)"),
     Capture("capture", "anotação rápida"),
     Optimize("optimize", "otimizar o celular"),
     Health("health", "saúde do aparelho"),

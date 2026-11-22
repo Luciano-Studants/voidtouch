@@ -283,7 +283,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .heightIn(min = 52.dp)
             .widthIn(min = 168.dp)
             .clip(CircleShape)
-            .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape)
+            .border(width = VoidColors.Stroke, color = VoidColors.TextDim, shape = CircleShape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 20.dp),
     ) {
@@ -385,7 +385,7 @@ private fun LetterBadge(letter: Char, size: Dp) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(size)
-            .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape),
+            .border(width = VoidColors.Stroke, color = VoidColors.TextDim, shape = CircleShape),
     ) {
         Text(
             text = letter.toString(),

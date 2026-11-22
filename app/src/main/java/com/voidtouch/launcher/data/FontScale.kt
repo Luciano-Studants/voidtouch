@@ -7,8 +7,11 @@ package com.voidtouch.launcher.data
 object FontScale {
     const val MAX = 1.15f
 
-    fun cap(scale: Float): Float = when {
-        scale.isNaN() || scale <= 0f -> 1f
-        else -> scale.coerceAtMost(MAX)
+    fun cap(scale: Float, highVis: Boolean = false): Float {
+        val base = when {
+            scale.isNaN() || scale <= 0f -> 1f
+            else -> scale.coerceAtMost(MAX)
+        }
+        return if (highVis) base.coerceAtLeast(HighVis.FONT_SCALE) else base
     }
 }

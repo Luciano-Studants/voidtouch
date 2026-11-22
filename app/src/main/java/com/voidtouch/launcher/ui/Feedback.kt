@@ -66,7 +66,7 @@ fun BannerHost(banner: Banner?, modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .background(VoidColors.Graphite, RoundedCornerShape(24.dp))
-                .border(1.dp, VoidColors.Line, RoundedCornerShape(24.dp))
+                .border(VoidColors.Stroke, VoidColors.Line, RoundedCornerShape(24.dp))
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
             Text(text = last, style = VoidType.Caption, color = VoidColors.Text)

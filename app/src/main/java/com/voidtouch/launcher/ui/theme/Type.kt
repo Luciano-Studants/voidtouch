@@ -18,57 +18,66 @@ val Allura = FontFamily(Font(R.font.allura_regular, FontWeight.Normal))
 
 /** Estilos de texto do app. A cor é aplicada em cada Text. */
 object VoidType {
+    /** No modo de alta visibilidade as letras ficam em negrito. */
+    private fun hv(style: TextStyle): TextStyle =
+        if (VoidColors.highVis) style.copy(fontWeight = FontWeight.Bold) else style
+
     /** Linhas do bloco de status e notificações: menores, para caber duas colunas. */
-    val Small = TextStyle(
+    val Small: TextStyle get() = hv(TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.3.sp,
-    )
+    ))
 
     /** Dia da semana grande, na página "hoje é" do carrossel. */
-    val Day = TextStyle(
+    val Day: TextStyle get() = hv(TextStyle(
         fontFamily = Oxanium,
         fontWeight = FontWeight.ExtraLight,
         fontSize = 40.sp,
         lineHeight = 44.sp,
         letterSpacing = 1.sp,
-    )
+    ))
 
-    val Month = TextStyle(
+    val Month: TextStyle get() = if (VoidColors.highVis) TextStyle(
+        fontFamily = JetBrainsMono,
+        fontWeight = FontWeight.Bold,
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
+    ) else (TextStyle(
         fontFamily = Allura,
         fontWeight = FontWeight.Normal,
         fontSize = 46.sp,
         lineHeight = 52.sp,
-    )
+    ))
 
-    val Caption = TextStyle(
+    val Caption: TextStyle get() = hv(TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
         fontSize = 12.sp,
         letterSpacing = 1.5.sp,
-    )
+    ))
 
-    val App = TextStyle(
+    val App: TextStyle get() = hv(TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
         fontSize = 16.sp,
         letterSpacing = 0.3.sp,
-    )
+    ))
 
-    val Date = TextStyle(
+    val Date: TextStyle get() = hv(TextStyle(
         fontFamily = JetBrainsMono,
         fontWeight = FontWeight.Light,
         fontSize = 13.sp,
         letterSpacing = 0.8.sp,
-    )
+    ))
 
-    val Clock = TextStyle(
+    val Clock: TextStyle get() = hv(TextStyle(
         fontFamily = Oxanium,
         fontWeight = FontWeight.ExtraLight,
         fontSize = 64.sp,
         lineHeight = 68.sp,
         letterSpacing = 2.sp,
-    )
+    ))
 }

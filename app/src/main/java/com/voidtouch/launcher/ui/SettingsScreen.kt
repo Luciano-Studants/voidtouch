@@ -73,6 +73,8 @@ fun SettingsScreen(
     onFocusAutoEnd: () -> Unit,
     colorSet: String,
     onColorSet: (String) -> Unit,
+    highVis: Boolean,
+    onHighVis: () -> Unit,
     parallax: Boolean,
     parallaxAvailable: Boolean,
     ownImage: Boolean,
@@ -153,6 +155,15 @@ fun SettingsScreen(
                 modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClose).heightIn(min = 44.dp).padding(vertical = 8.dp),
             )
         }
+
+        Section("alta visibilidade")
+        ValueRow(if (highVis) "alta visibilidade: ligada" else "alta visibilidade: desligada", onHighVis)
+        Text(
+            "para sol forte ou lugares difíceis de ver: fundo preto, texto branco em negrito, contornos mais grossos, fonte maior e brilho da tela no máximo enquanto a home está aberta. Também dá para ligar por um gesto da home.",
+            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+            color = VoidColors.TextDim,
+            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
+        )
 
         Section("fundo")
         Options(

@@ -48,6 +48,7 @@ import com.voidtouch.launcher.data.FocusSchedule
 import com.voidtouch.launcher.data.FocusSession
 import com.voidtouch.launcher.data.ContactsReader
 import com.voidtouch.launcher.data.Hit
+import com.voidtouch.launcher.data.HighVis
 import com.voidtouch.launcher.data.LaterItem
 import com.voidtouch.launcher.data.LaunchCounts
 import com.voidtouch.launcher.data.ReadLater
@@ -187,6 +188,7 @@ class MainActivity : ComponentActivity() {
     private var lastTouchX = 0f
     private var lastTouchY = 0f
     private var openAnim by mutableStateOf(true)
+    private var highVis by mutableStateOf(false)
     private var parallax by mutableStateOf(true)
     private var colorSet by mutableStateOf(ColorSets.DEFAULT)
     // Criado só no primeiro uso (depois do onCreate), quando o contexto do app já está pronto.
@@ -380,6 +382,8 @@ class MainActivity : ComponentActivity() {
         predictOn = settingsStore.loadPredictOn()
         dockOn = settingsStore.loadDockOn()
         openAnim = settingsStore.loadOpenAnim()
+        highVis = settingsStore.loadHighVis()
+        VoidColors.highVis = highVis
         parallax = settingsStore.loadParallax()
         colorSet = settingsStore.loadColorSet()
         openHaptic = settingsStore.loadOpenHaptic()
@@ -509,6 +513,7 @@ class MainActivity : ComponentActivity() {
                         action == QuickAction.Search -> { focusSearch = true; nav.open(Screen.Drawer) }
                         action == QuickAction.Drawer -> { focusSearch = false; nav.open(Screen.Drawer) }
                         action == QuickAction.Focus -> toggleFocus()
+                        action == QuickAction.HighVis -> toggleHighVis()
                         action == QuickAction.Capture -> nav.open(Screen.Capture)
                         action == QuickAction.Usage -> nav.open(Screen.Usage)
                         action == QuickAction.Optimize -> nav.open(Screen.Optimize)
@@ -611,7 +616,7 @@ class MainActivity : ComponentActivity() {
                 Box(Modifier.fillMaxSize()) {
                 val wp = background.bitmap
                 // A imagem de fundo cobre a tela inteira (inclusive atrás das barras do sistema).
-                if (backdrop == Backdrop.Wallpaper && wp != null) {
+                if (backdrop == Backdrop.Wallpaper && wp != null && !highVis) {
                     val maxPx = with(androidx.compose.ui.platform.LocalDensity.current) { Parallax.MAX_DP.dp.toPx() }
                     androidx.compose.foundation.Image(
                         bitmap = wp.asImageBitmap(),
@@ -765,6 +770,8 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.saveColorSet(it)
                                 background.refresh()
                             },
+                            highVis = highVis,
+                            onHighVis = ::toggleHighVis,
                             parallax = parallax,
                             parallaxAvailable = background.parallaxAvailable,
                             ownImage = background.ownImage,
@@ -927,6 +934,7 @@ class MainActivity : ComponentActivity() {
                                         QuickAction.Search -> focusSearch = true
                                         QuickAction.Drawer -> Unit
                                         QuickAction.Focus -> toggleFocus()
+                                        QuickAction.HighVis -> toggleHighVis()
                                         QuickAction.Capture -> { nav.close(Screen.Drawer); nav.open(Screen.Capture) }
                                         QuickAction.Usage -> { nav.close(Screen.Drawer); nav.open(Screen.Usage) }
                                         QuickAction.Optimize -> { nav.close(Screen.Drawer); nav.open(Screen.Optimize) }
@@ -1307,8 +1315,24 @@ class MainActivity : ComponentActivity() {
     private fun expandNotificationPanel() = system.expandNotificationPanel()
 
     private fun applyBackdrop() {
-        val argb = if (backdrop == Backdrop.Wallpaper) VoidColors.Veil else backdrop.argb
+        val argb = when {
+            highVis -> HighVis.BACKGROUND
+            backdrop == Backdrop.Wallpaper -> VoidColors.Veil
+            else -> backdrop.argb
+        }
         window.setBackgroundDrawable(ColorDrawable(argb))
+        // Alta visibilidade: brilho no máximo só nesta janela (a home); os outros apps não mudam.
+        val attrs = window.attributes
+        attrs.screenBrightness = if (highVis) 1f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+        window.attributes = attrs
+    }
+
+    private fun toggleHighVis() {
+        highVis = !highVis
+        VoidColors.highVis = highVis
+        settingsStore.saveHighVis(highVis)
+        applyBackdrop()
+        say(if (highVis) "alta visibilidade ligada" else "alta visibilidade desligada")
     }
 
     private companion object {

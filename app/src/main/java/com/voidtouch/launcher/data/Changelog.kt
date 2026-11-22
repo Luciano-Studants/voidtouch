@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.47.0",
+            listOf(
+                "Modo de alta visibilidade, para sol forte e lugares difíceis de ver. Ligue em Ajustes > alta visibilidade ou por um gesto da home (ação \"alta visibilidade\").",
+                "No modo: fundo preto puro, texto branco em negrito, contornos de botões mais grossos, fonte um pouco maior, o mês em letra reta e o brilho da tela no máximo enquanto a home está aberta. Os outros apps não mudam.",
+                "O contraste do modo é verificado por teste (mínimo AAA, 7 para 1).",
+            ),
+        ),
+        ReleaseNote(
             "0.46.5",
             listOf(
                 "Organização interna: as ações que só falam com o sistema (lanterna, desinstalar, abrir configurações, painel de notificações, resultados da busca) saíram da tela principal para um arquivo próprio.",

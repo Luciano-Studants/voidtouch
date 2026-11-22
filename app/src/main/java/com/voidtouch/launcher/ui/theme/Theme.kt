@@ -6,6 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.voidtouch.launcher.data.HighVis
 import com.voidtouch.launcher.data.TonePalette
 import com.voidtouch.launcher.data.WallTone
 import androidx.compose.ui.graphics.Color
@@ -18,12 +21,18 @@ object VoidColors {
     // Texto e linhas podem ganhar um tom do papel de parede (veja WallTone); por padrão são neutros.
     private var palette by mutableStateOf(WallTone.NEUTRAL)
 
-    val Line: Color get() = Color(palette.line)
-    val TextDim: Color get() = Color(palette.dim)
-    val Text: Color get() = Color(palette.text)
+    /** Modo de alta visibilidade: sobrepõe as cores, o peso das letras e a espessura dos traços. */
+    var highVis by mutableStateOf(false)
 
-    /** Camada escura sobre o papel de parede (ARGB). */
-    val Veil: Int get() = palette.veil
+    val Line: Color get() = if (highVis) Color(HighVis.LINE) else Color(palette.line)
+    val TextDim: Color get() = if (highVis) Color(HighVis.DIM) else Color(palette.dim)
+    val Text: Color get() = if (highVis) Color(HighVis.TEXT) else Color(palette.text)
+
+    /** Espessura dos contornos de botões e pílulas. */
+    val Stroke: Dp get() = HighVis.strokeDp(highVis).dp
+
+    /** Camada escura sobre o papel de parede (ARGB). No modo de alta visibilidade, preto sólido. */
+    val Veil: Int get() = if (highVis) HighVis.BACKGROUND else palette.veil
 
     fun apply(p: TonePalette) {
         if (p != palette) palette = p
@@ -64,7 +73,7 @@ private val VoidScheme = darkColorScheme(
 @Composable
 fun VoidTouchTheme(content: @Composable () -> Unit) {
     val density = androidx.compose.ui.platform.LocalDensity.current
-    val capped = androidx.compose.ui.unit.Density(density.density, com.voidtouch.launcher.data.FontScale.cap(density.fontScale))
+    val capped = androidx.compose.ui.unit.Density(density.density, com.voidtouch.launcher.data.FontScale.cap(density.fontScale, VoidColors.highVis))
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides capped) {
         MaterialTheme(
             colorScheme = VoidScheme,

@@ -272,7 +272,7 @@ private fun ResultCard(text: String) {
         modifier = Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
-            .border(1.dp, VoidColors.TextDim, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+            .border(VoidColors.Stroke, VoidColors.TextDim, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
             .padding(16.dp),
     ) {
         Text(text, style = VoidType.App, color = VoidColors.Text)
@@ -306,7 +306,7 @@ private fun Pill(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .heightIn(min = 48.dp)
             .clip(CircleShape)
-            .border(1.dp, VoidColors.TextDim, CircleShape)
+            .border(VoidColors.Stroke, VoidColors.TextDim, CircleShape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 24.dp),
     ) {

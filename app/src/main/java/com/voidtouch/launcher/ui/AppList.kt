@@ -367,7 +367,7 @@ fun AppList(
                         .align(Alignment.Center)
                         .size(88.dp)
                         .background(VoidColors.Graphite, RoundedCornerShape(16.dp))
-                        .border(1.dp, VoidColors.Line, RoundedCornerShape(16.dp)),
+                        .border(VoidColors.Stroke, VoidColors.Line, RoundedCornerShape(16.dp)),
                 ) {
                     Text(
                         text = letter.toString(),
@@ -472,7 +472,7 @@ private fun SheetPanel(
         modifier = modifier
             .fillMaxWidth()
             .background(VoidColors.Graphite, shape)
-            .border(1.dp, VoidColors.Line, shape)
+            .border(VoidColors.Stroke, VoidColors.Line, shape)
             // Absorve o toque para não fechar a janela ao tocar dentro dela.
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
             .padding(horizontal = 24.dp, vertical = 20.dp),
@@ -715,7 +715,7 @@ private fun AppCell(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .size(9.dp)
-                        .border(1.dp, VoidColors.TextDim, CircleShape),
+                        .border(VoidColors.Stroke, VoidColors.TextDim, CircleShape),
                 )
             }
         }

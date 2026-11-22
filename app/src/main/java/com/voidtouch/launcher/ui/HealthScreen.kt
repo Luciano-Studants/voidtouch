@@ -248,7 +248,7 @@ private fun TextPill(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .heightIn(min = 48.dp)
             .clip(CircleShape)
-            .border(width = 1.dp, color = VoidColors.TextDim, shape = CircleShape)
+            .border(width = VoidColors.Stroke, color = VoidColors.TextDim, shape = CircleShape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .padding(horizontal = 24.dp),
     ) {

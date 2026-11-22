@@ -57,7 +57,7 @@ fun LivePill(items: List<LiveItem>, active: Boolean, onOpen: (LiveItem) -> Unit)
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp)
             .clip(shape)
-            .border(1.dp, VoidColors.TextDim.copy(alpha = 0.45f), shape)
+            .border(VoidColors.Stroke, VoidColors.TextDim.copy(alpha = 0.45f), shape)
             .animateContentSize()
             .clickable(role = androidx.compose.ui.semantics.Role.Button) { expanded = !expanded }
             .padding(horizontal = 14.dp, vertical = 8.dp),

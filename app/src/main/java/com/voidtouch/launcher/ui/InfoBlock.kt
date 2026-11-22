@@ -256,7 +256,7 @@ fun FocusLine(
                             if (focusOn) {
                                 Modifier.background(VoidColors.Text, CircleShape)
                             } else {
-                                Modifier.border(1.dp, VoidColors.TextDim, CircleShape)
+                                Modifier.border(VoidColors.Stroke, VoidColors.TextDim, CircleShape)
                             },
                         ),
                 )
