@@ -776,7 +776,7 @@ class MainActivity : ComponentActivity() {
                                 background.refresh()
                             },
                             design = design,
-                            onDesign = ::setDesign,
+                            onDesign = ::changeDesign,
                             highVis = highVis,
                             onHighVis = ::toggleHighVis,
                             parallax = parallax,
@@ -1335,7 +1335,7 @@ class MainActivity : ComponentActivity() {
         window.attributes = attrs
     }
 
-    private fun setDesign(next: Design) {
+    private fun changeDesign(next: Design) {
         design = next
         VoidColors.design = next
         settingsStore.saveDesign(next.key)
