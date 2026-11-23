@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.52.0",
+            listOf(
+                "Nova opção em Ajustes > modos: \"pausa antes de abrir\". Ao abrir um app marcado em \"apps do foco\", aparece uma pausa de 3 segundos que mostra quantas vezes você o abriu hoje e pergunta \"abrir mesmo assim?\". Desligada por padrão.",
+            ),
+        ),
+        ReleaseNote(
             "0.51.0",
             listOf(
                 "Na página \"hoje é\" do carrossel, o dia da semana agora cresce até ocupar toda a largura disponível.",

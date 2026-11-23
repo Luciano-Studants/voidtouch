@@ -51,6 +51,8 @@ import com.voidtouch.launcher.data.Design
 import com.voidtouch.launcher.data.Hit
 import com.voidtouch.launcher.data.RotinaTokens
 import com.voidtouch.launcher.data.HighVis
+import com.voidtouch.launcher.data.DailyOpens
+import com.voidtouch.launcher.ui.PauseScreen
 import com.voidtouch.launcher.data.LaterItem
 import com.voidtouch.launcher.data.LaunchCounts
 import com.voidtouch.launcher.data.ReadLater
@@ -192,6 +194,9 @@ class MainActivity : ComponentActivity() {
     private var openAnim by mutableStateOf(true)
     private var design by mutableStateOf(Design.Void)
     private var highVis by mutableStateOf(false)
+    private var pauseOn by mutableStateOf(false)
+    private var pausePending by mutableStateOf<AppEntry?>(null)
+    private var dailyOpens = DailyOpens.empty("")
     private var parallax by mutableStateOf(true)
     private var colorSet by mutableStateOf(ColorSets.DEFAULT)
     // Criado só no primeiro uso (depois do onCreate), quando o contexto do app já está pronto.
@@ -388,6 +393,8 @@ class MainActivity : ComponentActivity() {
         design = Design.fromKey(settingsStore.loadDesign())
         VoidColors.design = design
         highVis = settingsStore.loadHighVis()
+        pauseOn = settingsStore.loadPauseOn()
+        dailyOpens = DailyOpens.decode(settingsStore.loadDailyOpens(), java.time.LocalDate.now().toString())
         VoidColors.highVis = highVis
         parallax = settingsStore.loadParallax()
         colorSet = settingsStore.loadColorSet()
@@ -498,6 +505,7 @@ class MainActivity : ComponentActivity() {
                 // Um launcher não fecha com o botão voltar; aqui ele só sai das telas internas.
                 BackHandler {
                     when {
+                        pausePending != null -> pausePending = null
                         showDock -> { showDock = false; dockDismissed = true }
                         changelog != null -> changelog = null
                         nav.isOpen(Screen.Drawer) && markingFocusApps -> markingFocusApps = false
@@ -779,6 +787,12 @@ class MainActivity : ComponentActivity() {
                             onDesign = ::changeDesign,
                             highVis = highVis,
                             onHighVis = ::toggleHighVis,
+                            pauseOn = pauseOn,
+                            onPauseToggle = {
+                                pauseOn = !pauseOn
+                                settingsStore.savePauseOn(pauseOn)
+                                say(if (pauseOn) "pausa antes de abrir ligada" else "pausa antes de abrir desligada")
+                            },
                             parallax = parallax,
                             parallaxAvailable = background.parallaxAvailable,
                             ownImage = background.ownImage,
@@ -1043,6 +1057,14 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                   }
+                    pausePending?.let { p ->
+                        PauseScreen(
+                            appLabel = p.label,
+                            phrase = DailyOpens.phrase(DailyOpens.count(dailyOpens, java.time.LocalDate.now().toString(), p.key)),
+                            onOpen = { pausePending = null; launchApp(p, skipPause = true) },
+                            onBack = { pausePending = null },
+                        )
+                    }
                     if (showDock) {
                         DockScreen(
                             nowMillis = nowMillis,
@@ -1227,7 +1249,14 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Abre o app e conta a abertura, para a busca mostrar primeiro o que você mais usa. */
-    private fun launchApp(app: AppEntry) {
+    private fun launchApp(app: AppEntry, skipPause: Boolean = false) {
+        if (pauseOn && !skipPause && app.key in focusApps) {
+            pausePending = app
+            return
+        }
+        val today = java.time.LocalDate.now().toString()
+        dailyOpens = DailyOpens.increment(dailyOpens, today, app.key)
+        settingsStore.saveDailyOpens(DailyOpens.encode(dailyOpens))
         opens = LaunchCounts.increment(opens, app.key)
         if (predictOn) {
             val hour = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.systemDefault()).hour

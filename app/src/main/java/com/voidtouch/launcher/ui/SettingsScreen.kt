@@ -95,6 +95,8 @@ fun SettingsScreen(
     onDesign: (Design) -> Unit,
     highVis: Boolean,
     onHighVis: () -> Unit,
+    pauseOn: Boolean,
+    onPauseToggle: () -> Unit,
     parallax: Boolean,
     parallaxAvailable: Boolean,
     ownImage: Boolean,
@@ -259,6 +261,8 @@ fun SettingsScreen(
             if (dockOn) ToggleRow("manter a tela acesa", dockAwake, onDockAwake)
         }
         Note("Com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira com a bateria e a música. Um toque sai.")
+        Group { ToggleRow("pausa antes de abrir", pauseOn, onPauseToggle) }
+        Note("Ao abrir um app marcado em \"apps do foco\", aparece uma pausa de 3 segundos com quantas vezes você já o abriu hoje e a pergunta \"abrir mesmo assim?\".")
         Group {
             ToggleRow("foco automático", focusAutoOn, onFocusAutoToggle)
             if (focusAutoOn) {

@@ -174,6 +174,18 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_DESIGN, key).apply()
     }
 
+    fun loadPauseOn(): Boolean = prefs.getBoolean(KEY_PAUSE_ON, false)
+
+    fun savePauseOn(on: Boolean) {
+        prefs.edit().putBoolean(KEY_PAUSE_ON, on).apply()
+    }
+
+    fun loadDailyOpens(): String = prefs.getString(KEY_DAILY_OPENS, "") ?: ""
+
+    fun saveDailyOpens(text: String) {
+        prefs.edit().putString(KEY_DAILY_OPENS, text).apply()
+    }
+
     fun loadHighVis(): Boolean = prefs.getBoolean(KEY_HIGH_VIS, false)
 
     fun saveHighVis(on: Boolean) {
@@ -249,6 +261,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_WALL_TONE = "wall_tone"
         const val KEY_PARALLAX = "parallax"
         const val KEY_HIGH_VIS = "high_vis"
+        const val KEY_PAUSE_ON = "pause_on"
+        const val KEY_DAILY_OPENS = "daily_opens"
         const val KEY_DESIGN = "design"
         const val KEY_OPEN_HAPTIC = "open_haptic"
         const val KEY_MEMORY_MODE = "memory_mode"
