@@ -437,13 +437,10 @@ private fun NotePanel(item: NoteItem, onReply: (String) -> Unit, onLater: () -> 
     var replying by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     Column(modifier = Modifier.padding(bottom = 6.dp)) {
-        Row {
-            if (item.replyInput != null) {
-                PanelButton("responder") { replying = !replying }
-                Spacer(Modifier.width(14.dp))
-            }
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)) {
+            if (item.replyInput != null) PanelButton("responder") { replying = !replying }
             PanelButton("ler depois", onLater)
-            Spacer(Modifier.width(14.dp))
             PanelButton("dispensar", onDismiss)
         }
         if (replying) {
@@ -463,6 +460,8 @@ private fun NotePanel(item: NoteItem, onReply: (String) -> Unit, onLater: () -> 
 private fun PanelButton(label: String, onClick: () -> Unit) {
     Text(
         text = label,
+        maxLines = 1,
+        softWrap = false,
         style = VoidType.Caption,
         color = VoidColors.Text,
         modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).heightIn(min = 44.dp).padding(vertical = 6.dp),

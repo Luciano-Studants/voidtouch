@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.54.1",
+            listOf(
+                "Corrigido: no painel de notificações em meia largura, os botões \"responder\", \"ler depois\" e \"dispensar\" ficavam espremidos e \"dispensar\" quebrava letra por letra. Agora passam para a linha de baixo quando falta espaço.",
+                "O título do mês na agenda não é mais cortado.",
+            ),
+        ),
+        ReleaseNote(
             "0.54.0",
             listOf(
                 "Na grade do mês da agenda, os dias com compromisso no calendário ganham um ponto embaixo do número. Lê só o calendário do aparelho, e só com a permissão da agenda liberada.",
