@@ -99,6 +99,11 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     if (!project.hasProperty("screens")) exclude("**/screens/**")
-    if (project.hasProperty("screens")) systemProperty("roborazzi.test.record", "true")
+    if (project.hasProperty("screens")) {
+        systemProperty("roborazzi.test.record", "true")
+        // As imagens são saída "invisível" do teste: nunca reaproveitar do cache.
+        outputs.upToDateWhen { false }
+        outputs.cacheIf { false }
+    }
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
