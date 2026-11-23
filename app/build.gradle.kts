@@ -89,6 +89,7 @@ dependencies {
 
     // Capturas de tela (JVM, sem aparelho): rodam só com -Pscreens, num fluxo separado do release.
     testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.32.2")
     testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.32.2")
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation("androidx.compose.ui:ui-test-junit4")
