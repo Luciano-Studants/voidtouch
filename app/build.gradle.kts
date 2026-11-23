@@ -99,5 +99,6 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     if (!project.hasProperty("screens")) exclude("**/screens/**")
+    if (project.hasProperty("screens")) systemProperty("roborazzi.test.record", "true")
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
