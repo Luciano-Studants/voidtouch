@@ -99,4 +99,5 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     if (!project.hasProperty("screens")) exclude("**/screens/**")
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
