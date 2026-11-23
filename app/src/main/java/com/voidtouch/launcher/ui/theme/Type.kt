@@ -61,7 +61,7 @@ object VoidType {
         fontWeight = FontWeight.Bold,
         fontSize = 34.sp,
         lineHeight = 40.sp,
-    ) else (TextStyle(
+    ) else hv(TextStyle(
         fontFamily = Allura,
         fontWeight = FontWeight.Normal,
         fontSize = 46.sp,

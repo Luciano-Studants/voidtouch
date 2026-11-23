@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,97 +74,25 @@ fun InfoBlock(
     val context = LocalContext.current
     val lines = remember(stats) { stats?.let { statusLines(context, it) }.orEmpty() }
 
-    val rotina = VoidColors.isRotina
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (rotina) Modifier.height(IntrinsicSize.Min) else Modifier)
-            .padding(horizontal = if (rotina) RotinaTokens.MARGIN_DP.dp else 24.dp, vertical = 10.dp),
+            .padding(horizontal = 24.dp, vertical = 10.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = if (rotina) 6.dp else 12.dp)
-                .then(if (rotina) Modifier.fillMaxHeight().card().padding(14.dp) else Modifier),
-        ) {
-            Text(text = "notificações", style = VoidType.Caption, color = VoidColors.TextDim)
-            val haptic = LocalHapticFeedback.current
-            if (!notificationsEnabled) {
-                Text(
-                    text = "ativar acesso ›",
-                    style = VoidType.Small,
-                    color = VoidColors.Text,
-                    modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnableNotifications).padding(top = 3.dp, bottom = 3.dp),
-                )
-            } else if (notifications.isEmpty()) {
-                Text("nenhuma", style = VoidType.Small, color = VoidColors.TextDim, modifier = Modifier.padding(top = 3.dp))
-            } else {
-                val groups = remember(notifications) { NoteGroups.group(notifications) { it.packageName + "|" + it.title } }
-                var panelFor by remember { mutableStateOf<String?>(null) }
-                groups.take(3).forEach { g ->
-                    val n = g.first
-                    Column(
-                        modifier = Modifier
-                            .combinedClickable(
-                role = androidx.compose.ui.semantics.Role.Button,
-                                onClick = { onNotificationClick(n) },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    panelFor = if (panelFor == n.key) null else n.key
-                                },
-                            )
-                            .padding(vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = n.appLabel,
-                            style = VoidType.Caption,
-                            color = VoidColors.TextDim,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = if (g.count > 1) "${n.title} (${g.count})" else n.title,
-                            style = VoidType.Small,
-                            color = VoidColors.Text,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (n.text.isNotBlank()) {
-                            Text(
-                                text = n.text,
-                                style = VoidType.Caption,
-                                color = VoidColors.TextDim,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                    if (panelFor == n.key) {
-                        NotePanel(
-                            item = n,
-                            onReply = { text -> onNotificationReply(n, text); panelFor = null },
-                            onLater = { onNotificationLater(n); panelFor = null },
-                            onDismiss = { g.items.forEach(onNotificationDismiss); panelFor = null },
-                        )
-                    }
-                }
-                if (groups.size > 3) {
-                    Text("+${groups.size - 3}", style = VoidType.Small, color = VoidColors.TextDim)
-                }
-            }
-            if (laterCount > 0) {
-                Text(
-                    text = "ler depois ($laterCount) ›",
-                    style = VoidType.Caption,
-                    color = VoidColors.Text,
-                    modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpenLater).padding(top = 6.dp, bottom = 2.dp),
-                )
-            }
-        }
+        NotificationsPanel(
+            notifications = notifications,
+            notificationsEnabled = notificationsEnabled,
+            onNotificationClick = onNotificationClick,
+            onNotificationDismiss = onNotificationDismiss,
+            onNotificationReply = onNotificationReply,
+            onNotificationLater = onNotificationLater,
+            laterCount = laterCount,
+            onOpenLater = onOpenLater,
+            onEnableNotifications = onEnableNotifications,
+            modifier = Modifier.weight(1f).padding(end = 12.dp),
+        )
         // Só o bloco de texto abre a saúde do aparelho; o espaço vazio em volta fica livre para os gestos.
-        if (rotina) {
-            StatGrid(stats, onStatusClick, Modifier.weight(1f).padding(start = 6.dp).fillMaxHeight())
-        } else Box(modifier = Modifier.weight(1f)) {
+        Box(modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onStatusClick)) {
                 Text(text = "status do celular ›", style = VoidType.Date, color = VoidColors.TextDim)
                 lines.forEach { line ->
@@ -176,9 +105,102 @@ fun InfoBlock(
                 }
             }
         }
+
     }
 }
 
+/** Lista de notificações agrupadas, com o painel de opções (segurar). Usada nos dois designs. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun NotificationsPanel(
+    notifications: List<NoteItem>,
+    notificationsEnabled: Boolean,
+    onNotificationClick: (NoteItem) -> Unit,
+    onNotificationDismiss: (NoteItem) -> Unit,
+    onNotificationReply: (NoteItem, String) -> Unit,
+    onNotificationLater: (NoteItem) -> Unit,
+    laterCount: Int,
+    onOpenLater: () -> Unit,
+    onEnableNotifications: () -> Unit,
+    modifier: Modifier = Modifier,
+    maxGroups: Int = 3,
+) {
+    Column(modifier = modifier) {
+        Text(text = "notificações", style = VoidType.Caption, color = VoidColors.TextDim)
+        val haptic = LocalHapticFeedback.current
+        if (!notificationsEnabled) {
+            Text(
+                text = "ativar acesso ›",
+                style = VoidType.Small,
+                color = VoidColors.Text,
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnableNotifications).padding(top = 3.dp, bottom = 3.dp),
+            )
+        } else if (notifications.isEmpty()) {
+            Text("nenhuma", style = VoidType.Small, color = VoidColors.TextDim, modifier = Modifier.padding(top = 3.dp))
+        } else {
+            val groups = remember(notifications) { NoteGroups.group(notifications) { it.packageName + "|" + it.title } }
+            var panelFor by remember { mutableStateOf<String?>(null) }
+            groups.take(maxGroups).forEach { g ->
+                val n = g.first
+                Column(
+                    modifier = Modifier
+                        .combinedClickable(
+            role = androidx.compose.ui.semantics.Role.Button,
+                            onClick = { onNotificationClick(n) },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                panelFor = if (panelFor == n.key) null else n.key
+                            },
+                        )
+                        .padding(vertical = 4.dp),
+                ) {
+                    Text(
+                        text = n.appLabel,
+                        style = VoidType.Caption,
+                        color = VoidColors.TextDim,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (g.count > 1) "${n.title} (${g.count})" else n.title,
+                        style = VoidType.Small,
+                        color = VoidColors.Text,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (n.text.isNotBlank()) {
+                        Text(
+                            text = n.text,
+                            style = VoidType.Caption,
+                            color = VoidColors.TextDim,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                if (panelFor == n.key) {
+                    NotePanel(
+                        item = n,
+                        onReply = { text -> onNotificationReply(n, text); panelFor = null },
+                        onLater = { onNotificationLater(n); panelFor = null },
+                        onDismiss = { g.items.forEach(onNotificationDismiss); panelFor = null },
+                    )
+                }
+            }
+            if (groups.size > maxGroups) {
+                Text("+${groups.size - maxGroups}", style = VoidType.Small, color = VoidColors.TextDim)
+            }
+        }
+        if (laterCount > 0) {
+            Text(
+                text = "ler depois ($laterCount) ›",
+                style = VoidType.Caption,
+                color = VoidColors.Text,
+                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpenLater).padding(top = 6.dp, bottom = 2.dp),
+            )
+        }
+    }
+}
 
 /** Recuo lateral do texto das linhas da home: menor dentro dos cartões do design Rotina. */
 internal val LineInset: androidx.compose.ui.unit.Dp get() = if (VoidColors.isRotina) 14.dp else 24.dp
@@ -200,7 +222,7 @@ private fun statTiles(context: Context, s: DeviceStats): List<StatTileData> = bu
 
 /** Design Rotina: o status do celular em quatro cartões de número. Toque abre a saúde do aparelho. */
 @Composable
-private fun StatGrid(stats: DeviceStats?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun StatGrid(stats: DeviceStats?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val tiles = remember(stats) { stats?.let { statTiles(context, it) }.orEmpty() }
     Column(
@@ -373,7 +395,7 @@ fun NowLine(apps: List<AppEntry>, onLaunch: (AppEntry) -> Unit, modifier: Modifi
                 color = VoidColors.Text,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false).clickable(role = androidx.compose.ui.semantics.Role.Button) { onLaunch(app) }.heightIn(min = 44.dp).padding(vertical = 6.dp),
+                modifier = Modifier.weight(1f, fill = false).clickable(role = androidx.compose.ui.semantics.Role.Button) { onLaunch(app) }.heightIn(min = 44.dp).wrapContentHeight(Alignment.CenterVertically).padding(vertical = 6.dp),
             )
         }
     }

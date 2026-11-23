@@ -11,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -194,9 +193,8 @@ fun HomeContent(
                         },
                     ),
             ) {
-                // Com o foco ligado a home fica mais calma: some o bloco de notificações e status.
-                if (!focusOn && !night) {
-                    InfoBlock(
+                if (VoidColors.isRotina) {
+                    RotinaHomeBody(
                         stats = stats,
                         notifications = notifications,
                         notificationsEnabled = notificationsEnabled,
@@ -207,41 +205,45 @@ fun HomeContent(
                         laterCount = laterCount,
                         onOpenLater = onOpenLater,
                         onEnableNotifications = onEnableNotifications,
-                        onStatusClick = onOpenHealth,
+                        onOpenHealth = onOpenHealth,
+                        focusOn = focusOn,
+                        night = night,
+                        focusSummary = focusSummary,
+                        onDismissFocusSummary = onDismissFocusSummary,
+                        focusSinceMillis = focusSinceMillis,
+                        focusUntilMillis = focusUntilMillis,
+                        nowMillis = nowMillis,
+                        onToggleFocus = onToggleFocus,
+                        onStartFocus = onStartFocus,
+                        suggestions = suggestions,
+                        onLaunch = onLaunch,
+                        focusNote = focusNote,
+                        onNoteDone = onNoteDone,
+                        onOpenCapture = onOpenCapture,
+                        favorites = favorites,
+                        favoritesScroll = favoritesScroll,
+                        onOpenFolder = onOpenFolder,
+                        onUnpin = onUnpin,
+                        modifier = Modifier.weight(1f),
                     )
-                }
-                val rotina = VoidColors.isRotina
-                // No design Rotina, cada linha vira um cartão com margem.
-                val rowCard = if (rotina) Modifier.fillMaxWidth().padding(horizontal = RotinaTokens.MARGIN_DP.dp, vertical = 4.dp).card() else Modifier
-                val showNow = !night && suggestions.isNotEmpty()
-                if (focusSummary != null && !night) {
-                    Box(rowCard) { FocusSummaryLine(focusSummary, onDismissFocusSummary) }
-                }
-                if (rotina) {
-                    // "foco" e "agora" lado a lado, em dois cartões.
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                            .padding(horizontal = RotinaTokens.MARGIN_DP.dp, vertical = 4.dp),
-                    ) {
-                        FocusLine(
-                            focusSinceMillis = focusSinceMillis,
-                            focusUntilMillis = focusUntilMillis,
-                            nowMillis = nowMillis,
-                            onClick = onToggleFocus,
-                            onStartSession = onStartFocus,
-                            modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 52.dp).padding(end = if (showNow) 6.dp else 0.dp).card(),
-                        )
-                        if (showNow) {
-                            NowLine(
-                                suggestions,
-                                onLaunch,
-                                modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 52.dp).padding(start = 6.dp).card(),
-                            )
-                        }
-                    }
                 } else {
+                    // Com o foco ligado a home fica mais calma: some o bloco de notificações e status.
+                    if (!focusOn && !night) {
+                        InfoBlock(
+                            stats = stats,
+                            notifications = notifications,
+                            notificationsEnabled = notificationsEnabled,
+                            onNotificationClick = onNotificationClick,
+                            onNotificationDismiss = onNotificationDismiss,
+                            onNotificationReply = onNotificationReply,
+                            onNotificationLater = onNotificationLater,
+                            laterCount = laterCount,
+                            onOpenLater = onOpenLater,
+                            onEnableNotifications = onEnableNotifications,
+                            onStatusClick = onOpenHealth,
+                        )
+                    }
+                    if (focusSummary != null && !night) FocusSummaryLine(focusSummary, onDismissFocusSummary)
                     FocusLine(
                         focusSinceMillis = focusSinceMillis,
                         focusUntilMillis = focusUntilMillis,
@@ -250,61 +252,40 @@ fun HomeContent(
                         onStartSession = onStartFocus,
                     )
                     // "Agora": apps prováveis para este horário; some na home calma.
-                    if (showNow) NowLine(suggestions, onLaunch)
-                }
-                // Tarefa do foco: toque marca como feita; segurar abre as anotações.
-                if (!night && focusNote != null) Box(rowCard) { TaskLine(focusNote, onNoteDone, onOpenCapture) }
+                    if (!night && suggestions.isNotEmpty()) NowLine(suggestions, onLaunch)
+                    // Tarefa do foco: toque marca como feita; segurar abre as anotações.
+                    if (!night && focusNote != null) TaskLine(focusNote, onNoteDone, onOpenCapture)
 
-                // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
-                // (de 32 a 44 dp) para os 10 caberem sem rolar.
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .then(if (VoidColors.isRotina) Modifier.padding(horizontal = RotinaTokens.MARGIN_DP.dp - 3.dp) else Modifier),
-                ) {
-                    val rowHeight = if (VoidColors.isRotina) {
-                        (maxHeight / ((favorites.size + 1) / 2).coerceAtLeast(1)).coerceIn(40.dp, 56.dp)
-                    } else {
-                        (maxHeight / favorites.size.coerceAtLeast(1)).coerceIn(32.dp, 44.dp)
-                    }
-                    Column(modifier = Modifier.fillMaxSize().verticalScroll(favoritesScroll)) {
-                        if (favorites.isEmpty()) {
-                            Text(
-                                text = if (focusOn) {
-                                    "modo foco ligado: nenhum favorito liberado"
-                                } else {
-                                    "deslize para cima, segure um app\npara fixar aqui"
-                                },
-                                style = VoidType.Caption,
-                                color = VoidColors.TextDim,
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                            )
-                        } else {
-                            val rowFor: @Composable (Favorite, Modifier) -> Unit = { item, m ->
-                                FavoriteRow(
-                                    item = item,
-                                    height = rowHeight,
-                                    modifier = m,
-                                    onOpen = {
-                                        when (item) {
-                                            is Favorite.App -> onLaunch(item.app)
-                                            is Favorite.FolderItem -> onOpenFolder(item.folder)
-                                        }
+                    // Os favoritos dividem o espaço que sobra: a altura de cada linha se ajusta
+                    // (de 32 a 44 dp) para os 10 caberem sem rolar.
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        val rowHeight = (maxHeight / favorites.size.coerceAtLeast(1)).coerceIn(32.dp, 44.dp)
+                        Column(modifier = Modifier.fillMaxSize().verticalScroll(favoritesScroll)) {
+                            if (favorites.isEmpty()) {
+                                Text(
+                                    text = if (focusOn) {
+                                        "modo foco ligado: nenhum favorito liberado"
+                                    } else {
+                                        "deslize para cima, segure um app\npara fixar aqui"
                                     },
-                                    onUnpin = { onUnpin(item) },
+                                    style = VoidType.Caption,
+                                    color = VoidColors.TextDim,
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                                 )
-                            }
-                            if (VoidColors.isRotina) {
-                                // Design Rotina: favoritos em duas colunas de cartões.
-                                favorites.chunked(2).forEach { pair ->
-                                    Row(modifier = Modifier.fillMaxWidth()) {
-                                        pair.forEach { rowFor(it, Modifier.weight(1f)) }
-                                        if (pair.size == 1) Spacer(Modifier.weight(1f))
-                                    }
-                                }
                             } else {
-                                favorites.forEach { rowFor(it, Modifier) }
+                                favorites.forEach { item ->
+                                    FavoriteRow(
+                                        item = item,
+                                        height = rowHeight,
+                                        onOpen = {
+                                            when (item) {
+                                                is Favorite.App -> onLaunch(item.app)
+                                                is Favorite.FolderItem -> onOpenFolder(item.folder)
+                                            }
+                                        },
+                                        onUnpin = { onUnpin(item) },
+                                    )
+                                }
                             }
                         }
                     }
@@ -351,7 +332,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun FavoriteRow(
+internal fun FavoriteRow(
     item: Favorite,
     height: Dp,
     onOpen: () -> Unit,

@@ -23,6 +23,8 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -633,9 +635,10 @@ private fun FolderCell(
     val source = remember { MutableInteractionSource() }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = modifier
             .fillMaxWidth()
-            .then(if (VoidColors.isRotina) Modifier.padding(4.dp).card(16.dp) else Modifier)
+            .then(if (VoidColors.isRotina) Modifier.padding(4.dp).card(16.dp).height(108.dp) else Modifier)
             .pressFeedback(source)
             .combinedClickable(
                 role = androidx.compose.ui.semantics.Role.Button,
@@ -690,9 +693,10 @@ private fun AppCell(
     val source = remember { MutableInteractionSource() }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = modifier
             .fillMaxWidth()
-            .then(if (VoidColors.isRotina) Modifier.padding(4.dp).card(16.dp) else Modifier)
+            .then(if (VoidColors.isRotina) Modifier.padding(4.dp).card(16.dp).height(108.dp) else Modifier)
             .pressFeedback(source)
             .combinedClickable(
                 role = androidx.compose.ui.semantics.Role.Button,
@@ -844,19 +848,36 @@ internal fun SearchField(
             .fillMaxWidth()
             .focusRequester(focusRequester),
         decorationBox = { inner ->
-            Column {
-                Box(modifier = Modifier.padding(vertical = 6.dp)) {
+            if (VoidColors.isRotina) {
+                // Design Rotina: campo de busca em pílula, sem a linha embaixo.
+                Box(
+                    contentAlignment = Alignment.CenterStart,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp)
+                        .card(26.dp)
+                        .padding(horizontal = 20.dp),
+                ) {
                     if (query.isEmpty()) {
                         Text(text = placeholder, style = VoidType.App, color = VoidColors.TextDim)
                     }
                     inner()
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(VoidColors.Line),
-                )
+            } else {
+                Column {
+                    Box(modifier = Modifier.padding(vertical = 6.dp)) {
+                        if (query.isEmpty()) {
+                            Text(text = placeholder, style = VoidType.App, color = VoidColors.TextDim)
+                        }
+                        inner()
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(VoidColors.Line),
+                    )
+                }
             }
         },
     )
