@@ -114,6 +114,7 @@ fun HomeCarousel(
     onEnableNotifications: () -> Unit,
     active: Boolean,
     agenda: List<AgendaItem>,
+    eventDays: Set<Int> = emptySet(),
     agendaEnabled: Boolean,
     onEnableAgenda: () -> Unit,
     onAgendaClick: () -> Unit,
@@ -162,7 +163,7 @@ fun HomeCarousel(
                     0 -> TimePage(text, memory, onMemoryClick, onMemoryHide)
                     1 -> DayPage(text)
                     2 -> MusicPage(notificationsEnabled, onEnableNotifications, active)
-                    else -> AgendaPage(agenda, agendaEnabled, nowMillis, onEnableAgenda, onAgendaClick)
+                    else -> AgendaPage(agenda, agendaEnabled, nowMillis, onEnableAgenda, onAgendaClick, eventDays)
                 }
             }
         }
@@ -263,6 +264,7 @@ private fun AgendaPage(
     nowMillis: Long,
     onEnable: () -> Unit,
     onOpen: () -> Unit,
+    eventDays: Set<Int> = emptySet(),
 ) {
     when {
         !enabled -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -273,7 +275,7 @@ private fun AgendaPage(
                 modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnable).padding(12.dp),
             )
         }
-        agenda.isEmpty() -> MonthPage(nowMillis, onOpen)
+        agenda.isEmpty() -> MonthPage(nowMillis, onOpen, eventDays)
         else -> Column(modifier = Modifier.fillMaxSize().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen), verticalArrangement = Arrangement.Center) {
             Text("agenda", style = VoidType.Caption, color = VoidColors.TextDim)
             Spacer(Modifier.height(6.dp))
@@ -300,7 +302,7 @@ private fun AgendaPage(
 
 /** Sem compromissos nos próximos dias, a agenda mostra o mês com o dia de hoje marcado. */
 @Composable
-private fun MonthPage(nowMillis: Long, onOpen: () -> Unit) {
+private fun MonthPage(nowMillis: Long, onOpen: () -> Unit, eventDays: Set<Int>) {
     val zone = ZoneId.systemDefault()
     val today = Instant.ofEpochMilli(nowMillis).atZone(zone).toLocalDate()
     val month = java.time.YearMonth.from(today)
@@ -313,7 +315,7 @@ private fun MonthPage(nowMillis: Long, onOpen: () -> Unit) {
         val rowH = ((maxHeight - 40.dp) / weeks.size).coerceIn(16.dp, 26.dp)
         Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
             Text(
-                "$name de ${month.year} · nada nos próximos 7 dias",
+                "$name de ${month.year} · nada nos próximos 7 dias" + if (eventDays.isNotEmpty()) " · ponto = compromisso" else "",
                 style = VoidType.Caption,
                 color = VoidColors.TextDim,
                 maxLines = 1,
@@ -343,6 +345,15 @@ private fun MonthPage(nowMillis: Long, onOpen: () -> Unit) {
                                         day.toString(),
                                         style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 14.sp),
                                         color = if (isToday) VoidColors.OnSelected else if (day < today.dayOfMonth) VoidColors.TextDim else VoidColors.Text,
+                                    )
+                                }
+                                if (day in eventDays) {
+                                    Box(
+                                        Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .size(4.dp)
+                                            .clip(CircleShape)
+                                            .background(VoidColors.Text),
                                     )
                                 }
                             }

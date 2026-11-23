@@ -584,6 +584,15 @@ class MainActivity : ComponentActivity() {
                 val night = (nightEnabled && NightMode.isNight(hour, nightStart, nightEnd)) || quietScene
 
                 // Próximos compromissos, relidos a cada 5 minutos com a tela visível.
+                val eventDays by produceState(emptySet<Int>(), calendarAccess, nowMillis / 3_600_000L) {
+                    value = withContext(Dispatchers.IO) {
+                        guarded("dias com compromisso", emptySet()) {
+                            val zone = java.time.ZoneId.systemDefault()
+                            val month = java.time.YearMonth.from(Instant.ofEpochMilli(nowMillis).atZone(zone))
+                            com.voidtouch.launcher.data.EventDays.days(Agenda.readMonth(applicationContext, month, zone), month, zone)
+                        }
+                    }
+                }
                 val agenda by produceState(emptyList<AgendaItem>(), calendarAccess, nowMillis / 300_000L) {
                     value = withContext(Dispatchers.IO) { guarded("agenda", emptyList()) { Agenda.read(applicationContext, nowMillis) } }
                 }
@@ -1021,6 +1030,7 @@ class MainActivity : ComponentActivity() {
                             onEnableNotifications = ::openNotificationAccess,
                             active = screenActive,
                             agenda = agenda,
+                            eventDays = eventDays,
                             agendaEnabled = calendarAccess,
                             onEnableAgenda = { runCatching { calendarPermission.launch(android.Manifest.permission.READ_CALENDAR) } },
                             onAgendaClick = { openCalendar(nowMillis) },

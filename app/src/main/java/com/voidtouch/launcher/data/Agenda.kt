@@ -63,6 +63,35 @@ object Agenda {
         items.take(limit)
     }.getOrDefault(emptyList())
 
+    /** Todos os compromissos do mês (para os pontos da grade). */
+    fun readMonth(context: Context, month: java.time.YearMonth, zone: ZoneId): List<AgendaItem> = runCatching {
+        if (!hasAccess(context)) return emptyList()
+        val from = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli() - DAY
+        val to = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli() + DAY
+        val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also {
+            ContentUris.appendId(it, from)
+            ContentUris.appendId(it, to)
+        }.build()
+        val items = ArrayList<AgendaItem>()
+        context.contentResolver.query(
+            uri,
+            arrayOf(
+                CalendarContract.Instances.TITLE,
+                CalendarContract.Instances.BEGIN,
+                CalendarContract.Instances.END,
+                CalendarContract.Instances.ALL_DAY,
+            ),
+            null,
+            null,
+            "${CalendarContract.Instances.BEGIN} ASC",
+        )?.use { c ->
+            while (c.moveToNext() && items.size < 500) {
+                items += AgendaItem("", c.getLong(1), c.getLong(2), c.getInt(3) == 1)
+            }
+        }
+        items
+    }.getOrDefault(emptyList())
+
     /** "hoje 14:30", "amanhã 09:00", "sex 10:00", "agora até 15:00" ou "hoje · dia todo". */
     fun label(item: AgendaItem, nowMillis: Long, zone: ZoneId): String {
         val today = Instant.ofEpochMilli(nowMillis).atZone(zone).toLocalDate()

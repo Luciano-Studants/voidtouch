@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.54.0",
+            listOf(
+                "Na grade do mês da agenda, os dias com compromisso no calendário ganham um ponto embaixo do número. Lê só o calendário do aparelho, e só com a permissão da agenda liberada.",
+            ),
+        ),
+        ReleaseNote(
             "0.53.0",
             listOf(
                 "Nova opção em Ajustes > aparência: \"automática pela luz\". O sensor de luz liga a alta visibilidade sob sol forte e desliga na sombra, com margem para não ficar piscando. O sensor só roda com a home aberta, sem nada em segundo plano. Desligada por padrão.",
