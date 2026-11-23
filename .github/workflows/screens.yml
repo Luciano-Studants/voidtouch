@@ -6,6 +6,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   screens:
     runs-on: ubuntu-latest
@@ -25,3 +28,18 @@ jobs:
           name: capturas
           path: app/build/screens/*.png
           if-no-files-found: warn
+      # O download de artefatos pode ser bloqueado em alguns ambientes; por isso as imagens também
+      # vão para a branch "capturas" (não dispara o release, que só roda na main).
+      - name: Publicar imagens na branch capturas
+        if: always()
+        run: |
+          if ls app/build/screens/*.png >/dev/null 2>&1; then
+            mkdir -p "$RUNNER_TEMP/shots" && cp app/build/screens/*.png "$RUNNER_TEMP/shots/"
+            cd "$RUNNER_TEMP/shots"
+            git init -q -b capturas
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+            git add -A
+            git commit -qm "capturas de ${GITHUB_SHA::7}"
+            git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" capturas
+          fi
