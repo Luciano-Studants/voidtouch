@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.53.0",
+            listOf(
+                "Nova opção em Ajustes > aparência: \"automática pela luz\". O sensor de luz liga a alta visibilidade sob sol forte e desliga na sombra, com margem para não ficar piscando. O sensor só roda com a home aberta, sem nada em segundo plano. Desligada por padrão.",
+            ),
+        ),
+        ReleaseNote(
             "0.52.0",
             listOf(
                 "Nova opção em Ajustes > modos: \"pausa antes de abrir\". Ao abrir um app marcado em \"apps do foco\", aparece uma pausa de 3 segundos que mostra quantas vezes você o abriu hoje e pergunta \"abrir mesmo assim?\". Desligada por padrão.",

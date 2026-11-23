@@ -194,6 +194,19 @@ class MainActivity : ComponentActivity() {
     private var openAnim by mutableStateOf(true)
     private var design by mutableStateOf(Design.Void)
     private var highVis by mutableStateOf(false)
+    private var lightAuto by mutableStateOf(false)
+    private var lightState = com.voidtouch.launcher.data.LightAuto.State()
+    private val lightListener = object : android.hardware.SensorEventListener {
+        override fun onSensorChanged(e: android.hardware.SensorEvent) {
+            val lux = e.values.firstOrNull() ?: return
+            lightState = com.voidtouch.launcher.data.LightAuto.next(lightState, lux)
+            if (lightState.on != highVis) applyHighVis(lightState.on, persist = false)
+        }
+        override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
+    }
+    private val lightSensor: android.hardware.Sensor? by lazy {
+        runCatching { getSystemService(android.hardware.SensorManager::class.java).getDefaultSensor(android.hardware.Sensor.TYPE_LIGHT) }.getOrNull()
+    }
     private var pauseOn by mutableStateOf(false)
     private var pausePending by mutableStateOf<AppEntry?>(null)
     private var dailyOpens = DailyOpens.empty("")
@@ -394,6 +407,7 @@ class MainActivity : ComponentActivity() {
         VoidColors.design = design
         highVis = settingsStore.loadHighVis()
         pauseOn = settingsStore.loadPauseOn()
+        lightAuto = settingsStore.loadLightAuto()
         dailyOpens = DailyOpens.decode(settingsStore.loadDailyOpens(), java.time.LocalDate.now().toString())
         VoidColors.highVis = highVis
         parallax = settingsStore.loadParallax()
@@ -787,6 +801,14 @@ class MainActivity : ComponentActivity() {
                             onDesign = ::changeDesign,
                             highVis = highVis,
                             onHighVis = ::toggleHighVis,
+                            lightAuto = lightAuto,
+                            lightAutoAvailable = lightSensor != null,
+                            onLightAuto = {
+                                lightAuto = !lightAuto
+                                settingsStore.saveLightAuto(lightAuto)
+                                if (lightAuto) startLight() else stopLight()
+                                say(if (lightAuto) "alta visibilidade automática ligada" else "alta visibilidade automática desligada")
+                            },
                             pauseOn = pauseOn,
                             onPauseToggle = {
                                 pauseOn = !pauseOn
@@ -1109,6 +1131,7 @@ class MainActivity : ComponentActivity() {
         runCatching { ContextCompat.registerReceiver(this, timeReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) }
         system.startTorchWatch()
         background.onStart()
+        if (lightAuto) startLight()
     }
 
     override fun onStop() {
@@ -1117,6 +1140,7 @@ class MainActivity : ComponentActivity() {
         runCatching { unregisterReceiver(timeReceiver) }
         background.onStop()
         system.stopTorchWatch()
+        stopLight()
     }
 
     override fun onResume() {
@@ -1372,11 +1396,27 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun toggleHighVis() {
-        highVis = !highVis
-        VoidColors.highVis = highVis
-        settingsStore.saveHighVis(highVis)
-        applyBackdrop()
+        applyHighVis(!highVis, persist = true)
+        lightState = com.voidtouch.launcher.data.LightAuto.State(highVis)
         say(if (highVis) "alta visibilidade ligada" else "alta visibilidade desligada")
+    }
+
+    /** Liga/desliga o visual; a troca feita pelo sensor não é gravada, para não prender o modo. */
+    private fun applyHighVis(on: Boolean, persist: Boolean) {
+        highVis = on
+        VoidColors.highVis = on
+        if (persist) settingsStore.saveHighVis(on)
+        applyBackdrop()
+    }
+
+    private fun startLight() {
+        val s = lightSensor ?: return
+        lightState = com.voidtouch.launcher.data.LightAuto.State(highVis)
+        runCatching { getSystemService(android.hardware.SensorManager::class.java).registerListener(lightListener, s, 1_000_000) }
+    }
+
+    private fun stopLight() {
+        runCatching { getSystemService(android.hardware.SensorManager::class.java).unregisterListener(lightListener) }
     }
 
     private companion object {

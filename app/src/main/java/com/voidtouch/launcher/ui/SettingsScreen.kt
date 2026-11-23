@@ -95,6 +95,9 @@ fun SettingsScreen(
     onDesign: (Design) -> Unit,
     highVis: Boolean,
     onHighVis: () -> Unit,
+    lightAuto: Boolean,
+    lightAutoAvailable: Boolean,
+    onLightAuto: () -> Unit,
     pauseOn: Boolean,
     onPauseToggle: () -> Unit,
     parallax: Boolean,
@@ -202,7 +205,11 @@ fun SettingsScreen(
         Spacer(Modifier.height(10.dp))
         ChoiceGroup(items = ClockStyle.entries.toList(), selected = clockStyle, label = { "hora ${it.label}" }, onSelect = onClockStyle)
         Spacer(Modifier.height(10.dp))
-        Group { ToggleRow("alta visibilidade", highVis, onHighVis) }
+        Group {
+            ToggleRow("alta visibilidade", highVis, onHighVis)
+            ToggleRow("automática pela luz", lightAuto, onLightAuto, unavailable = !lightAutoAvailable)
+        }
+        Note("Com a automática, o sensor de luz liga a alta visibilidade sob sol forte e desliga na sombra. O sensor só funciona com a home aberta.")
         Note("Alta visibilidade é para sol forte ou lugares difíceis de ver: fundo preto, texto branco em negrito, contornos mais grossos, fonte maior e brilho da tela no máximo enquanto a home está aberta. Também dá para ligar por um gesto da home.")
 
         Section("papel de parede")

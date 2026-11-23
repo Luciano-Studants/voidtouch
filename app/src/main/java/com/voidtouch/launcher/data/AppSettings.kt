@@ -186,6 +186,12 @@ class SettingsStore(private val prefs: SharedPreferences) {
         prefs.edit().putString(KEY_DAILY_OPENS, text).apply()
     }
 
+    fun loadLightAuto(): Boolean = prefs.getBoolean(KEY_LIGHT_AUTO, false)
+
+    fun saveLightAuto(on: Boolean) {
+        prefs.edit().putBoolean(KEY_LIGHT_AUTO, on).apply()
+    }
+
     fun loadHighVis(): Boolean = prefs.getBoolean(KEY_HIGH_VIS, false)
 
     fun saveHighVis(on: Boolean) {
@@ -261,6 +267,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_WALL_TONE = "wall_tone"
         const val KEY_PARALLAX = "parallax"
         const val KEY_HIGH_VIS = "high_vis"
+        const val KEY_LIGHT_AUTO = "light_auto"
         const val KEY_PAUSE_ON = "pause_on"
         const val KEY_DAILY_OPENS = "daily_opens"
         const val KEY_DESIGN = "design"
