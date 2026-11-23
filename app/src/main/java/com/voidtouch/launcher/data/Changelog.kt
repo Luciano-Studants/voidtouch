@@ -10,6 +10,12 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.54.3",
+            listOf(
+                "O título do mês na agenda agora é só \"novembro de 2026\": com fonte grande ou tela estreita o texto antigo ainda era cortado (achado pelas novas capturas de tela do CI).",
+            ),
+        ),
+        ReleaseNote(
             "0.54.2",
             listOf(
                 "Interno, sem mudança visível: o CI agora gera capturas de tela de pedaços da home (meia largura, fonte grande, alta visibilidade) para achar defeitos de layout antes de você.",

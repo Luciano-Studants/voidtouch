@@ -315,7 +315,7 @@ internal fun MonthPage(nowMillis: Long, onOpen: () -> Unit, eventDays: Set<Int>)
         val rowH = ((maxHeight - 40.dp) / weeks.size).coerceIn(16.dp, 26.dp)
         Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
             Text(
-                "$name de ${month.year} · nada nos próximos 7 dias",
+                "$name de ${month.year}",
                 style = VoidType.Caption,
                 color = VoidColors.TextDim,
                 maxLines = 1,
