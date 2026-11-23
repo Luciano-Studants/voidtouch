@@ -302,7 +302,7 @@ private fun AgendaPage(
 
 /** Sem compromissos nos próximos dias, a agenda mostra o mês com o dia de hoje marcado. */
 @Composable
-private fun MonthPage(nowMillis: Long, onOpen: () -> Unit, eventDays: Set<Int>) {
+internal fun MonthPage(nowMillis: Long, onOpen: () -> Unit, eventDays: Set<Int>) {
     val zone = ZoneId.systemDefault()
     val today = Instant.ofEpochMilli(nowMillis).atZone(zone).toLocalDate()
     val month = java.time.YearMonth.from(today)
