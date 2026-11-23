@@ -76,7 +76,10 @@ android {
     }
 }
 
+val robolectricAndroid: Configuration by configurations.creating
+
 dependencies {
+    robolectricAndroid("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -104,6 +107,15 @@ tasks.withType<Test>().configureEach {
         // As imagens são saída "invisível" do teste: nunca reaproveitar do cache.
         outputs.upToDateWhen { false }
         outputs.cacheIf { false }
+        // O Robolectric baixa o Android sozinho e o Maven Central responde 429 no CI; o Gradle baixa com tentativas.
+        val depsDir = layout.buildDirectory.dir("robolectric-deps").get().asFile
+        val androidAll = robolectricAndroid
+        doFirst {
+            depsDir.mkdirs()
+            androidAll.resolve().forEach { it.copyTo(java.io.File(depsDir, it.name), overwrite = true) }
+        }
+        systemProperty("robolectric.offline", "true")
+        systemProperty("robolectric.dependency.dir", depsDir.absolutePath)
     }
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
