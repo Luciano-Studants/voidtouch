@@ -14,9 +14,9 @@ object LightAuto {
 
     /** Próximo estado depois de uma leitura. */
     fun next(state: State, lux: Float): State {
-        val wants = if (state.on) lux > OFF_LUX else lux >= ON_LUX
-        // "wants" = continuar como está; quando não, conta leituras a favor da troca.
-        if (wants) return State(state.on, 0)
+        val keep = if (state.on) lux > OFF_LUX else lux < ON_LUX
+        // Leitura que mantém o estado zera a contagem; as que pedem a troca vão somando.
+        if (keep) return State(state.on, 0)
         val streak = state.streak + 1
         return if (streak >= NEEDED) State(!state.on, 0) else State(state.on, streak)
     }
