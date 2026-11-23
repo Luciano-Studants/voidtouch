@@ -10,6 +10,13 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.51.0",
+            listOf(
+                "Na página \"hoje é\" do carrossel, o dia da semana agora cresce até ocupar toda a largura disponível.",
+                "Na agenda, quando não há compromissos nos próximos 7 dias, aparece o mês inteiro com o dia de hoje marcado (domingo a sábado). Tocar abre o calendário.",
+            ),
+        ),
+        ReleaseNote(
             "0.50.0",
             listOf(
                 "Ajustes reorganizados, nos dois designs: as opções ficam em grupos com contorno e divisórias, e cada tipo de linha tem a sua marca. A seta › abre outra tela, a chave liga e desliga, o círculo marca a escolha e o valor atual aparece à direita.",

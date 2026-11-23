@@ -60,6 +60,7 @@ import kotlinx.coroutines.delay
 import com.voidtouch.launcher.data.Agenda
 import com.voidtouch.launcher.data.AgendaItem
 import com.voidtouch.launcher.data.ClockStyle
+import com.voidtouch.launcher.data.MonthGrid
 import com.voidtouch.launcher.notify.NotificationHub
 import androidx.compose.ui.text.style.TextOverflow
 import com.voidtouch.launcher.ui.theme.VoidColors
@@ -240,9 +241,15 @@ private fun MemoryCard(shown: MemoryShown, onClick: () -> Unit, onHide: () -> Un
 /** Página 2: "hoje é" e o dia da semana grande, como na prancheta de referência. */
 @Composable
 private fun DayPage(text: CarouselText) {
-    Column {
+    // O dia da semana cresce até ocupar toda a largura da página.
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
         Text(text = "hoje é", style = VoidType.App, color = VoidColors.TextDim)
-        Text(text = text.weekday.uppercase(), style = VoidType.Day, color = VoidColors.Text)
+        FitText(
+            text = text.weekday.uppercase(),
+            style = VoidType.Day,
+            color = VoidColors.Text,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(6.dp))
         Text(text = text.shortDate, style = VoidType.App, color = VoidColors.TextDim)
     }
@@ -266,9 +273,7 @@ private fun AgendaPage(
                 modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onEnable).padding(12.dp),
             )
         }
-        agenda.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("nada nos próximos 7 dias", style = VoidType.App, color = VoidColors.TextDim)
-        }
+        agenda.isEmpty() -> MonthPage(nowMillis, onOpen)
         else -> Column(modifier = Modifier.fillMaxSize().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen), verticalArrangement = Arrangement.Center) {
             Text("agenda", style = VoidType.Caption, color = VoidColors.TextDim)
             Spacer(Modifier.height(6.dp))
@@ -287,6 +292,62 @@ private fun AgendaPage(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                }
+            }
+        }
+    }
+}
+
+/** Sem compromissos nos próximos dias, a agenda mostra o mês com o dia de hoje marcado. */
+@Composable
+private fun MonthPage(nowMillis: Long, onOpen: () -> Unit) {
+    val zone = ZoneId.systemDefault()
+    val today = Instant.ofEpochMilli(nowMillis).atZone(zone).toLocalDate()
+    val month = java.time.YearMonth.from(today)
+    val weeks = remember(month) { MonthGrid.weeks(month) }
+    val name = month.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.forLanguageTag("pt-BR"))
+    androidx.compose.foundation.layout.BoxWithConstraints(
+        modifier = Modifier.fillMaxSize().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onOpen),
+    ) {
+        // Cabeçalho + letras dos dias + semanas dividem a altura da página.
+        val rowH = ((maxHeight - 40.dp) / weeks.size).coerceIn(16.dp, 26.dp)
+        Column(verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
+            Text(
+                "$name de ${month.year} · nada nos próximos 7 dias",
+                style = VoidType.Caption,
+                color = VoidColors.TextDim,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(Modifier.fillMaxWidth()) {
+                MonthGrid.WEEKDAYS.forEach { d ->
+                    Box(Modifier.weight(1f).height(18.dp), contentAlignment = Alignment.Center) {
+                        Text(d, style = VoidType.Caption.copy(fontSize = 11.sp), color = VoidColors.TextDim)
+                    }
+                }
+            }
+            weeks.forEach { week ->
+                Row(Modifier.fillMaxWidth()) {
+                    week.forEach { day ->
+                        Box(Modifier.weight(1f).height(rowH), contentAlignment = Alignment.Center) {
+                            if (day != null) {
+                                val isToday = day == today.dayOfMonth
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(rowH.coerceAtMost(24.dp))
+                                        .then(if (isToday) Modifier.clip(CircleShape).background(VoidColors.Selected) else Modifier),
+                                ) {
+                                    Text(
+                                        day.toString(),
+                                        style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 14.sp),
+                                        color = if (isToday) VoidColors.OnSelected else if (day < today.dayOfMonth) VoidColors.TextDim else VoidColors.Text,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
