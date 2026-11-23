@@ -112,7 +112,7 @@ tasks.withType<Test>().configureEach {
         val androidAll = robolectricAndroid
         doFirst {
             depsDir.mkdirs()
-            androidAll.resolve().forEach { it.copyTo(java.io.File(depsDir, it.name), overwrite = true) }
+            androidAll.resolve().forEach { it.copyTo(depsDir.resolve(it.name), overwrite = true) }
         }
         systemProperty("robolectric.offline", "true")
         systemProperty("robolectric.dependency.dir", depsDir.absolutePath)
