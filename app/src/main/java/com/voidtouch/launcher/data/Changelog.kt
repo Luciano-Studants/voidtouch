@@ -10,6 +10,14 @@ data class ReleaseNote(val version: String, val items: List<String>)
 object Changelog {
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            "0.50.0",
+            listOf(
+                "Ajustes reorganizados, nos dois designs: as opções ficam em grupos com contorno e divisórias, e cada tipo de linha tem a sua marca. A seta › abre outra tela, a chave liga e desliga, o círculo marca a escolha e o valor atual aparece à direita.",
+                "Os textos de explicação ficaram menores e sem toque, para não parecerem botões. Os títulos viraram blocos: aparência, papel de parede, home, modos, cenas, celular, notificações, backup e sobre.",
+                "O botão \"fechar\" agora tem contorno, e uma frase no topo explica como ler a tela.",
+            ),
+        ),
+        ReleaseNote(
             "0.49.1",
             listOf(
                 "Design rotina reorganizado: os favoritos voltam para uma lista na lateral esquerda (ícone e nome em cartões compactos) e, na direita, ficam os cartões de notificações, status, foco e \"agora\".",

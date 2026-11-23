@@ -6,6 +6,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -149,264 +164,171 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 28.dp),
+            .padding(horizontal = 20.dp, vertical = 28.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("ajustes", style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f))
-            Text(
-                "fechar",
-                style = VoidType.Caption,
-                color = VoidColors.Text,
-                modifier = Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClose).heightIn(min = 44.dp).padding(vertical = 8.dp),
-            )
+            Text("ajustes", style = VoidType.App.copy(fontSize = 24.sp, lineHeight = 30.sp), color = VoidColors.Text, modifier = Modifier.weight(1f))
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .border(VoidColors.Stroke, VoidColors.TextDim, CircleShape)
+                    .clickable(role = Role.Button, onClick = onClose)
+                    .heightIn(min = 44.dp)
+                    .padding(horizontal = 20.dp),
+            ) {
+                Text("fechar", style = VoidType.Caption, color = VoidColors.Text)
+            }
         }
+        Note("Toque numa linha para mudar. Linhas com › abrem outra tela, as chaves ligam e desligam, o círculo marca a escolha e os textos pequenos só explicam.")
 
-        Section("design")
-        Options(
-            items = Design.entries.toList(),
-            selected = design,
-            label = { it.label },
-            onSelect = onDesign,
-        )
-        Text(
-            design.note,
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
-        )
-
-        Section("alta visibilidade")
-        ValueRow(if (highVis) "alta visibilidade: ligada" else "alta visibilidade: desligada", onHighVis)
-        Text(
-            "para sol forte ou lugares difíceis de ver: fundo preto, texto branco em negrito, contornos mais grossos, fonte maior e brilho da tela no máximo enquanto a home está aberta. Também dá para ligar por um gesto da home.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
-        )
-
-        Section("fundo")
-        Options(
+        Section("aparência")
+        ChoiceGroup(items = Design.entries.toList(), selected = design, label = { "design ${it.label}" }, onSelect = onDesign)
+        Note(design.note)
+        ChoiceGroup(
             items = Backdrop.entries.toList(),
             selected = backdrop,
             label = {
                 when (it) {
-                    Backdrop.Void -> "preto"
-                    Backdrop.Graphite -> "grafite"
-                    Backdrop.Wallpaper -> "papel de parede"
+                    Backdrop.Void -> "fundo preto"
+                    Backdrop.Graphite -> "fundo grafite"
+                    Backdrop.Wallpaper -> "fundo com papel de parede"
                 }
             },
             onSelect = onBackdrop,
         )
-
-        Section("hora")
-        Options(
-            items = ClockStyle.entries.toList(),
-            selected = clockStyle,
-            label = { it.label },
-            onSelect = onClockStyle,
-        )
-
-        Section("gestos da home")
-        SwipeSide.entries.forEach { side ->
-            Text(gestureName(side), style = VoidType.Caption, color = VoidColors.TextDim, modifier = Modifier.padding(top = 8.dp))
-            ValueRow(targetLabel(gestures[side], byKey)) { picking = side }
-        }
-        Text(
-            "os gestos valem na home, abaixo do carrossel. Cada um abre um app ou executa uma ação (lanterna, painel de notificações, busca...)",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 10.dp),
-        )
-
-        Section("favoritos")
-        ValueRow("ordem dos favoritos", onOpenFavoritesOrder)
+        Spacer(Modifier.height(10.dp))
+        ChoiceGroup(items = ClockStyle.entries.toList(), selected = clockStyle, label = { "hora ${it.label}" }, onSelect = onClockStyle)
+        Spacer(Modifier.height(10.dp))
+        Group { ToggleRow("alta visibilidade", highVis, onHighVis) }
+        Note("Alta visibilidade é para sol forte ou lugares difíceis de ver: fundo preto, texto branco em negrito, contornos mais grossos, fonte maior e brilho da tela no máximo enquanto a home está aberta. Também dá para ligar por um gesto da home.")
 
         Section("papel de parede")
-        Text(
-            "conjunto de cores · toque para trocar; cada nome já aparece na cor dele",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        ColorSets.all.forEach { set ->
-            val pal = ColorSets.palette(set, WallTone.fromPixels(IntArray(0)) ?: Tone(30f, 0.8f), true)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button) { onColorSet(set.key) }.padding(vertical = 12.dp),
-            ) {
-                Text(
-                    set.name,
-                    style = VoidType.App,
-                    color = androidx.compose.ui.graphics.Color(pal.text),
-                    modifier = Modifier.weight(1f),
+        Note("Conjunto de cores: toque para trocar. Cada nome já aparece na cor dele.", top = 0.dp)
+        Spacer(Modifier.height(6.dp))
+        Group {
+            ColorSets.all.forEach { set ->
+                val pal = ColorSets.palette(set, WallTone.fromPixels(IntArray(0)) ?: Tone(30f, 0.8f), true)
+                ChoiceRow(
+                    label = set.name,
+                    selected = set.key == colorSet,
+                    onClick = { onColorSet(set.key) },
+                    labelColor = Color(pal.text),
+                    sample = "texto",
+                    sampleColor = Color(pal.dim),
                 )
-                Text(
-                    "texto",
-                    style = VoidType.Small,
-                    color = androidx.compose.ui.graphics.Color(pal.dim),
-                )
-                Spacer(Modifier.width(12.dp))
-                Text(if (set.key == colorSet) "●" else "○", style = VoidType.App, color = VoidColors.Text)
             }
         }
-        Text(
-            "o automático segue o papel de parede e só vale com o fundo em papel de parede. A luminosidade é fixa, então a leitura é a mesma em todos.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
-        )
-        ValueRow(if (ownImage) "imagem de fundo própria: trocar" else "escolher imagem de fundo própria", onPickImage)
-        if (ownImage) ValueRow("remover imagem de fundo própria", onRemoveImage)
-        Text(
-            "a imagem escolhida fica só neste aparelho, reduzida ao tamanho da tela. Funciona em qualquer Android e permite a paralaxe mesmo quando o sistema não deixa ler o papel de parede.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp, bottom = 6.dp),
-        )
-        ValueRow(if (!parallax) "paralaxe: desligada" else if (parallaxAvailable) "paralaxe: ligada" else "paralaxe: indisponível neste aparelho", onParallax)
-        Text(
-            "com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular. Só funciona com a home visível e usa o acelerômetro apenas nesse momento. Em alguns aparelhos o Android não deixa apps lerem a imagem do papel de parede; aí a paralaxe fica indisponível, mas as cores continuam funcionando.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 10.dp),
-        )
+        Note("O automático segue o papel de parede e só vale com o fundo em papel de parede. A luminosidade é fixa, então a leitura é a mesma em todos.")
+        Group {
+            ActionRow(if (ownImage) "trocar a imagem de fundo própria" else "escolher imagem de fundo própria", onPickImage)
+            if (ownImage) ActionRow("remover a imagem própria", onRemoveImage)
+            ToggleRow("paralaxe", parallax, onParallax, unavailable = !parallaxAvailable)
+        }
+        Note("A imagem escolhida fica só neste aparelho, reduzida ao tamanho da tela. Funciona em qualquer Android e permite a paralaxe mesmo quando o sistema não deixa ler o papel de parede.")
+        Note("Paralaxe: com o fundo em papel de parede, a imagem se move de leve conforme você inclina o celular. Só funciona com a home visível e usa o acelerômetro apenas nesse momento. Em alguns aparelhos o Android não deixa apps lerem o papel de parede; aí fica indisponível, mas as cores continuam funcionando.", top = 4.dp)
 
-        Section("abrir apps")
-        ValueRow(if (openAnim) "animação a partir do toque: ligada" else "animação a partir do toque: desligada", onOpenAnim)
-        ValueRow(if (openHaptic) "vibração leve ao abrir: ligada" else "vibração leve ao abrir: desligada", onOpenHaptic)
-        Text(
-            "o app se abre crescendo do ponto onde você tocou, e os itens da home e da lista afundam e voltam com um pequeno quique ao toque.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        Section("home")
+        Group {
+            SwipeSide.entries.forEach { side ->
+                ValueRow(gestureName(side), targetLabel(gestures[side], byKey)) { picking = side }
+            }
+        }
+        Note("Os gestos valem na home, abaixo do carrossel. Cada um abre um app ou executa uma ação (lanterna, painel de notificações, busca...).")
+        Group { ActionRow("ordem dos favoritos", onOpenFavoritesOrder) }
+        Spacer(Modifier.height(10.dp))
+        Group {
+            ToggleRow("animação a partir do toque", openAnim, onOpenAnim)
+            ToggleRow("vibração leve ao abrir", openHaptic, onOpenHaptic)
+        }
+        Note("O app se abre crescendo do ponto onde você tocou, e os itens da home e da lista afundam e voltam com um pequeno quique ao toque.")
+        Group {
+            ToggleRow("linha \"agora\"", predictOn, onPredictToggle)
+            if (predictOn) ActionRow("apagar o histórico de horários", onPredictClear)
+        }
+        Note("Mostra na home os apps que você costuma abrir neste horário, só pelo seu histórico no aparelho. Nada é enviado e nada roda em segundo plano.")
+        Group {
+            ValueRow("memórias do dia", memoryMode.label, onMemoryMode)
+            if (hiddenPhotos > 0) ActionRow("$hiddenPhotos foto(s) oculta(s) · restaurar", onRestorePhotos)
+        }
+        Note("Mostra, ao lado da hora, uma foto da galeria (menos capturas de tela) tirada por volta de hoje em anos ou meses atrás. As fotos não saem do aparelho.")
 
-        Section("modo carregando")
-        ValueRow(if (dockOn) "ligado" else "desligado", onDockToggle)
-        if (dockOn) ValueRow(if (dockAwake) "tela acesa enquanto aparece: sim" else "tela acesa enquanto aparece: não", onDockAwake)
-        Text(
-            "com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira com a bateria e a música. Um toque sai.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Section("linha agora")
-        ValueRow(if (predictOn) "ligada" else "desligada", onPredictToggle)
-        if (predictOn) ValueRow("apagar o histórico de horários", onPredictClear)
-        Text(
-            "mostra na home os apps que você costuma abrir neste horário, só pelo seu histórico no aparelho. Nada é enviado e nada roda em segundo plano.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        Section("modos")
+        Group {
+            ToggleRow("modo carregando", dockOn, onDockToggle)
+            if (dockOn) ToggleRow("manter a tela acesa", dockAwake, onDockAwake)
+        }
+        Note("Com o celular carregando e a home parada por 15 segundos, aparece um relógio grande de cabeceira com a bateria e a música. Um toque sai.")
+        Group {
+            ToggleRow("foco automático", focusAutoOn, onFocusAutoToggle)
+            if (focusAutoOn) {
+                ValueRow("liga às", "${focusAutoStart}h", onFocusAutoStart)
+                ValueRow("desliga às", "${focusAutoEnd}h", onFocusAutoEnd)
+            }
+        }
+        Note("Liga e desliga o modo foco nesse horário. Precisa de apps marcados em \"apps do foco\". A troca acontece quando a home está aberta; você pode ligar ou desligar à mão a qualquer momento.")
+        Group {
+            ToggleRow("modo noite", nightEnabled, onNightToggle)
+            if (nightEnabled) {
+                ValueRow("começa às", "${nightStart}h", onNightStart)
+                ValueRow("termina às", "${nightEnd}h", onNightEnd)
+            }
+        }
+        Note("No horário escolhido a home fica mais escura e mais calma: some o bloco de status e notificações e a foto do dia. Toque nos horários para mudar de hora em hora.")
 
         Section("cenas")
-        ValueRow(if (sceneAuto) "troca sozinha pelo horário" else "troca só quando eu escolho", onSceneAuto)
         var openScene by remember { mutableStateOf<String?>(null) }
-        scenes.forEach { sc ->
-            val on = sc.id == sceneActive
-            ValueRow((if (on) "● " else "○ ") + "${sc.name} · ${sc.start}h às ${sc.end}h") {
-                openScene = if (openScene == sc.id) null else sc.id
+        Group {
+            ToggleRow("trocar sozinha pelo horário", sceneAuto, onSceneAuto)
+            scenes.forEach { sc ->
+                val on = sc.id == sceneActive
+                ValueRow((if (on) "● " else "") + sc.name, "${sc.start}h às ${sc.end}h") {
+                    openScene = if (openScene == sc.id) null else sc.id
+                }
+                if (openScene == sc.id) {
+                    ActionRow(if (on) "em uso · voltar para sem cena" else "usar esta cena agora") { onSceneUse(if (on) null else sc.id) }
+                    ValueRow("começa às", "${sc.start}h") { onSceneEdit(sc.copy(start = (sc.start + 1) % 24)) }
+                    ValueRow("termina às", "${sc.end}h") { onSceneEdit(sc.copy(end = (sc.end + 1) % 24)) }
+                    ToggleRow("liga o modo foco", sc.focus, onToggle = { onSceneEdit(sc.copy(focus = !sc.focus)) })
+                    ToggleRow("home calma", sc.quiet, onToggle = { onSceneEdit(sc.copy(quiet = !sc.quiet)) })
+                    ActionRow("excluir esta cena") { onSceneDelete(sc.id) }
+                }
             }
-            if (openScene == sc.id) {
-                ValueRow(if (on) "em uso · voltar para sem cena" else "usar agora") { onSceneUse(if (on) null else sc.id) }
-                ValueRow("começa às ${sc.start}h") { onSceneEdit(sc.copy(start = (sc.start + 1) % 24)) }
-                ValueRow("termina às ${sc.end}h") { onSceneEdit(sc.copy(end = (sc.end + 1) % 24)) }
-                ValueRow("modo foco: ${if (sc.focus) "liga" else "não mexe"}") { onSceneEdit(sc.copy(focus = !sc.focus)) }
-                ValueRow("home calma: ${if (sc.quiet) "sim" else "não"}") { onSceneEdit(sc.copy(quiet = !sc.quiet)) }
-                ValueRow("excluir cena") { onSceneDelete(sc.id) }
-            }
+            ActionRow("+ nova cena", onSceneAdd)
         }
-        ValueRow("+ nova cena", onSceneAdd)
-        Text(
-            "cada cena lembra os próprios favoritos: ao sair dela, os favoritos de agora ficam guardados. A home calma esconde status, notificações e foto, como o modo noite.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Section("foco automático")
-        ValueRow(if (focusAutoOn) "ligado" else "desligado", onFocusAutoToggle)
-        if (focusAutoOn) {
-            ValueRow("liga às ${focusAutoStart}h", onFocusAutoStart)
-            ValueRow("desliga às ${focusAutoEnd}h", onFocusAutoEnd)
-        }
-        Text(
-            "liga e desliga o modo foco nesse horário. Precisa de apps marcados em \"apps do foco\". A troca acontece quando a home está aberta; você pode ligar ou desligar à mão a qualquer momento.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Section("modo noite")
-        ValueRow(if (nightEnabled) "ligado" else "desligado", onNightToggle)
-        if (nightEnabled) {
-            ValueRow("começa às ${nightStart}h", onNightStart)
-            ValueRow("termina às ${nightEnd}h", onNightEnd)
-        }
-        Text(
-            "no horário escolhido a home fica mais escura e mais calma: some o bloco de status e notificações e a foto do dia. Toque nos horários para mudar de hora em hora.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Section("memórias do dia")
-        ValueRow(memoryMode.label, onMemoryMode)
-        Text(
-            "mostra, ao lado da hora, uma foto da galeria (menos capturas de tela) tirada por volta de hoje em anos ou meses atrás. As fotos não saem do aparelho.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-        if (hiddenPhotos > 0) ValueRow("$hiddenPhotos foto(s) oculta(s) · restaurar", onRestorePhotos)
+        Note("Cada cena lembra os próprios favoritos: ao sair dela, os favoritos de agora ficam guardados. A home calma esconde status, notificações e foto, como o modo noite. Toque numa cena para ver as opções dela.")
 
         Section("celular")
-        ValueRow("otimizar", onOpenOptimize)
-        ValueRow("relatório de uso", onOpenUsage)
-        ValueRow("permissões", onOpenPermissions)
-        ValueRow("trocar tela inicial padrão", onOpenHomeSettings)
-        Text(
-            "se o VoidTouch travar várias vezes seguidas, ele abre um modo seguro sozinho. Aqui você também pode voltar para outra tela inicial a qualquer momento.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        Group {
+            ActionRow("otimizar", onOpenOptimize)
+            ActionRow("relatório de uso", onOpenUsage)
+            ActionRow("permissões", onOpenPermissions)
+            ActionRow("trocar tela inicial padrão", onOpenHomeSettings)
+        }
+        Note("Se o VoidTouch travar várias vezes seguidas, ele abre um modo seguro sozinho. Aqui você também pode voltar para outra tela inicial a qualquer momento.")
 
         Section("notificações e música")
-        ValueRow(if (notificationsEnabled) "acesso ligado" else "acesso desligado", onOpenNotificationAccess)
-        ValueRow("liberar configurações restritas", onOpenAppInfo)
-        Text(
-            "se o acesso aparecer bloqueado: info do app > ⋮ > permitir configurações restritas",
-            style = VoidType.Small,
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        Group {
+            ValueRow("acesso às notificações", if (notificationsEnabled) "ligado" else "desligado", onOpenNotificationAccess)
+            ActionRow("liberar configurações restritas", onOpenAppInfo)
+        }
+        Note("Se o acesso aparecer bloqueado: info do app > ⋮ > permitir configurações restritas.")
 
-        Section("backup dos ajustes")
-        ValueRow("salvar backup em arquivo", onBackupSave)
-        ValueRow("restaurar backup de arquivo", onBackupRestore)
-        Text(
-            "guarda favoritos, pastas, apps do foco, gestos e ajustes. Útil antes de trocar de celular.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        Section("backup")
+        Group {
+            ActionRow("salvar backup em arquivo", onBackupSave)
+            ActionRow("restaurar backup de arquivo", onBackupRestore)
+        }
+        Note("Guarda favoritos, pastas, apps do foco, gestos e ajustes. Útil antes de trocar de celular.")
 
         Section("sobre")
-        VersionLine(versionName)
-        ValueRow("novidades", onOpenChangelog)
-        ValueRow("dicas de uso", onOpenTips)
-        if (openTimeMs > 0L) {
-            Text(
-                "última abertura: $openTimeMs ms",
-                style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-                color = VoidColors.TextDim,
-                modifier = Modifier.padding(top = 4.dp),
-            )
+        Group {
+            VersionLine(versionName)
+            ActionRow("novidades desta versão", onOpenChangelog)
+            ActionRow("dicas de uso", onOpenTips)
+            UpdateRow(versionName)
         }
-        UpdateRow(versionName)
+        if (openTimeMs > 0L) Note("Última abertura: $openTimeMs ms.")
     }
 }
 
@@ -441,13 +363,7 @@ private fun UpdateRow(versionName: String) {
         }
     }
 
-    Text(
-        text = status,
-        style = VoidType.App,
-        color = VoidColors.Text,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !busy, role = androidx.compose.ui.semantics.Role.Button) {
+    RowBase(tap = Modifier.clickable(enabled = !busy, role = Role.Button) {
                 val info = found
                 if (info != null) {
                     download(info)
@@ -468,58 +384,162 @@ private fun UpdateRow(versionName: String) {
                         busy = false
                     }
                 }
-            }
-            .padding(vertical = 12.dp),
-    )
+}) {
+        Text(status, style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f))
+        if (!busy) {
+            Spacer(Modifier.width(12.dp))
+            Text("›", style = VoidType.App.copy(fontSize = 20.sp), color = VoidColors.TextDim)
+        }
+    }
     // Barra enquanto algo acontece: indeterminada ao verificar, com avanço ao baixar.
     if (busy) LoadingLine(progress = progress)
 }
 
+/** Título de um bloco de ajustes. */
 @Composable
 private fun Section(title: String) {
-    Spacer(Modifier.height(28.dp))
-    Text(title, style = VoidType.Caption, color = VoidColors.TextDim)
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(26.dp))
+    Text(
+        title.uppercase(),
+        style = VoidType.Caption.copy(fontSize = 11.sp, letterSpacing = 1.4.sp),
+        color = VoidColors.TextDim,
+        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
+    )
+}
+
+/** Texto de explicação: pequeno, claro e sem toque, para não ser confundido com botão. */
+@Composable
+private fun Note(text: String, top: Dp = 8.dp) {
+    Text(
+        text,
+        style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+        color = VoidColors.TextDim,
+        modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = top, bottom = 2.dp),
+    )
+}
+
+/** Contêiner com contorno: tudo o que está dentro dele é uma linha de ajuste que dá para tocar. */
+@Composable
+private fun Group(content: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(14.dp)
+    val fill = if (VoidColors.isRotina) VoidColors.Surface else Color.Black.copy(alpha = 0.35f)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(fill)
+            .border(VoidColors.Stroke, VoidColors.Line, shape),
+        content = content,
+    )
+}
+
+/** Base de toda linha: altura mínima de 52 dp e uma divisória fina embaixo. */
+@Composable
+private fun RowBase(tap: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    val line = VoidColors.Line
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(tap)
+            .heightIn(min = 52.dp)
+            .drawBehind {
+                drawLine(line, Offset(0f, size.height), Offset(size.width, size.height), strokeWidth = 1.dp.toPx())
+            }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        content = content,
+    )
 }
 
 @Composable
-private fun <T> Options(items: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
-    items.forEach { item ->
-        val on = item == selected
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(role = androidx.compose.ui.semantics.Role.Button) { onSelect(item) }
-                .padding(vertical = 12.dp),
-        ) {
-            val pill = VoidColors.isRotina && on
-            Text(
-                text = (if (on) "● " else "○ ") + label(item),
-                style = VoidType.App,
-                color = if (pill) VoidColors.OnSelected else if (on) VoidColors.Text else VoidColors.TextDim,
-                modifier = if (pill) {
-                    Modifier
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(VoidColors.Selected)
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                } else {
-                    Modifier
-                },
-            )
+private fun Chevron() {
+    Spacer(Modifier.width(12.dp))
+    Text("›", style = VoidType.App.copy(fontSize = 20.sp), color = VoidColors.TextDim)
+}
+
+/** Abre outra tela ou executa algo: texto e a seta ›. */
+@Composable
+private fun ActionRow(label: String, onClick: () -> Unit) {
+    RowBase(tap = Modifier.clickable(role = Role.Button, onClick = onClick)) {
+        Text(label, style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f))
+        Chevron()
+    }
+}
+
+/** Mostra o valor atual à direita; tocar muda o valor ou abre a escolha. */
+@Composable
+private fun ValueRow(label: String, value: String, onClick: () -> Unit) {
+    RowBase(tap = Modifier.clickable(role = Role.Button, onClick = onClick)) {
+        Text(label, style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(12.dp))
+        Text(value, style = VoidType.Small, color = VoidColors.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 150.dp))
+        Chevron()
+    }
+}
+
+/** Liga e desliga: a chave à direita mostra o estado. */
+@Composable
+private fun ToggleRow(label: String, on: Boolean, onToggle: () -> Unit, unavailable: Boolean = false) {
+    RowBase(tap = Modifier.toggleable(value = on, role = Role.Switch, onValueChange = { onToggle() })) {
+        Text(label, style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(12.dp))
+        if (unavailable) {
+            Text("indisponível", style = VoidType.Small, color = VoidColors.TextDim)
+        } else {
+            SwitchMark(on)
         }
     }
 }
 
 @Composable
-private fun ValueRow(value: String, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(vertical = 12.dp),
+private fun SwitchMark(on: Boolean) {
+    val edge = if (on) VoidColors.Selected else VoidColors.TextDim
+    Box(
+        contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
+        modifier = Modifier
+            .size(width = 46.dp, height = 26.dp)
+            .clip(CircleShape)
+            .background(if (on) VoidColors.Selected else Color.Transparent)
+            .border(VoidColors.Stroke, edge, CircleShape)
+            .padding(4.dp),
     ) {
-        Text(value, style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.width(12.dp))
-        Text("›", style = VoidType.App, color = VoidColors.TextDim)
+        Box(Modifier.size(18.dp).background(if (on) VoidColors.OnSelected else VoidColors.TextDim, CircleShape))
+    }
+}
+
+/** Escolha entre várias opções: o círculo à esquerda marca a selecionada. */
+@Composable
+private fun ChoiceRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    labelColor: Color = Color.Unspecified,
+    sample: String? = null,
+    sampleColor: Color = Color.Unspecified,
+) {
+    RowBase(tap = Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onClick)) {
+        val ring = if (selected) VoidColors.Selected else VoidColors.TextDim
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(20.dp).border(VoidColors.Stroke, ring, CircleShape),
+        ) {
+            if (selected) Box(Modifier.size(10.dp).background(VoidColors.Selected, CircleShape))
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(
+            label,
+            style = VoidType.App,
+            color = if (labelColor != Color.Unspecified) labelColor else if (selected) VoidColors.Text else VoidColors.TextDim,
+            modifier = Modifier.weight(1f),
+        )
+        if (sample != null) Text(sample, style = VoidType.Small, color = if (sampleColor != Color.Unspecified) sampleColor else VoidColors.TextDim)
+    }
+}
+
+@Composable
+private fun <T> ChoiceGroup(items: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
+    Group {
+        items.forEach { item -> ChoiceRow(label(item), item == selected, { onSelect(item) }) }
     }
 }
 
@@ -591,25 +611,24 @@ private fun AppPicker(title: String, apps: List<AppEntry>, onPick: (String?) -> 
 private fun VersionLine(versionName: String) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var test by remember { mutableStateOf(false) }
-    Text(
-        "VoidTouch $versionName",
-        style = VoidType.App,
-        color = VoidColors.TextDim,
-        modifier = Modifier.combinedClickable(role = androidx.compose.ui.semantics.Role.Button, onClick = {}, onLongClick = { test = !test }),
-    )
+    RowBase(tap = Modifier.combinedClickable(role = Role.Button, onClick = {}, onLongClick = { test = !test })) {
+        Text("versão", style = VoidType.App, color = VoidColors.Text, modifier = Modifier.weight(1f))
+        Text("VoidTouch $versionName", style = VoidType.Small, color = VoidColors.TextDim)
+    }
     val last = remember(test) { com.voidtouch.launcher.CrashGuard.lastError(context)?.lineSequence()?.firstOrNull() }
     if (last != null) {
-        Text("último travamento: $last", style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp), color = VoidColors.TextDim)
+        RowBase { Text("último travamento: $last", style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp), color = VoidColors.TextDim) }
     }
     if (test) {
-        ValueRow("simular travamento (teste do modo seguro)") {
+        ActionRow("simular travamento (teste do modo seguro)") {
             throw IllegalStateException("travamento simulado pelo usuário")
         }
-        Text(
-            "cada toque fecha o VoidTouch de propósito. Depois de 2 toques logo após uma atualização (ou 3 em seguida), a tela inicial abre em modo seguro. Lá, \"tentar a home de novo\" volta ao normal.",
-            style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
-            color = VoidColors.TextDim,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        RowBase {
+            Text(
+                "Cada toque fecha o VoidTouch de propósito. Depois de 2 toques logo após uma atualização (ou 3 em seguida), a tela inicial abre em modo seguro. Lá, \"tentar a home de novo\" volta ao normal.",
+                style = VoidType.Small.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                color = VoidColors.TextDim,
+            )
+        }
     }
 }
