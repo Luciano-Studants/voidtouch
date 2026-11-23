@@ -77,10 +77,11 @@ android {
 }
 
 val robolectricAndroid: Configuration by configurations.creating
+val robolectricAndroid15: Configuration by configurations.creating
 
 dependencies {
     robolectricAndroid("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
-    robolectricAndroid("org.robolectric:android-all-instrumented:15-robolectric-12650502-i7")
+    robolectricAndroid15("org.robolectric:android-all-instrumented:15-robolectric-12650502-i7")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -111,9 +112,10 @@ tasks.withType<Test>().configureEach {
         // O Robolectric baixa o Android sozinho e o Maven Central responde 429 no CI; o Gradle baixa com tentativas.
         val depsDir = layout.buildDirectory.dir("robolectric-deps").get().asFile
         val androidAll = robolectricAndroid
+        val androidAll15 = robolectricAndroid15
         doFirst {
             depsDir.mkdirs()
-            androidAll.resolve().forEach { it.copyTo(depsDir.resolve(it.name), overwrite = true) }
+            (androidAll.resolve() + androidAll15.resolve()).forEach { it.copyTo(depsDir.resolve(it.name), overwrite = true) }
         }
         systemProperty("robolectric.offline", "true")
         systemProperty("robolectric.dependency.dir", depsDir.absolutePath)
