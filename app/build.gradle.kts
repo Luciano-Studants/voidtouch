@@ -80,6 +80,7 @@ val robolectricAndroid: Configuration by configurations.creating
 
 dependencies {
     robolectricAndroid("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
+    robolectricAndroid("org.robolectric:android-all-instrumented:15-robolectric-12650502-i7")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
